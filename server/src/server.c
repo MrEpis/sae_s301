@@ -1,3 +1,6 @@
+#include "server.h"
+#include "client_handler.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,38 +9,8 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
-#define PORT 8080
-#define MAX_PENDING_CONNECTIONS 5
 
-
-void *handle_client(void *arg) {
-    //On récupère le socket du client passé en argument
-    int client_socket = *(int*)arg;
-    free(arg); 
-    
-    char buffer[1024] = {0};
-    ssize_t bytes_read;
-
-    const char *msg = "Connexion réussie, bienvenue sur le serveur !\n";
-    send(client_socket, msg, strlen(msg), 0);
-
-    //Boucle de lecture simple en mode bloquant
-    bytes_read = recv(client_socket, buffer, 1024, 0);
-    if (bytes_read > 0) { //Si on a bien reçu le message
-        printf("Message reçu du client %d: %s\n", client_socket, buffer);
-    } else if (bytes_read == 0) { //Si le client s'est déconnecté
-        printf("Client %d déconnecté.\n", client_socket);
-    } else { //En cas d'erreur
-        perror("recv");
-    }
-
-    printf("Fermeture du socket client %d\n", client_socket);
-    close(client_socket);
-    pthread_exit(NULL);
-}
-
-
-int main() {
+int start_server() {
     int server_fd, new_socket;
     struct sockaddr_in address;
     int opt = 1;
@@ -47,13 +20,13 @@ int main() {
     //AF_INET = IPv4, SOCK_STREAM = TCP
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     //Fonction pour rendre le socket réutilisable après un arrêt
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
         perror("setsockopt");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     //On configure l'adresse et le port
@@ -66,14 +39,14 @@ int main() {
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
         close(server_fd);
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     //On met le port en mode écoute
     if (listen(server_fd, MAX_PENDING_CONNECTIONS) < 0) {
         perror("listen");
         close(server_fd);
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     //Boucle d'acceptation des clients
@@ -112,6 +85,7 @@ int main() {
         pthread_detach(client_thread);
     }
 
-
-
+    //Jamais atteint
+    close(server_fd);
+    return 0;
 }

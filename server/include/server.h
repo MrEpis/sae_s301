@@ -1,10 +1,9 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-void init();
+#define PORT 8080
+#define MAX_PENDING_CONNECTIONS 5
 
-void create_thread();
-
-void shutdown();
+int start_server();
 
 #endif

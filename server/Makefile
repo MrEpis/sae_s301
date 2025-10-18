@@ -1,0 +1,49 @@
+# Makefile
+
+# Compilateur
+CC = gcc
+
+# Options
+# -g: inclue les infos de debug
+# -Wall: affiche tous les warnings et erreurs
+# -Iinclude: indique le chemin vers les fichiers header 
+CFLAGS = -g -Wall -Iinclude
+
+# Bibliothèques
+# -lpthread: bibliothèque des threads
+LDLIBS = -lpthread
+
+# Nom de l'exécutable
+TARGET = server_exec
+
+# Répertoires
+SRCDIR = src
+OBJDIR = build
+BINDIR = bin
+
+# Fichiers source .c
+SOURCES = $(SRCDIR)/main.c $(SRCDIR)/server.c $(SRCDIR)/client_handler.c
+
+# Générer les noms de fichier .o
+OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
+
+# Cible par défaut
+all: $(BINDIR)/$(TARGET)
+
+# Règle pour lier l'exécutable
+$(BINDIR)/$(TARGET): $(OBJECTS)
+		@mkdir -p $(BINDIR)
+		$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+		@echo "Compilation terminée. Exécutable : $@"
+
+# Règle pour compiler les fichiers .c en .o
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+		@mkdir -p $(OBJDIR)
+		$(CC) $(CFLAGS) -c -o $@ $<
+
+# Cible pour nettoyer
+clean:
+		@echo "Nettoyage..."
+		rm -f $(OBJDIR)/* $(BINDIR)/*
+
+.PHONY: all clean 
