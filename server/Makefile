@@ -7,7 +7,8 @@ CC = gcc
 # -g: inclue les infos de debug
 # -Wall: affiche tous les warnings et erreurs
 # -Iinclude: indique le chemin vers les fichiers header 
-CFLAGS = -g -Wall -Iinclude
+# -fPIC : génère du code indépendant de la position
+CFLAGS = -g -Wall -Iinclude -fPIC
 
 # Bibliothèques
 # -lpthread: bibliothèque des threads
