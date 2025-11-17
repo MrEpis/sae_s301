@@ -67,3 +67,35 @@ static void mine_block(Block *block) {
         block->nonce++;
     }
 }
+
+Blockchain* create_new_blockchain() {
+    Blockchain* chain = malloc(sizeof(Blockchain));
+    if (!chain) {
+        perror("malloc chain");
+        return NULL;
+    }
+    chain->size = 1;
+
+    Block* genesis = malloc(sizeof(Block));
+    if (!genesis) {
+        perror("malloc genesis");
+        free(chain);
+        return NULL;
+    }
+
+    genesis->ID_block = 0;
+    genesis->timestamp = time(NULL);
+    genesis->data_action = strdup("Genesis Block");
+    genesis->nonce = 0;
+    genesis->next = NULL;
+    memset(genesis->previous_hash, '0', HASH_SIZE-1);
+    genesis->previous_hash[HASH_SIZE-1] = '\0';
+
+    mine_block(genesis);
+
+    chain->head = genesis;
+    chain->tail = genesis;
+
+    printf("Blockchain créée avec le bloc Genesis.\n");
+    return chain;
+}

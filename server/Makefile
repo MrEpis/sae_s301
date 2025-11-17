@@ -12,7 +12,9 @@ CFLAGS = -g -Wall -Iinclude -fPIC
 
 # Bibliothèques
 # -lpthread: bibliothèque des threads
-LDLIBS = -lpthread
+# -lssl -lcrypto: bibliothèque pour la blockchain
+# -lpq: bibliothèque pour PostgreSQL
+LDLIBS = -lpthread -lssl -lcrypto -lpq
 
 # Nom de l'exécutable
 TARGET = server_exec
@@ -23,7 +25,7 @@ OBJDIR = build
 BINDIR = bin
 
 # Fichiers source .c
-SOURCES = $(SRCDIR)/main.c $(SRCDIR)/server.c $(SRCDIR)/client_handler.c
+SOURCES = $(SRCDIR)/main.c $(SRCDIR)/server.c $(SRCDIR)/client_handler.c $(SRCDIR)/blockchain.c $(SRCDIR)/database.c
 
 # Générer les noms de fichier .o
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))

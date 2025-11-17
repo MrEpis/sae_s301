@@ -7,6 +7,6 @@ Blockchain* create_new_blockchain();
 
 void add_block();
 
-char calculate_hash(const char* input, char* output_hash);
+void calculate_hash(const char* input, char* output_hash);
 
 #endif
