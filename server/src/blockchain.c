@@ -14,21 +14,24 @@ void calculate_hash(const char* input, char* output_hash) {
     output_hash[HASH_SIZE - 1] = '\0';
 }
 
+/* Crée la chaine de données d'un bloc pour le hachage */
 static char* block_to_string_for_hashing(Block* block) {
     //Estimation simple d'allocation mémoire, à modifier
     int len = snprintf(NULL, 0, "%d%ld%s%s%d",
-                         block->ID_block,
+                        block->ID_block,
                         block->timestamp,
                         block->data_action,
                         block->previous_hash,
                         block->nonce);
     
+    //On malloc la chaine de retour
     char* str = malloc(len + 1);
     if (!str) {
         perror("malloc block_to_string");
         return NULL;
     }
 
+    //On écrit les infos du bloc dans la chaine
     sprintf(str, "%d%ld%s%s%d", 
             block->ID_block, 
             block->timestamp, 
@@ -42,6 +45,7 @@ static char* block_to_string_for_hashing(Block* block) {
 static void mine_block(Block *block) {
     char hash_check[DIFFICULTY + 1];
 
+    //On crée d'abord une chaine de zéros
     char target[DIFFICULTY + 1];
     memset(target, '0', DIFFICULTY);
     target[DIFFICULTY] = '\0';
@@ -56,6 +60,7 @@ static void mine_block(Block *block) {
         calculate_hash(block_data, block->hash);
         free(block_data);
 
+        //On vérifie si le hash commence par le bon nombre (DIFFICULTY) de zéros
         strncpy(hash_check, block->hash, DIFFICULTY);
         hash_check[DIFFICULTY] = '\0';
 

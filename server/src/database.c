@@ -33,3 +33,31 @@ void db_close() {
 PGconn* get_db_connection() {
     return db_connection;
 }
+
+int db_check_for_blockchain(PGconn *conn) {
+    //Requête pour compter les lignes
+    const char *query = "SELECT COUNT(*) FROM blockchain";
+    //Exécution de la requête
+    PGresult *result = PQexec(conn, query);
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        fprintf(stderr, "Erreur lors de la vérification de la blockchain : %s\n", PQerrorMessage(conn));
+        PQclear(result);
+        return -1;
+    }
+
+    //Récupération de la valeur (située en ligne 0, colonne 0)
+    char *count_str = PQgetvalue(result, 0, 0);
+    int count = atoi(count_str); //Conversion en int
+
+    //Nettoyage de la mémoire du résultat
+    PQclear(result);
+
+    printf("Vérification de la BDD : %d blocs trouvés.\n", count);
+
+    if (count > 0) {
+        return 1; //La blockchain existe
+    } else {
+        return 0; //La blockchain est vide
+    }
+}

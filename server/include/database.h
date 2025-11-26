@@ -9,4 +9,6 @@ void db_close();
 
 PGconn* get_db_connection();
 
+int db_check_for_blockchain(PGconn *conn);
+
 #endif
