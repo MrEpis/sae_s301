@@ -1,5 +1,7 @@
 package views;
 
+import controller.CombatController;
+import javafx.geometry.Insets; // Ajouté Insets
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -13,28 +15,34 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import model.Card;
+
 public class CombatView {
 
     private final Stage primaryStage;
-
+    private final CombatController controller;
     private VBox centerContainer;
+    private VBox playerCardDisplay;
+    private VBox opponentCardDisplay;
+    private Label statusLabel;
 
-    private String playerCardName = null;
-    private String opponentCardName = null;
+    private Card selectedPlayerCard;
+    private Card selectedOpponentCard;
 
-    public CombatView(Stage primaryStage) {
+    public CombatView(Stage primaryStage, CombatController controller) {
         this.primaryStage = primaryStage;
+        this.controller = controller;
     }
 
     public Scene createScene() {
         BorderPane root = new BorderPane();
+        root.setPadding(new Insets(10));
         root.setStyle("-fx-background-color: #2e2e2e;");
 
         Label titleLabel = createLabel("Card Duel Setup", 28, "#ffffff", FontWeight.BOLD);
         BorderPane.setAlignment(titleLabel, Pos.CENTER);
         root.setTop(titleLabel);
 
-        // Center Container will hold either selection or duel view
         centerContainer = new VBox();
         centerContainer.setAlignment(Pos.CENTER);
         root.setCenter(centerContainer);
@@ -42,17 +50,17 @@ public class CombatView {
         showSelectionView();
 
         // Bottom: Back Button
-        Button backButton = createActionButton("Back to Menu", "#666666");
-        backButton.setOnAction(e -> new MenuView(primaryStage).show());
+        Button backButton = createActionButton("Retour au Menu", "#666666");
+        backButton.setOnAction(e -> controller.backToMenu());
 
         VBox bottomBox = new VBox(backButton);
         bottomBox.setAlignment(Pos.CENTER);
+        BorderPane.setMargin(bottomBox, new Insets(10, 0, 0, 0));
         root.setBottom(bottomBox);
 
         return new Scene(root, 1000, 700);
     }
 
-    // Card Selection View
 
     private void showSelectionView() {
         centerContainer.getChildren().clear();
@@ -63,68 +71,80 @@ public class CombatView {
         HBox inventorySelection = new HBox(30);
         inventorySelection.setAlignment(Pos.CENTER);
 
-        VBox playerPanel = createInventoryPanel("Your Inventory", "#4CAF50", true); // Player's selection panel
-        VBox opponentPanel = createInventoryPanel("Opponent's Available Cards", "#F44336", false); // Opponent's selection panel
+        VBox playerPanel = createInventoryPanel("Votre Inventaire", "#4CAF50", controller.getPlayerInventory(), true);
+        VBox opponentPanel = createInventoryPanel("Cartes Adversaires (Exemple)", "#F44336", controller.getOpponentInventory(), false);
 
         inventorySelection.getChildren().addAll(playerPanel, opponentPanel);
 
-        Button startSetupButton = createActionButton("Commencer le Combat (Setup)", "#2196F3");
-        startSetupButton.setOnAction(e -> showDuelView()); // Transition to Duel View
+        Button startSetupButton = createActionButton("Commencer le Duel", "#2196F3");
+        startSetupButton.setOnAction(e -> {
+            if (selectedPlayerCard != null && selectedOpponentCard != null) {
+                controller.setupDuel(selectedPlayerCard, selectedOpponentCard);
+            } else {
+                System.err.println("Veuillez sélectionner une carte pour chaque joueur.");
+            }
+        });
 
-        selectionBox.getChildren().addAll(createLabel("Select Your Card and Opponent's Card", 18, "#FFC107", FontWeight.NORMAL), inventorySelection, startSetupButton);
+        selectionBox.getChildren().addAll(createLabel("Sélectionnez vos cartes", 18, "#FFC107", FontWeight.NORMAL), inventorySelection, startSetupButton);
         centerContainer.getChildren().add(selectionBox);
     }
 
     // Creates a list panel for selecting cards from an inventory
-    private VBox createInventoryPanel(String title, String color, boolean isPlayer) {
+    private VBox createInventoryPanel(String title, String color, ListView<Card> cardListView, boolean isPlayer) {
         VBox panel = new VBox(10);
         panel.setPrefWidth(400);
         panel.setPrefHeight(450);
         panel.setStyle("-fx-background-color: #4a4a4a; -fx-border-color: " + color + "; -fx-border-width: 2;");
 
-        ListView<String> cardListView = new ListView<>();
-
-        // Placeholder data and selection logic
-        if (isPlayer) {
-            cardListView.getItems().addAll("Caillou", "Voiture", "Aspirateur");
-            cardListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> playerCardName = newV);
-        } else {
-            cardListView.getItems().addAll("Feutre", "Bureau", "Chausette");
-            cardListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> opponentCardName = newV);
-        }
+        cardListView.setCellFactory(list -> new CardListCell());
+        cardListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
+            if (isPlayer) {
+                selectedPlayerCard = newV;
+            } else {
+                selectedOpponentCard = newV;
+            }
+        });
 
         panel.getChildren().addAll(createLabel(title, 18, "#ffffff", FontWeight.BOLD), cardListView);
         return panel;
     }
 
-    // Duel View
-
-    private void showDuelView() {
+    public void showDuelView(Card playerCard, Card opponentCard) {
         centerContainer.getChildren().clear();
 
         VBox duelBox = new VBox(20);
         duelBox.setAlignment(Pos.CENTER);
 
-        Label statusLabel = createLabel("Waiting to Start Duel", 18, "#ffffff", FontWeight.NORMAL);
+        statusLabel = createLabel("Prêt au Combat !", 18, "#ffffff", FontWeight.NORMAL);
 
         HBox cardArea = new HBox(50);
         cardArea.setAlignment(Pos.CENTER);
 
-        VBox playerCardDisplay = createCardDisplay(playerCardName != null ? playerCardName : "Player Card", "#008b00");
+        playerCardDisplay = createCardDisplay(playerCard, "#008b00");
         Label vsLabel = createLabel("VS", 40, "#FFC107", FontWeight.EXTRA_BOLD);
-        VBox opponentCardDisplay = createCardDisplay(opponentCardName != null ? opponentCardName : "Opponent Card", "#8b0000");
+        opponentCardDisplay = createCardDisplay(opponentCard, "#8b0000");
 
         cardArea.getChildren().addAll(playerCardDisplay, vsLabel, opponentCardDisplay);
 
-        Button startCombatButton = createActionButton("Lancer le Combat", "#4CAF50");
-        startCombatButton.setOnAction(e -> statusLabel.setText("Combat Launched! (Logic to follow)"));
+        Button startCombatButton = createActionButton("Lancer le Combat INSTANTANÉ", "#4CAF50");
+        startCombatButton.setOnAction(e -> controller.launchInstantFight());
 
         duelBox.getChildren().addAll(statusLabel, cardArea, startCombatButton);
         centerContainer.getChildren().add(duelBox);
     }
 
+    public void updateDuelDisplay(Card playerCard, Card opponentCard, String result) {
+        playerCardDisplay = createCardDisplay(playerCard, "#008b00");
+        opponentCardDisplay = createCardDisplay(opponentCard, "#8b0000");
 
-    private VBox createCardDisplay(String cardName, String borderColor) {
+        HBox cardArea = (HBox) ((VBox) centerContainer.getChildren().get(0)).getChildren().get(2); // Accès par index
+        cardArea.getChildren().set(0, playerCardDisplay);
+        cardArea.getChildren().set(2, opponentCardDisplay);
+
+        statusLabel.setText(result);
+    }
+
+    private VBox createCardDisplay(Card card, String borderColor) {
         VBox cardSlot = new VBox(10);
         cardSlot.setPrefSize(200, 280);
         cardSlot.setAlignment(Pos.TOP_CENTER);
@@ -136,14 +156,39 @@ public class CombatView {
                         "-fx-border-style: solid;"
         );
 
-        VBox imagePlaceholder = new VBox();
-        imagePlaceholder.setPrefSize(180, 150);
-
         VBox stats = new VBox(5);
+        stats.setAlignment(Pos.CENTER_LEFT);
+        stats.setPadding(new Insets(0, 0, 0, 5));
 
-        cardSlot.getChildren().addAll(createLabel(cardName, 16, "#ffffff", FontWeight.BOLD), imagePlaceholder, stats);
+        stats.getChildren().addAll(
+                createLabel("HP: " + card.getHp(), 14, "#4CAF50", FontWeight.BOLD), // Affiche les PV actuels
+                createLabel("ATK: " + card.getAtk(), 14, "#F44336", FontWeight.BOLD),
+                createLabel("DEF: " + card.getDef(), 14, "#2196F3", FontWeight.BOLD)
+        );
+
+        if (card.getHp() <= 0) {
+            Label defeated = createLabel("VAINCU", 24, "#FF0000", FontWeight.EXTRA_BOLD);
+            VBox.setMargin(defeated, new Insets(10, 0, 0, 0));
+            stats.getChildren().add(defeated);
+        }
+
+        cardSlot.getChildren().addAll(createLabel(card.getNom(), 16, "#ffffff", FontWeight.BOLD), stats);
         return cardSlot;
     }
+
+    static class CardListCell extends javafx.scene.control.ListCell<Card> {
+        @Override
+        protected void updateItem(Card item, boolean empty) {
+            super.updateItem(item, empty);
+            setText(null);
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                setText(item.getNom() + " (ATK: " + item.getAtk() + ")");
+            }
+        }
+    }
+
 
     public void show() {
         primaryStage.setScene(createScene());

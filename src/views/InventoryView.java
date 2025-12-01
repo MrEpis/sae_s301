@@ -1,5 +1,6 @@
 package views;
 
+import controller.MainController;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -17,9 +18,11 @@ import javafx.stage.Stage;
 public class InventoryView {
 
     private final Stage primaryStage;
+    private final MainController controller;
 
-    public InventoryView(Stage primaryStage) {
+    public InventoryView(Stage primaryStage, MainController controller) {
         this.primaryStage = primaryStage;
+        this.controller = controller;
     }
 
     public Scene createScene() {
@@ -32,7 +35,7 @@ public class InventoryView {
         topBox.setStyle("-fx-background-color: #1a1a1a;");
 
         Button backButton = createActionButton("Back to Menu", "#666666");
-        backButton.setOnAction(e -> new MenuView(primaryStage).show());
+        backButton.setOnAction(e -> controller.showMenu());
 
         topBox.getChildren().addAll(createLabel("Player Inventory", 28, "#ffffff", FontWeight.BOLD), backButton);
         root.setTop(topBox);
@@ -47,7 +50,6 @@ public class InventoryView {
         return new Scene(root, 1100, 750);
     }
 
-    // Creates a scrollable area containing the card grid
     private ScrollPane createCardGridArea() {
         GridPane cardGrid = new GridPane();
         cardGrid.setHgap(20);
@@ -66,7 +68,6 @@ public class InventoryView {
         return scrollPane;
     }
 
-    // Creates a visual representation of a card in the inventory
     private VBox createCardPlaceholder(String name) {
         VBox card = new VBox(5);
         card.setPrefSize(120, 160);
@@ -78,7 +79,6 @@ public class InventoryView {
         return card;
     }
 
-    // Creates the panel to display the selected card's information
     private VBox createCardDetailPanel() {
         VBox detailBox = new VBox(15);
         detailBox.setPrefWidth(300);
@@ -93,15 +93,14 @@ public class InventoryView {
                 createLabel("ATK: N/A", 14, "#cccccc", FontWeight.NORMAL),
                 createLabel("DEF: N/A", 14, "#cccccc", FontWeight.NORMAL)
         );
-        stats.setUserData(new Label[]{(Label)stats.getChildren().get(0), (Label)stats.getChildren().get(1), (Label)stats.getChildren().get(2)}); // Store labels for easy update
+        stats.setUserData(new Label[]{(Label)stats.getChildren().get(0), (Label)stats.getChildren().get(1), (Label)stats.getChildren().get(2)});
 
         detailBox.getChildren().addAll(createLabel("Card Details", 20, "#FFC107", FontWeight.BOLD), selectedCardName, new Separator(), stats);
-        detailBox.setUserData(new Object[]{selectedCardName, stats}); // Store key elements for update
+        detailBox.setUserData(new Object[]{selectedCardName, stats});
 
         return detailBox;
     }
 
-    // Logic to update the details panel based on selected card
     private void updateDetails(Scene scene, String cardName) {
         VBox detailBox = (VBox) scene.lookup("#DetailPanel");
 

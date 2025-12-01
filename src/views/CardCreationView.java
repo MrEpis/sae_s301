@@ -1,5 +1,6 @@
 package views;
 
+import controller.MainController;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,12 +16,14 @@ import javafx.stage.Stage;
 
 public class CardCreationView {
 
-    private static final int MAX_POINTS = 100; // Total stat points to distribute
+    private static final int MAX_POINTS = 100;
     private final Stage primaryStage;
+    private final MainController controller;
     private Label pointsLeftLabel;
 
-    public CardCreationView(Stage primaryStage) {
+    public CardCreationView(Stage primaryStage, MainController controller) {
         this.primaryStage = primaryStage;
+        this.controller = controller;
     }
 
     public Scene createScene() {
@@ -45,7 +48,7 @@ public class CardCreationView {
         bottomBox.setAlignment(Pos.CENTER);
 
         Button backButton = createActionButton("Back to Menu", "#666666");
-        backButton.setOnAction(e -> new MenuView(primaryStage).show());
+        backButton.setOnAction(e -> controller.showMenu());
 
         bottomBox.getChildren().addAll(createActionButton("Save Card", "#4CAF50"), backButton);
         root.setBottom(bottomBox);
@@ -53,7 +56,6 @@ public class CardCreationView {
         return new Scene(root, 800, 600);
     }
 
-    // Creates the area for stats distribution using Spinners
     private VBox createStatDistributionForm() {
         VBox form = new VBox(15);
         form.setPrefWidth(350);
@@ -73,13 +75,12 @@ public class CardCreationView {
         statGrid.addRow(1, createLabel("Attack (ATK):", 14, "#cccccc"), attackSpinner);
         statGrid.addRow(2, createLabel("Defense (DEF):", 14, "#cccccc"), defenseSpinner);
 
-        setupSpinnerListeners(hpSpinner, attackSpinner, defenseSpinner); // Links spinners to the points distribution logic
+        setupSpinnerListeners(hpSpinner, attackSpinner, defenseSpinner);
 
         form.getChildren().addAll(createLabel("Allocate Stat Points", 16, "#ffffff"), pointsLeftLabel, statGrid);
         return form;
     }
 
-    // Creates the area for card name and image selection
     private VBox createCardPreviewArea() {
         VBox preview = new VBox(15);
         preview.setPrefSize(300, 350);
@@ -89,14 +90,13 @@ public class CardCreationView {
         TextField cardNameField = new TextField("My Custom Card");
 
         Button selectImageButton = createActionButton("Select Image File", "#2196F3");
-        VBox imagePlaceholder = new VBox(); // Placeholder for the card image
+        VBox imagePlaceholder = new VBox();
         imagePlaceholder.setPrefSize(180, 180);
 
         preview.getChildren().addAll(createLabel("Card Name:", 14, "#ffffff"), cardNameField, createLabel("Image:", 14, "#ffffff"), selectImageButton, imagePlaceholder);
         return preview;
     }
 
-    // Creates a stat point distribution spinner.
     private Spinner<Integer> createStatSpinner(int min, int max, int initial) {
         Spinner<Integer> spinner = new Spinner<>(min, max, initial);
         spinner.setEditable(true);
@@ -104,7 +104,6 @@ public class CardCreationView {
         return spinner;
     }
 
-    // Links spinners to the points distribution logic
     private void setupSpinnerListeners(Spinner<Integer> hp, Spinner<Integer> atk, Spinner<Integer> def) {
         ChangeListener<Integer> listener = (obs, oldValue, newValue) -> {
             int currentTotal = hp.getValue() + atk.getValue() + def.getValue();

@@ -12,4 +12,24 @@ public class Card {
         this.def = def;
         this.atk = atk;
     }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public int getHp() {
+        return hp;
+    }
+
+    public int getDef() {
+        return def;
+    }
+
+    public int getAtk() {
+        return atk;
+    }
+
+    public void setHp(int hp) {
+        this.hp = hp;
+    }
 }

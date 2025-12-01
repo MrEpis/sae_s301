@@ -1,5 +1,6 @@
 package views;
 
+import controller.MainController;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -17,28 +18,29 @@ import javafx.stage.Stage;
 public class TradeView {
 
     private final Stage primaryStage;
+    private final MainController controller;
 
-    public TradeView(Stage primaryStage) {
+    public TradeView(Stage primaryStage, MainController controller) {
         this.primaryStage = primaryStage;
+        this.controller = controller;
     }
 
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #383838;");
 
-        VBox topBox = createTopControlArea(); // Title and Player Selection
+        VBox topBox = createTopControlArea();
         root.setTop(topBox);
 
-        HBox tradeBox = createTradeSelectionArea(); // Side-by-side inventories
+        HBox tradeBox = createTradeSelectionArea();
         root.setCenter(tradeBox);
 
-        HBox buttonBox = createBottomButtonArea(); // Action Buttons
+        HBox buttonBox = createBottomButtonArea();
         root.setBottom(buttonBox);
 
         return new Scene(root, 1000, 700);
     }
 
-    // Creates the title and opponent selection area at the top
     private VBox createTopControlArea() {
         VBox top = new VBox(15);
         top.setAlignment(Pos.CENTER);
@@ -56,7 +58,6 @@ public class TradeView {
         return top;
     }
 
-    // Creates the main area with two lists for card selection
     private HBox createTradeSelectionArea() {
         HBox tradeBox = new HBox(30);
         tradeBox.setAlignment(Pos.CENTER);
@@ -68,14 +69,13 @@ public class TradeView {
         return tradeBox;
     }
 
-    // Creates a list panel for selecting cards from an inventory
     private VBox createInventoryPanel(String title, String color) {
         VBox panel = new VBox(10);
         panel.setPrefWidth(400);
         panel.setPrefHeight(450);
         panel.setStyle("-fx-background-color: #4a4a4a; -fx-border-color: " + color + "; -fx-border-width: 2;");
 
-        ListView<String> cardListView = new ListView<>(); // List to display card names
+        ListView<String> cardListView = new ListView<>();
         cardListView.getItems().addAll("My Dragon Card", "My Warrior", "My Shield", "Card to Trade");
 
         Label selectedCard = createLabel("Selected: None", 14, "#FFC107", FontWeight.NORMAL);
@@ -84,7 +84,6 @@ public class TradeView {
         return panel;
     }
 
-    // Creates the buttons at the bottom
     private HBox createBottomButtonArea() {
         HBox buttonBox = new HBox(20);
         buttonBox.setAlignment(Pos.CENTER);
@@ -92,7 +91,7 @@ public class TradeView {
         Button btnSend = createActionButton("Send Trade Request", "#4CAF50");
         Button btnBack = createActionButton("Back to Menu", "#FFC107");
 
-        btnBack.setOnAction(e -> new MenuView(primaryStage).show());
+        btnBack.setOnAction(e -> controller.showMenu());
 
         buttonBox.getChildren().addAll(btnSend, btnBack);
         return buttonBox;

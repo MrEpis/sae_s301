@@ -1,5 +1,6 @@
 package views;
 
+import controller.MainController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,9 +15,11 @@ import javafx.stage.Stage;
 public class MenuView {
 
     private final Stage primaryStage;
+    private final MainController controller;
 
-    public MenuView(Stage primaryStage) {
+    public MenuView(Stage primaryStage, MainController controller) {
         this.primaryStage = primaryStage;
+        this.controller = controller;
     }
 
     public Scene createScene() {
@@ -36,22 +39,22 @@ public class MenuView {
         Button quitButton = createButton("Quit");
 
         combatButton.setOnAction(e -> {
-            new CombatView(primaryStage).show();
+            controller.showCombat();
         });
 
         inventoryButton.setOnAction(e -> {
-            new InventoryView(primaryStage).show();
+            controller.showInventory();
         });
 
         createCardButton.setOnAction(e -> {
-            new CardCreationView(primaryStage).show();
+            controller.showCardCreation();
         });
 
         tradeButton.setOnAction(e -> {
-            new TradeView(primaryStage).show();
+            controller.showTrade();
         });
 
-        quitButton.setOnAction(e -> primaryStage.close());
+        quitButton.setOnAction(e -> controller.quit());
 
         root.getChildren().addAll(titleLabel, combatButton, inventoryButton, createCardButton, tradeButton, quitButton);
 
