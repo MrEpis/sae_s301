@@ -16,7 +16,7 @@ import javafx.stage.Stage;
 
 public class CardCreationView {
 
-    private static final int MAX_POINTS = 100;
+    public static final int MAX_POINTS = 100;
     private final Stage primaryStage;
     private final MainController controller;
     private Label pointsLeftLabel;
@@ -33,7 +33,6 @@ public class CardCreationView {
         Label titleLabel = createTitleLabel("Create Your Card");
         root.setTop(titleLabel);
 
-        // Center: Form and Preview
         HBox centerBox = new HBox(30);
         centerBox.setAlignment(Pos.CENTER);
 
@@ -43,14 +42,18 @@ public class CardCreationView {
         centerBox.getChildren().addAll(formBox, previewBox);
         root.setCenter(centerBox);
 
-        // Bottom: Action Buttons
         HBox bottomBox = new HBox(20);
         bottomBox.setAlignment(Pos.CENTER);
 
-        Button backButton = createActionButton("Back to Menu", "#666666");
+        Button saveButton = createActionButton("Save Card", "#7834CB", 180, 40);
+        Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
+
+        saveButton.setOnAction(e -> {
+            // Logique de sauvegarde ici
+        });
         backButton.setOnAction(e -> controller.showMenu());
 
-        bottomBox.getChildren().addAll(createActionButton("Save Card", "#4CAF50"), backButton);
+        bottomBox.getChildren().addAll(saveButton, backButton);
         root.setBottom(bottomBox);
 
         return new Scene(root, 800, 600);
@@ -89,7 +92,7 @@ public class CardCreationView {
 
         TextField cardNameField = new TextField("My Custom Card");
 
-        Button selectImageButton = createActionButton("Select Image File", "#2196F3");
+        Button selectImageButton = createActionButton("Select Image File", "#C5CC8F", 180, 40);
         VBox imagePlaceholder = new VBox();
         imagePlaceholder.setPrefSize(180, 180);
 
@@ -135,15 +138,39 @@ public class CardCreationView {
         return label;
     }
 
-    private Button createActionButton(String text, String color) {
+    private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
-        btn.setPrefSize(180, 40);
-        btn.setStyle(
-                "-fx-background-color: " + color + ";" +
-                        "-fx-text-fill: black;" +
-                        "-fx-font-size: 14px;" +
-                        "-fx-font-weight: bold;"
-        );
+        btn.setPrefSize(width, height);
+
+        String styleNormal;
+        String styleHover;
+
+        if (color.equals("#7834CB")) {
+            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+        } else if (color.equals("#D9C6F0")) {
+            styleNormal = "-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+        } else if (color.equals("#C5CC8F")) {
+            styleNormal = "-fx-background-color: #C5CC8F; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #A97DDE; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+        } else {
+            styleNormal = "-fx-background-color: " + color + "; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = styleNormal;
+        }
+
+        btn.setStyle(styleNormal);
+
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(styleHover);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(styleNormal);
+            btn.setCursor(javafx.scene.Cursor.DEFAULT);
+        });
+
         return btn;
     }
 

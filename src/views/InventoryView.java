@@ -29,12 +29,11 @@ public class InventoryView {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #222222;");
 
-        // Title and Back Button
         VBox topBox = new VBox(10);
         topBox.setAlignment(Pos.CENTER);
         topBox.setStyle("-fx-background-color: #1a1a1a;");
 
-        Button backButton = createActionButton("Back to Menu", "#666666");
+        Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
         backButton.setOnAction(e -> controller.showMenu());
 
         topBox.getChildren().addAll(createLabel("Player Inventory", 28, "#ffffff", FontWeight.BOLD), backButton);
@@ -55,10 +54,8 @@ public class InventoryView {
         cardGrid.setHgap(20);
         cardGrid.setVgap(20);
 
-        // Placeholder for displaying card images
         for (int i = 0; i < 50; i++) {
             VBox cardPlaceholder = createCardPlaceholder("Card " + (i + 1));
-            // Add event to show details on click
             cardPlaceholder.setOnMouseClicked(e -> updateDetails(primaryStage.getScene(), cardPlaceholder.getUserData().toString()));
             cardGrid.add(cardPlaceholder, i % 7, i / 7);
         }
@@ -124,15 +121,36 @@ public class InventoryView {
         return label;
     }
 
-    private Button createActionButton(String text, String color) {
+    private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
-        btn.setPrefSize(180, 40);
-        btn.setStyle(
-                "-fx-background-color: " + color + ";" +
-                        "-fx-text-fill: white;" +
-                        "-fx-font-size: 14px;" +
-                        "-fx-font-weight: bold;"
-        );
+        btn.setPrefSize(width, height);
+
+        String styleNormal;
+        String styleHover;
+
+        if (color.equals("#7834CB")) {
+            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+        } else if (color.equals("#D9C6F0")) {
+            styleNormal = "-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+        } else {
+            styleNormal = "-fx-background-color: " + color + "; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = styleNormal;
+        }
+
+        btn.setStyle(styleNormal);
+
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(styleHover);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(styleNormal);
+            btn.setCursor(javafx.scene.Cursor.DEFAULT);
+        });
+
         return btn;
     }
 

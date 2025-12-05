@@ -88,8 +88,8 @@ public class TradeView {
         HBox buttonBox = new HBox(20);
         buttonBox.setAlignment(Pos.CENTER);
 
-        Button btnSend = createActionButton("Send Trade Request", "#4CAF50");
-        Button btnBack = createActionButton("Back to Menu", "#FFC107");
+        Button btnSend = createActionButton("Send Trade Request", "#7834CB", 250, 45);
+        Button btnBack = createActionButton("Back to Menu", "#D9C6F0", 250, 45);
 
         btnBack.setOnAction(e -> controller.showMenu());
 
@@ -110,15 +110,36 @@ public class TradeView {
         return label;
     }
 
-    private Button createActionButton(String text, String color) {
+    private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
-        btn.setPrefSize(250, 45);
-        btn.setStyle(
-                "-fx-background-color: " + color + "; " +
-                        "-fx-text-fill: black; " +
-                        "-fx-font-size: 16px; " +
-                        "-fx-font-weight: bold;"
-        );
+        btn.setPrefSize(width, height);
+
+        String styleNormal;
+        String styleHover;
+
+        if (color.equals("#7834CB")) {
+            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+        } else if (color.equals("#D9C6F0")) {
+            styleNormal = "-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+        } else {
+            styleNormal = "-fx-background-color: " + color + "; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+            styleHover = styleNormal;
+        }
+
+        btn.setStyle(styleNormal);
+
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(styleHover);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(styleNormal);
+            btn.setCursor(javafx.scene.Cursor.DEFAULT);
+        });
+
         return btn;
     }
 }

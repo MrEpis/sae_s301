@@ -16,6 +16,8 @@ public class MenuView {
 
     private final Stage primaryStage;
     private final MainController controller;
+    final String STYLE_NORMAL = "-fx-background-color: #A97DDE; -fx-text-fill: black; -fx-font-weight: bold;";
+    final String STYLE_HOVER = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-weight: bold;";
 
     public MenuView(Stage primaryStage, MainController controller) {
         this.primaryStage = primaryStage;
@@ -70,12 +72,16 @@ public class MenuView {
     private Button createButton(String text) {
         Button btn = new Button(text);
         btn.setPrefSize(300, 45);
-        btn.setStyle(
-                "-fx-background-color: #555555; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-font-size: 16px; " +
-                        "-fx-font-weight: bold;"
-        );
+        btn.setStyle(STYLE_NORMAL);
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(STYLE_HOVER);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(STYLE_NORMAL);
+            btn.setCursor(javafx.scene.Cursor.DEFAULT);
+        });
         return btn;
     }
 }
