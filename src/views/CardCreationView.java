@@ -1,10 +1,12 @@
 package views;
 
-import controller.MainController;
+import controller.CardCreationController;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -12,19 +14,52 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import java.io.File; // Ajout
 
 public class CardCreationView {
 
     public static final int MAX_POINTS = 100;
     private final Stage primaryStage;
-    private final MainController controller;
+    private CardCreationController controller;
     private Label pointsLeftLabel;
 
-    public CardCreationView(Stage primaryStage, MainController controller) {
+    private ImageView cardImageView;
+
+    public CardCreationView(Stage primaryStage) {
         this.primaryStage = primaryStage;
+    }
+
+    public void setController(CardCreationController controller) {
         this.controller = controller;
     }
+
+    public File openFileChooser() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Sélectionner l'image de la carte");
+        FileChooser.ExtensionFilter extFilter =
+                new FileChooser.ExtensionFilter("Fichiers images (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg");
+        fileChooser.getExtensionFilters().add(extFilter);
+
+        return fileChooser.showOpenDialog(primaryStage);
+    }
+
+    public void displayImagePreview(String imagePath) {
+        try {
+            Image image = new Image(imagePath);
+            cardImageView.setImage(image);
+
+            // Redimensionnement à la taille souhaitée d'une carte
+            cardImageView.setFitWidth(150);
+            cardImageView.setFitHeight(200);
+            cardImageView.setPreserveRatio(true);
+
+        } catch (Exception e) {
+            System.err.println("Erreur lors du chargement de l'image : " + e.getMessage());
+        }
+    }
+    // -----------------------------------------------------------
 
     public Scene createScene() {
         BorderPane root = new BorderPane();
@@ -48,10 +83,13 @@ public class CardCreationView {
         Button saveButton = createActionButton("Save Card", "#7834CB", 180, 40);
         Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
 
+        // --- ACTION DE SAUVEGARDE (Appel du Contrôleur) ---
         saveButton.setOnAction(e -> {
-            // Logique de sauvegarde ici
+            // TODO: Récupérer les valeurs des Spinners et du champ de nom ici
+            // controller.saveCard(name, hp, atk, def);
         });
-        backButton.setOnAction(e -> controller.showMenu());
+
+        backButton.setOnAction(e -> controller.backToMenu());
 
         bottomBox.getChildren().addAll(saveButton, backButton);
         root.setBottom(bottomBox);
@@ -59,6 +97,7 @@ public class CardCreationView {
         return new Scene(root, 800, 600);
     }
 
+    // Crée le formulaire de distribution de stats
     private VBox createStatDistributionForm() {
         VBox form = new VBox(15);
         form.setPrefWidth(350);
@@ -92,9 +131,17 @@ public class CardCreationView {
 
         TextField cardNameField = new TextField("My Custom Card");
 
+        cardImageView = new ImageView();
+        cardImageView.setFitWidth(150);
+        cardImageView.setFitHeight(200);
+
         Button selectImageButton = createActionButton("Select Image File", "#C5CC8F", 180, 40);
-        VBox imagePlaceholder = new VBox();
-        imagePlaceholder.setPrefSize(180, 180);
+
+        selectImageButton.setOnAction(e -> controller.chooseImageFile());
+
+        VBox imagePlaceholder = new VBox(cardImageView);
+        imagePlaceholder.setAlignment(Pos.CENTER);
+        imagePlaceholder.setPrefSize(180, 200);
 
         preview.getChildren().addAll(createLabel("Card Name:", 14, "#ffffff"), cardNameField, createLabel("Image:", 14, "#ffffff"), selectImageButton, imagePlaceholder);
         return preview;
@@ -146,8 +193,8 @@ public class CardCreationView {
         String styleHover;
 
         if (color.equals("#7834CB")) {
-            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
-            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;";
         } else if (color.equals("#D9C6F0")) {
             styleNormal = "-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
             styleHover = "-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";

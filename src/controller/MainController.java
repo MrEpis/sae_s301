@@ -6,15 +6,16 @@ import views.CombatView;
 import views.InventoryView;
 import views.CardCreationView;
 import views.TradeView;
+import model.Player; // Ajout pour la dépendance Player
 
 public class MainController {
 
     private final Stage primaryStage;
+    private final Player localPlayer = new Player(1, "LocalPlayer");
 
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
-
 
     public void showMenu() {
         new MenuView(primaryStage, this).show();
@@ -30,7 +31,15 @@ public class MainController {
     }
 
     public void showCardCreation() {
-        new CardCreationView(primaryStage, this).show();
+        CardCreationView cardCreationView = new CardCreationView(primaryStage);
+        CardCreationController cardCreationController = new CardCreationController(
+                this,
+                localPlayer,
+                cardCreationView
+        );
+
+        cardCreationView.setController(cardCreationController);
+        cardCreationView.show();
     }
 
     public void showTrade() {
