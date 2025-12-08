@@ -11,4 +11,8 @@ PGconn* get_db_connection();
 
 int db_check_for_blockchain(PGconn *conn);
 
+Blockchain* db_load_blockchain(PGconn *conn);
+
+int db_save_block(PGconn *conn, Block *block);
+
 #endif

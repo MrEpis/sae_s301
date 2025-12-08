@@ -16,13 +16,16 @@ int main() {
 
     if (check == 1) {
         printf("Restauration du contexte depuis la BDD...\n");
-        //TODO: bc = db_load_blockchain(conn);
+        bc = db_load_blockchain(conn);
     } else if (check == 0) {
         printf("Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");
         bc = create_new_blockchain();
 
         //TODO: Sauvegarder immédiatement le bloc Genesis en BDD
-        //db_save_block(conn, bc->head);
+        if (db_save_block(conn, bc->head) != 0) {
+            perror("Echec de la sauvegarde du premier bloc.\n");
+            return EXIT_FAILURE;
+        }
     } else {
         fprintf(stderr, "Erreur critique de la BDD. Arrêt du serveur.\n");
         db_close();
