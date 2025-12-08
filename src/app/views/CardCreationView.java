@@ -1,6 +1,6 @@
-package java.views;
+package app.views;
 
-import java.controller.CardCreationController;
+import app.controller.CardCreationController;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;

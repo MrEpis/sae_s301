@@ -1,4 +1,4 @@
-package java.model;
+package app.model;
 
 import java.io.*;
 import java.net.Socket;

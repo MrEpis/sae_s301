@@ -1,8 +1,8 @@
-package java.controller;
+package app.controller;
 
-import java.model.Player;
+import app.model.Player;
 
-import java.views.TradeView;
+import app.views.TradeView;
 
 public class TradeController {
 

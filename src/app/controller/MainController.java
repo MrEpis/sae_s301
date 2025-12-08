@@ -1,11 +1,11 @@
-package java.controller;
+package app.controller;
 
 import javafx.stage.Stage;
-import java.views.MenuView;
-import java.views.InventoryView;
-import java.views.CardCreationView;
-import java.views.TradeView;
-import java.model.Player; // Ajout pour la dépendance Player
+import app.views.MenuView;
+import app.views.InventoryView;
+import app.views.CardCreationView;
+import app.views.TradeView;
+import app.model.Player; // Ajout pour la dépendance Player
 
 public class MainController {
 

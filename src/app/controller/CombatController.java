@@ -1,12 +1,12 @@
-package java.controller;
+package app.controller;
 
 import javafx.collections.FXCollections;
 import javafx.scene.control.ListView;
 import javafx.stage.Stage;
-import java.model.Card;
-import java.model.Game;
-import java.model.Player;
-import java.views.CombatView;
+import app.model.Card;
+import app.model.Game;
+import app.model.Player;
+import app.views.CombatView;
 import java.util.Arrays;
 import java.util.List;
 

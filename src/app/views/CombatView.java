@@ -1,6 +1,6 @@
-package java.views;
+package app.views;
 
-import java.controller.CombatController;
+import app.controller.CombatController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -16,7 +16,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import java.model.Card;
+import app.model.Card;
 
 public class CombatView {
 

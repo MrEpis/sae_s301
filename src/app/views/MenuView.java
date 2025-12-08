@@ -1,6 +1,6 @@
-package java.views;
+package app.views;
 
-import java.controller.MainController;
+import app.controller.MainController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;

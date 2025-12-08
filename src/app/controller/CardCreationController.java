@@ -1,7 +1,7 @@
-package java.controller;
+package app.controller;
 
-import java.model.Player;
-import java.views.CardCreationView;
+import app.model.Player;
+import app.views.CardCreationView;
 import java.io.File;
 
 public class CardCreationController {

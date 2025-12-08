@@ -1,4 +1,4 @@
-package java.model;
+package app.model;
 
 public class Game {
     private Player player1;

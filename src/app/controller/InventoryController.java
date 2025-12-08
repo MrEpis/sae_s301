@@ -1,7 +1,7 @@
-package java.controller;
+package app.controller;
 
-import java.model.Player;
-import java.views.InventoryView;
+import app.model.Player;
+import app.views.InventoryView;
 
 public class InventoryController {
 
