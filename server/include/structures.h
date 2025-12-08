@@ -7,12 +7,21 @@
 #define DIFFICULTY 4
 
 
+typedef struct Client {
+    int client_id;
+    char username[50];
+} Client;
 
-struct Client;
-
-struct Player;
-
-struct Card;
+typedef struct Card {
+    int card_id;
+    int owner_id;
+    char name[50];
+    int attack;
+    int defense;
+    int max_hp;
+    int current_hp;
+    char file_name[50];
+} Card;
 
 typedef struct Block {
     int ID_block;

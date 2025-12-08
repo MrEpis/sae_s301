@@ -1,5 +1,5 @@
 #include "client_handler.h"
-
+#include "protocol.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,35 +12,43 @@ void *handle_client(void *arg) {
     int client_socket = *(int*)arg;
     free(arg); 
     
-    char buffer[1024] = {0};
+    char buffer[2048]; // Taille suffisante pour un JSON
+    char action_name[50];
     ssize_t bytes_read;
 
 
     //Boucle de lecture simple en mode bloquant
     bytes_read = recv(client_socket, buffer, sizeof(buffer)-1, 0);
-    
-    if (bytes_read > 0) { //Si on a bien reçu le message
+    while (bytes_read > 0) { //Si on a bien reçu le message
         buffer[bytes_read] = '\0';
         printf("Message reçu du client %d: %s\n", client_socket, buffer);
 
-        if (strstr(buffer, "\"LOGIN\"") != NULL) {
-            /* A FAIRE : Extraire l'ID proprement
-            Ici, on simule juste une réponse positive pour l'ID 1. */
-            //On construit la réponse JSON selon le protocole
-            char *response = "{\"type\": \"response\", \"nom\": \"LOGIN\", \"data\": 1, \"status\": \"OK\"}\n";
+        if (extract_json_value(buffer, "nom", action_name, sizeof(action_name))) {
 
-            send(client_socket, response, strlen(response), 0);
-            printf("Réponse envoyée : %s", response);
+            if (strcmp(action_name, ACTION_LOGIN) == 0) {
+                char id_str[10];
+                if (extract_json_value(buffer, "data", id_str, sizeof(id_str))) {
+                    int id = atoi(id_str);
+                    printf("Action LOGIN détectée pour ID %d\n", id);
+
+                    // TODO: process_login(client_socket, id);
+
+                    // Réponse temporaire de test
+                    char response[200];
+                    sprintf(response, "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": %d}\n", id);
+                    send(client_socket, response, strlen(response), 0);
+                }
+            }
+            else if (strcmp(action_name, ACTION_CREATION) == 0) {
+                printf("Action CREATION détectée\n");
+                // TODO: process_creation(client_socket, buffer);
+            }
+            else {
+                send_error_response(client_socket, action_name, "Action inconnue");
+            }
         } else {
-            //Gestion de l'erreur si on a pas un LOGIN
-            char *error_response = "{\"status\": \"ERROR\", \"message\": \"Requete inconnue\"}\n";
-            send (client_socket, error_response, strlen(error_response), 0);
+            send_error_response(client_socket, "UNKNOWN", "Format JSON invalide");
         }
-
-    } else if (bytes_read == 0) { //Si le client s'est déconnecté
-        printf("Client %d déconnecté.\n", client_socket);
-    } else { //En cas d'erreur
-        perror("recv failed");
     }
 
     printf("Fermeture du socket client %d\n", client_socket);
