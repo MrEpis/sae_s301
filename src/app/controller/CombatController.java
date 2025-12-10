@@ -1,70 +1,71 @@
 package app.controller;
 
-import javafx.collections.FXCollections;
-import javafx.scene.control.ListView;
-import javafx.stage.Stage;
 import app.model.Card;
 import app.model.Game;
 import app.model.Player;
 import app.views.CombatView;
-import java.util.Arrays;
-import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.scene.control.ListView;
 
 public class CombatController {
 
-    private final Stage primaryStage;
     private final MainController mainController;
-    private final CombatView combatView;
+    private final Player playerLocal;
+    private Player playerAdversaire;
     private Game currentGame;
+    private CombatView combatView;
 
-    private Player playerLocal = new Player(1, "Joueur LOCAL");
-    private Player playerAdversaire = new Player(2, "Adversaire IA");
-
-    public CombatController(Stage primaryStage, MainController mainController) {
+    public CombatController(MainController mainController, Player player) {
         this.mainController = mainController;
-        this.primaryStage = primaryStage;
+        this.playerLocal = player;
 
-        this.combatView = new CombatView(primaryStage, this);
+        this.playerAdversaire = new Player(999, "Adversaire IA");
+
+        if (this.playerLocal.getInventory().isEmpty()) {
+            this.playerLocal.getInventory().add(new Card("Dragon Bleu", 20, 5, 10));
+            this.playerLocal.getInventory().add(new Card("Guerrier", 15, 3, 8));
+        }
+        if (this.playerAdversaire.getInventory().isEmpty()) {
+            this.playerAdversaire.getInventory().add(new Card("Golem", 30, 8, 7));
+            this.playerAdversaire.getInventory().add(new Card("Voleur", 10, 2, 12));
+        }
     }
 
-    public void showView() {
-        primaryStage.setScene(combatView.createScene());
-        primaryStage.setTitle("Combat - Sélection");
-        primaryStage.show();
+    public void setView(CombatView view) {
+        this.combatView = view;
     }
 
     public ListView<Card> getPlayerInventory() {
-        List<Card> localInventory = Arrays.asList(
-                new Card("Dragon Bleu", 20, 5, 10),
-                new Card("Guerrier", 15, 3, 8)
-        );
         ListView<Card> listView = new ListView<>();
-        listView.setItems(FXCollections.observableArrayList(localInventory));
+        listView.setItems(FXCollections.observableArrayList(playerLocal.getInventory()));
         return listView;
     }
 
     public ListView<Card> getOpponentInventory() {
-        List<Card> opponentInventory = Arrays.asList(
-                new Card("Golem de Fer", 30, 8, 7),
-                new Card("Voleur d'Ombre", 10, 2, 12)
-        );
         ListView<Card> listView = new ListView<>();
-        listView.setItems(FXCollections.observableArrayList(opponentInventory));
+        listView.setItems(FXCollections.observableArrayList(playerAdversaire.getInventory()));
         return listView;
     }
 
+    public void searchOpponent(String name) {
+        System.out.println("Recherche de l'adversaire : " + name);
+        this.playerAdversaire = new Player(202, name);
+        this.playerAdversaire.getInventory().add(new Card("Monstre de " + name, 25, 5, 5));
+
+        // TODO: Mettre à jour la vue avec le nouvel inventaire
+    }
 
     public void setupDuel(Card cardPlayer, Card cardOpponent) {
-        Card card1 = new Card(cardPlayer.getNom(), cardPlayer.getHp(), cardPlayer.getDef(), cardPlayer.getAtk());
-        Card card2 = new Card(cardOpponent.getNom(), cardOpponent.getHp(), cardOpponent.getDef(), cardOpponent.getAtk());
+        Card c1 = new Card(cardPlayer.getNom(), cardPlayer.getHp(), cardPlayer.getDef(), cardPlayer.getAtk());
+        Card c2 = new Card(cardOpponent.getNom(), cardOpponent.getHp(), cardOpponent.getDef(), cardOpponent.getAtk());
 
-        this.currentGame = new Game(playerLocal, playerAdversaire, card1, card2);
+        this.currentGame = new Game(playerLocal, playerAdversaire, c1, c2);
 
-        combatView.showDuelView(card1, card2);
-        primaryStage.setTitle("Combat - Duel en Cours");
     }
 
     public void launchInstantFight() {
+        if (currentGame == null) return;
+
         Card carte1 = currentGame.getCardPlayer1();
         Card carte2 = currentGame.getCardPlayer2();
 
@@ -72,23 +73,18 @@ public class CombatController {
         int score2 = carte2.getHp() + carte2.getAtk() - carte1.getDef();
 
         String resultMessage;
-        Player winner = null;
 
         if (score1 > score2) {
-            resultMessage = playerLocal.getName() + " GAGNE ! (" + carte1.getNom() + ")";
+            resultMessage = playerLocal.getName() + " GAGNE !";
             carte2.setHp(0);
-            winner = playerLocal;
         } else if (score2 > score1) {
-            resultMessage = playerAdversaire.getName() + " GAGNE ! (" + carte2.getNom() + ")";
+            resultMessage = playerAdversaire.getName() + " GAGNE !";
             carte1.setHp(0);
-            winner = playerAdversaire;
         } else {
-            resultMessage = "ÉGALITÉ ! Personne ne perd de PV.";
+            resultMessage = "ÉGALITÉ !";
         }
 
-        currentGame.setWinner(winner);
-
-        combatView.updateDuelDisplay(carte1, carte2, resultMessage);
+        // TODO: Appeler une méthode de la vue pour mettre à jour l'affichage si la référence est stockée
     }
 
     public void backToMenu() {

@@ -1,48 +1,62 @@
 package app.controller;
 
 import javafx.stage.Stage;
-import app.views.MenuView;
-import app.views.InventoryView;
-import app.views.CardCreationView;
-import app.views.TradeView;
-import app.model.Player; // Ajout pour la dépendance Player
+import app.views.*;
+import app.model.Player;
 
 public class MainController {
 
     private final Stage primaryStage;
-    private final Player localPlayer = new Player(1, "LocalPlayer");
+    private final Player localPlayer;
+
+    private CombatController combatController;
+    private CardCreationController cardCreationController;
+    private InventoryController inventoryController;
+    private TradeController tradeController;
+
+    private CardCreationView cardCreationView;
+    private MenuView menuView;
 
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
+        this.localPlayer = new Player(101, "Joueur Local");
+
+        this.menuView = new MenuView(primaryStage, this);
+        this.cardCreationView = new CardCreationView(primaryStage);
+
+        this.cardCreationController = new CardCreationController(this, localPlayer, cardCreationView);
+        this.cardCreationView.setController(this.cardCreationController);
+    }
+
+    public void start() {
+        showMenu();
     }
 
     public void showMenu() {
-        new MenuView(primaryStage, this).show();
+        menuView.show();
     }
 
     public void showCombat() {
-        CombatController combatController = new CombatController(primaryStage, this);
-        combatController.showView();
+        this.combatController = new CombatController(this, localPlayer);
+        CombatView combatView = new CombatView(primaryStage, this.combatController);
+        combatView.show();
     }
 
     public void showInventory() {
-        new InventoryView(primaryStage, this).show();
+        this.inventoryController = new InventoryController(this, localPlayer);
+        InventoryView inventoryView = new InventoryView(primaryStage, this.inventoryController);
+        inventoryView.show();
     }
 
     public void showCardCreation() {
-        CardCreationView cardCreationView = new CardCreationView(primaryStage);
-        CardCreationController cardCreationController = new CardCreationController(
-                this,
-                localPlayer,
-                cardCreationView
-        );
-
-        cardCreationView.setController(cardCreationController);
         cardCreationView.show();
     }
 
     public void showTrade() {
-        new TradeView(primaryStage, this).show();
+        TradeView tradeView = new TradeView(primaryStage);
+        this.tradeController = new TradeController(this, localPlayer, tradeView);
+        tradeView.setController(this.tradeController);
+        tradeView.show();
     }
 
     public void quit() {

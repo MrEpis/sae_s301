@@ -1,6 +1,7 @@
 package app.views;
 
 import app.controller.MainController;
+import app.controller.InventoryController;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -18,9 +19,9 @@ import javafx.stage.Stage;
 public class InventoryView {
 
     private final Stage primaryStage;
-    private final MainController controller;
+    private final InventoryController controller; // Doit être lié au contrôleur d'inventaire
 
-    public InventoryView(Stage primaryStage, MainController controller) {
+    public InventoryView(Stage primaryStage, InventoryController controller) {
         this.primaryStage = primaryStage;
         this.controller = controller;
     }
@@ -34,9 +35,9 @@ public class InventoryView {
         topBox.setStyle("-fx-background-color: #1a1a1a;");
 
         Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
-        backButton.setOnAction(e -> controller.showMenu());
+        backButton.setOnAction(e -> controller.backToMenu());
 
-        topBox.getChildren().addAll(createLabel("Player Inventory", 28, "#ffffff", FontWeight.BOLD), backButton);
+        topBox.getChildren().addAll(createLabel("Player Inventory", 28, FontWeight.BOLD, "#ffffff"), backButton);
         root.setTop(topBox);
 
         VBox detailBox = createCardDetailPanel();
@@ -72,7 +73,7 @@ public class InventoryView {
         card.setStyle("-fx-background-color: #333333; -fx-border-color: #aaaaaa; -fx-border-width: 2;");
         card.setUserData(name);
 
-        card.getChildren().addAll(createLabel(name, 12, "#ffffff", FontWeight.BOLD), createLabel("Click for Info", 10, "#999999", FontWeight.NORMAL));
+        card.getChildren().addAll(createLabel(name, 12, FontWeight.BOLD, "#ffffff"), createLabel("Click for Info", 10, FontWeight.NORMAL, "#999999"));
         return card;
     }
 
@@ -82,17 +83,17 @@ public class InventoryView {
         detailBox.setStyle("-fx-background-color: #3a3a3a; -fx-border-color: #555555; -fx-border-width: 0 0 0 1;");
         detailBox.setAlignment(Pos.TOP_CENTER);
 
-        Label selectedCardName = createLabel("No Card Selected", 18, "#ffffff", FontWeight.BOLD);
+        Label selectedCardName = createLabel("No Card Selected", 18, FontWeight.BOLD, "#ffffff");
 
         VBox stats = new VBox(5);
         stats.getChildren().addAll(
-                createLabel("HP: N/A", 14, "#cccccc", FontWeight.NORMAL),
-                createLabel("ATK: N/A", 14, "#cccccc", FontWeight.NORMAL),
-                createLabel("DEF: N/A", 14, "#cccccc", FontWeight.NORMAL)
+                createLabel("HP: N/A", 14, FontWeight.NORMAL, "#cccccc"),
+                createLabel("ATK: N/A", 14, FontWeight.NORMAL, "#cccccc"),
+                createLabel("DEF: N/A", 14, FontWeight.NORMAL, "#cccccc")
         );
         stats.setUserData(new Label[]{(Label)stats.getChildren().get(0), (Label)stats.getChildren().get(1), (Label)stats.getChildren().get(2)});
 
-        detailBox.getChildren().addAll(createLabel("Card Details", 20, "#FFC107", FontWeight.BOLD), selectedCardName, new Separator(), stats);
+        detailBox.getChildren().addAll(createLabel("Card Details", 20, FontWeight.BOLD, "#FFC107"), selectedCardName, new Separator(), stats);
         detailBox.setUserData(new Object[]{selectedCardName, stats});
 
         return detailBox;
@@ -114,7 +115,7 @@ public class InventoryView {
         }
     }
 
-    private Label createLabel(String text, int size, String color, FontWeight weight) {
+    private Label createLabel(String text, int size, FontWeight weight, String color) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", weight, size));
         label.setTextFill(Color.web(color));
@@ -129,8 +130,8 @@ public class InventoryView {
         String styleHover;
 
         if (color.equals("#7834CB")) {
-            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
-            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;";
         } else if (color.equals("#D9C6F0")) {
             styleNormal = "-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
             styleHover = "-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";

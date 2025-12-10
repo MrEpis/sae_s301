@@ -1,23 +1,22 @@
 package app.controller;
 
 import app.model.Player;
-import app.views.InventoryView;
 
 public class InventoryController {
 
     private final MainController mainController;
-    private final Player player;
-    private final InventoryView inventoryView;
+    private final Player playerLocal;
 
-    public InventoryController(MainController mainController, Player player, InventoryView inventoryView) {
+    public InventoryController(MainController mainController, Player player) {
         this.mainController = mainController;
-        this.player = player;
-        this.inventoryView = inventoryView;
+        this.playerLocal = player;
     }
 
     public void backToMenu() {
         mainController.showMenu();
     }
 
-    // TODO: Ajouter des méthodes pour afficher les détails d'une carte sélectionnée,
+    public Player getPlayer() {
+        return playerLocal;
+    }
 }

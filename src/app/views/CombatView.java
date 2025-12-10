@@ -52,16 +52,8 @@ public class CombatView {
 
         showSelectionView();
 
-        Button backButton = createActionButton("Retour au Menu", "#D9C6F0");
-        backButton.setOnMouseEntered(e -> {
-            backButton.setStyle("-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 12pt;");
-            backButton.setCursor(javafx.scene.Cursor.HAND);
-        });
+        Button backButton = createActionButton("Retour au Menu", "#D9C6F0", 250, 45); // Fixer la taille ici
 
-        backButton.setOnMouseExited(e -> {
-            backButton.setStyle("-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 12pt;");
-            backButton.setCursor(javafx.scene.Cursor.DEFAULT);
-        });
         backButton.setOnAction(e -> controller.backToMenu());
 
         VBox bottomBox = new VBox(backButton);
@@ -78,10 +70,8 @@ public class CombatView {
         VBox selectionBox = new VBox(15);
         selectionBox.setAlignment(Pos.CENTER);
 
-        // Zone de sélection d'adversaire
         VBox opponentSelectionArea = createOpponentSelectionArea();
 
-        // Zone d'inventaires
         inventorySelection = new HBox(30);
         inventorySelection.setAlignment(Pos.CENTER);
 
@@ -95,16 +85,7 @@ public class CombatView {
         inventorySelection.getChildren().add(opponentPanel);
 
 
-        Button startSetupButton = createActionButton("Commencer le Duel", "#7834CB");
-        startSetupButton.setOnMouseEntered(e -> {
-            startSetupButton.setStyle("-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 12pt;");
-            startSetupButton.setCursor(javafx.scene.Cursor.HAND);
-        });
-
-        startSetupButton.setOnMouseExited(e -> {
-            startSetupButton.setStyle("-fx-background-color: #7834CB; -fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 12pt;");
-            startSetupButton.setCursor(javafx.scene.Cursor.DEFAULT);
-        });
+        Button startSetupButton = createActionButton("Commencer le Duel", "#7834CB", 250, 45); // Fixer la taille ici
 
         startSetupButton.setOnAction(e -> {
             if (selectedPlayerCard != null && selectedOpponentCard != null) {
@@ -129,25 +110,12 @@ public class CombatView {
 
         opponentNameField = new TextField();
         opponentNameField.setPromptText("Entrez le nom de l'adversaire");
-        final String STYLE_NORMAL = "-fx-background-color: #A97DDE; -fx-text-fill: black; -fx-font-weight: bold;";
-        final String STYLE_HOVER = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-weight: bold;";
-        Button searchButton = createActionButton("Rechercher Adversaire", "#C5CC8F");
-        searchButton.setStyle(STYLE_NORMAL);
-        searchButton.setPrefSize(200, 30);
 
-        searchButton.setOnMouseEntered(e -> {
-            searchButton.setStyle(STYLE_HOVER);
-            searchButton.setCursor(javafx.scene.Cursor.HAND);
-        });
-
-        searchButton.setOnMouseExited(e -> {
-            searchButton.setStyle(STYLE_NORMAL);
-            searchButton.setCursor(javafx.scene.Cursor.DEFAULT);
-        });
+        Button searchButton = createActionButton("Rechercher Adversaire", "#C5CC8F", 200, 30);
 
         searchButton.setOnAction(e -> {
             String name = opponentNameField.getText();
-            // java.controller.searchOpponent(name);
+            // controller.searchOpponent(name);
         });
 
         inputRow.getChildren().addAll(opponentNameField, searchButton);
@@ -164,7 +132,7 @@ public class CombatView {
 
         if (oldOpponentPanel != null) {
             VBox newOpponentPanel = createInventoryPanel("Inventaire de " + opponentName, "#F44336", opponentInventory, false);
-            newOpponentPanel.setId("opponentPanel"); // Assurer que l'ID est conservé
+            newOpponentPanel.setId("opponentPanel");
 
             int index = inventorySelection.getChildren().indexOf(oldOpponentPanel);
             if (index != -1) {
@@ -211,7 +179,7 @@ public class CombatView {
 
         cardArea.getChildren().addAll(playerCardDisplay, vsLabel, opponentCardDisplay);
 
-        Button startCombatButton = createActionButton("Lancer le Combat INSTANTANÉ", "#4CAF50");
+        Button startCombatButton = createActionButton("Lancer le Combat INSTANTANÉ", "#4CAF50", 250, 45);
         startCombatButton.setOnAction(e -> controller.launchInstantFight());
 
         duelBox.getChildren().addAll(statusLabel, cardArea, startCombatButton);
@@ -289,15 +257,39 @@ public class CombatView {
         return label;
     }
 
-    private Button createActionButton(String text, String color) {
+    private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
-        btn.setPrefSize(250, 45);
-        btn.setStyle(
-                "-fx-background-color: " + color + "; " +
-                        "-fx-text-fill: black; " +
-                        "-fx-font-size: 16px; " +
-                        "-fx-font-weight: bold;"
-        );
+        btn.setPrefSize(width, height);
+
+        String styleNormal;
+        String styleHover;
+
+        if (color.equals("#7834CB")) {
+            styleNormal = "-fx-background-color: #7834CB; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #9059D4; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;";
+        } else if (color.equals("#D9C6F0")) {
+            styleNormal = "-fx-background-color: #D9C6F0; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #F1EBFA; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+        } else if (color.equals("#C5CC8F")) {
+            styleNormal = "-fx-background-color: #C5CC8F; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+            styleHover = "-fx-background-color: #A97DDE; -fx-text-fill: black; -fx-font-size: 14px; -fx-font-weight: bold;";
+        } else {
+            styleNormal = "-fx-background-color: " + color + "; -fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;";
+            styleHover = styleNormal;
+        }
+
+        btn.setStyle(styleNormal);
+
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(styleHover);
+            btn.setCursor(javafx.scene.Cursor.HAND);
+        });
+
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(styleNormal);
+            btn.setCursor(javafx.scene.Cursor.DEFAULT);
+        });
+
         return btn;
     }
 }

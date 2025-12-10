@@ -7,7 +7,7 @@ import java.io.File;
 public class CardCreationController {
 
     private final MainController mainController;
-    private final Player player; // TODO: Fournir le joueur réel
+    private final Player player;
     private final CardCreationView creationView;
     private String selectedImagePath;
 
@@ -27,7 +27,18 @@ public class CardCreationController {
 
         if (selectedFile != null) {
             this.selectedImagePath = selectedFile.toURI().toString();
-            creationView.displayImagePreview(this.selectedImagePath);
+
+            String fileName = selectedFile.getName();
+
+            String cardName;
+            int lastDot = fileName.lastIndexOf('.');
+            if (lastDot > 0) {
+                cardName = fileName.substring(0, lastDot);
+            } else {
+                cardName = fileName;
+            }
+
+            creationView.displayImagePreview(this.selectedImagePath, cardName);
         }
     }
 
@@ -41,10 +52,6 @@ public class CardCreationController {
             System.err.println("Erreur: Total de points supérieur au maximum autorisé.");
             return;
         }
-
-        // TODO: Mettre à jour java.model.Card pour accepter le chemin de l'image (String imagePath)
-        // Card newCard = new Card(name, hp, atk, def, selectedImagePath);
-        // player.addCard(newCard);
 
         System.out.println("Carte '" + name + "' créée et ajoutée à l'inventaire avec image.");
 
