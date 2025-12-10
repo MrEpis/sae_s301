@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/SAE_cartes.iml" filepath="$PROJECT_DIR$/.idea/SAE_cartes.iml" />
+      <module fileurl="file://$PROJECT_DIR$/s301_groupeb.iml" filepath="$PROJECT_DIR$/s301_groupeb.iml" />
     </modules>
   </component>
 </project>
