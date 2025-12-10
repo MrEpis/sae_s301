@@ -10,7 +10,7 @@ public class MainView extends Application {
     public void start(Stage primaryStage) {
         // Crée le MainController et lance l'application
         MainController mainController = new MainController(primaryStage);
-        mainController.showMenu();
+        mainController.start();
     }
 
     public static void main(String[] args) {

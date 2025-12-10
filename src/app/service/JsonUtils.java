@@ -10,19 +10,22 @@ public class JsonUtils {
         );
     }
 
-    public static String buildCardCreationData(String nom, int pv, int atk) {
+    public static String buildCardCreationData(String nom, int pv, int atk, int def) {
         return String.format(
-                "{\"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d}",
-                nom, pv, atk
+                "{\"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d, \"defence\":%d}",
+                nom, pv, atk, def
         );
     }
 
-    // NOUVEAU : Formatage pour le LOGIN
     public static String buildLoginData(int idClient, String username) {
-        return String.format(
-                "{\"id_client\": %d, \"username\": \"%s\"}",
-                idClient,
-                username
-        );
+        if (username == null) {
+            return String.format("" + idClient);
+        } else {
+            return String.format(
+                    "{\"id_client\": %d, \"username\": \"%s\"}",
+                    idClient,
+                    username
+            );
+        }
     }
 }

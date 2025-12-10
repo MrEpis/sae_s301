@@ -42,7 +42,7 @@ public class LoginView {
         usernameField.setMaxWidth(300);
         usernameField.setPromptText("Pseudo...");
 
-        Button validateButton = new Button("Commencer l'aventure");
+        Button validateButton = new Button("ça part !!!");
         validateButton.setStyle("-fx-background-color: #7834CB; -fx-text-fill: white; -fx-font-weight: bold;");
         validateButton.setOnAction(e -> {
             if (controller != null) {

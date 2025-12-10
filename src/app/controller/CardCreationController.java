@@ -35,7 +35,6 @@ public class CardCreationController {
     }
 
     public void saveCard(String name, int hp, int atk, int def) {
-        // 1. Validations locales
         if (selectedImagePath == null) {
             System.err.println("Erreur: Image manquante.");
             return;
@@ -45,16 +44,14 @@ public class CardCreationController {
             return;
         }
 
-        String jsonData = JsonUtils.buildCardCreationData(name, hp, atk);
+        String jsonData = JsonUtils.buildCardCreationData(name, hp, atk, def);
         String jsonRequest = JsonUtils.buildRequest("RequestCardCreation", jsonData);
 
-        // 3. Envoi au serveur via le MainController
         NetworkService network = mainController.getNetworkService();
 
         if (network != null) {
             System.out.println("Envoi de la requête : " + jsonRequest);
 
-            // Envoi et attente de la réponse (Bloquant pour l'instant)
             String response = network.sendRequest(jsonRequest);
 
             System.out.println("Réponse du serveur : " + response);
@@ -62,7 +59,6 @@ public class CardCreationController {
             // TODO (Étape C): Analyser la réponse ("status": "OK") avant de fermer
             if (response != null && response.contains("OK")) {
                 System.out.println("Succès ! Carte créée.");
-                // On pourrait créer l'objet Card localement ici aussi
                 this.selectedImagePath = null;
                 backToMenu();
             } else {

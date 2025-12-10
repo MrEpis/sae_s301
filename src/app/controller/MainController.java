@@ -50,7 +50,7 @@ public class MainController {
             System.out.println("ID trouvé : " + storedId + ". Reconnexion...");
             localPlayer.setId(storedId);
 
-            String jsonData = JsonUtils.buildLoginData(storedId, "UserReconnecting");
+            String jsonData = JsonUtils.buildLoginData(storedId, null);
             String request = JsonUtils.buildRequest("LOGIN", jsonData);
 
             if (networkService != null) {

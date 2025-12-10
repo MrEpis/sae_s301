@@ -5,6 +5,9 @@ import app.service.JsonUtils;
 import app.service.SessionService;
 import app.views.LoginView;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class LoginController {
 
     private final MainController mainController;
@@ -20,25 +23,23 @@ public class LoginController {
 
         NetworkService net = mainController.getNetworkService();
         if (net != null) {
-            // 1. Construire la requête (ID = 0 pour nouveau)
             String jsonData = JsonUtils.buildLoginData(0, username);
             String request = JsonUtils.buildRequest("LOGIN", jsonData);
 
-            // 2. Envoyer
             String response = net.sendRequest(request);
 
-            // 3. Traiter la réponse (Simulation basique pour BUT2)
-            // On suppose que le serveur répond un JSON contenant l'ID, ex: ... "data": 42 ...
             if (response != null && response.contains("OK")) {
                 System.out.println("Connexion réussie !");
 
-                // TODO: Parser proprement le JSON pour récupérer le vrai ID envoyé par le serveur
-                // Pour l'instant, on simule que le serveur nous a donné l'ID 101
-                int newId = 101;
+                Pattern pattern = Pattern.compile("\"id_client\":\\s*(\\d+)");
+                Matcher matcher = pattern.matcher(response);
+                int newId = 0;
+                if (matcher.find()) {
+                    newId = Integer.parseInt(matcher.group(1));
+                }
 
-                // 4. Sauvegarder et passer au menu
                 SessionService.saveClientId(newId);
-                mainController.getLocalPlayer().setId(newId); // Mettre à jour le joueur en mémoire
+                mainController.getLocalPlayer().setId(newId);
                 mainController.getLocalPlayer().setName(username);
 
                 mainController.showMenu();

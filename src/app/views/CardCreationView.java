@@ -17,7 +17,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.converter.IntegerStringConverter;
 import java.io.File;
+import java.util.function.UnaryOperator;
 
 public class CardCreationView {
 
@@ -49,7 +51,6 @@ public class CardCreationView {
         try {
             Image image = new Image(imagePath);
             cardImageView.setImage(image);
-
             cardImageView.setFitWidth(150);
             cardImageView.setFitHeight(150);
             cardImageView.setPreserveRatio(true);
@@ -114,9 +115,13 @@ public class CardCreationView {
         statGrid.setHgap(10);
         statGrid.setVgap(10);
 
-        hpSpinner = createStatSpinner(0, MAX_POINTS, 10);
-        attackSpinner = createStatSpinner(0, MAX_POINTS, 10);
-        defenseSpinner = createStatSpinner(0, MAX_POINTS, 10);
+        hpSpinner = new Spinner<>(0, MAX_POINTS, 10);
+        attackSpinner = new Spinner<>(0, MAX_POINTS, 10);
+        defenseSpinner = new Spinner<>(0, MAX_POINTS, 10);
+
+        configureSpinnerBehavior(hpSpinner);
+        configureSpinnerBehavior(attackSpinner);
+        configureSpinnerBehavior(defenseSpinner);
 
         cardNameField = new TextField("Nom de la Carte");
 
@@ -125,7 +130,12 @@ public class CardCreationView {
         statGrid.addRow(2, createLabel("Attack (ATK):", 14, "#cccccc"), attackSpinner);
         statGrid.addRow(3, createLabel("Defense (DEF):", 14, "#cccccc"), defenseSpinner);
 
-        setupSpinnerListeners(hpSpinner, attackSpinner, defenseSpinner);
+        updateSpinnerLimits();
+
+        // CORRECTION : On attache un listener spécifique qui vérifie le total
+        addSafeListener(hpSpinner);
+        addSafeListener(attackSpinner);
+        addSafeListener(defenseSpinner);
 
         cardNameField.textProperty().addListener((obs, oldV, newV) -> {
             previewNameField.setText(newV);
@@ -133,6 +143,71 @@ public class CardCreationView {
 
         form.getChildren().addAll(createLabel("Card Properties", 16, "#ffffff"), pointsLeftLabel, statGrid);
         return form;
+    }
+
+    private void configureSpinnerBehavior(Spinner<Integer> spinner) {
+        spinner.setEditable(true);
+
+        UnaryOperator<TextFormatter.Change> filter = change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("\\d*")) {
+                // CORRECTION : On empêche d'écrire un nombre > MAX_POINTS directement
+                if (newText.isEmpty()) return change;
+                try {
+                    int val = Integer.parseInt(newText);
+                    if (val <= MAX_POINTS) return change;
+                } catch (NumberFormatException e) { }
+            }
+            return null;
+        };
+
+        TextFormatter<Integer> textFormatter = new TextFormatter<>(new IntegerStringConverter(), spinner.getValue(), filter);
+        spinner.getEditor().setTextFormatter(textFormatter);
+
+        spinner.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
+            if (!isNowFocused) {
+                try {
+                    spinner.increment(0);
+                } catch (Exception e) {
+                    spinner.getEditor().setText(String.valueOf(spinner.getValue()));
+                }
+            }
+        });
+    }
+
+    // CORRECTION : Listener qui empêche le total de dépasser 100
+    private void addSafeListener(Spinner<Integer> spinner) {
+        spinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) return;
+
+            int total = hpSpinner.getValue() + attackSpinner.getValue() + defenseSpinner.getValue();
+
+            // Si le total dépasse, on annule le changement (on remet oldVal)
+            if (total > MAX_POINTS) {
+                spinner.getValueFactory().setValue(oldVal);
+            } else {
+                updateSpinnerLimits(); // Sinon on met à jour l'affichage
+            }
+        });
+    }
+
+    private void updateSpinnerLimits() {
+        int currentHp = hpSpinner.getValue();
+        int currentAtk = attackSpinner.getValue();
+        int currentDef = defenseSpinner.getValue();
+
+        int maxForHp = MAX_POINTS - (currentAtk + currentDef);
+        int maxForAtk = MAX_POINTS - (currentHp + currentDef);
+        int maxForDef = MAX_POINTS - (currentHp + currentAtk);
+
+        ((SpinnerValueFactory.IntegerSpinnerValueFactory) hpSpinner.getValueFactory()).setMax(maxForHp);
+        ((SpinnerValueFactory.IntegerSpinnerValueFactory) attackSpinner.getValueFactory()).setMax(maxForAtk);
+        ((SpinnerValueFactory.IntegerSpinnerValueFactory) defenseSpinner.getValueFactory()).setMax(maxForDef);
+
+        int pointsLeft = MAX_POINTS - (currentHp + currentAtk + currentDef);
+        pointsLeftLabel.setText("Points Remaining: " + pointsLeft);
+
+        updateCardPreview();
     }
 
     private VBox createCardPreviewArea() {
@@ -188,9 +263,12 @@ public class CardCreationView {
         statsBox.setAlignment(Pos.CENTER_LEFT);
         statsBox.setPadding(new Insets(0, 0, 0, 5));
 
-        previewHpLabel = createLabel("HP: 10", 24, "#4CAF50", FontWeight.BOLD);
-        previewAtkLabel = createLabel("ATK: 10", 24, "#F44336", FontWeight.BOLD);
-        previewDefLabel = createLabel("DEF: 10", 24, "#2196F3", FontWeight.BOLD);
+        previewHpLabel = createLabel("HP: 10", 24, "#4CAF50");
+        previewHpLabel.setFont(Font.font("Serif", FontWeight.BOLD, 24));
+        previewAtkLabel = createLabel("ATK: 10", 24, "#F44336");
+        previewAtkLabel.setFont(Font.font("Serif", FontWeight.BOLD, 24));
+        previewDefLabel = createLabel("DEF: 10", 24, "#2196F3");
+        previewDefLabel.setFont(Font.font("Serif", FontWeight.BOLD, 24));
 
         statsBox.getChildren().addAll(previewHpLabel, previewAtkLabel, previewDefLabel);
 
@@ -205,33 +283,6 @@ public class CardCreationView {
             previewAtkLabel.setText("ATK: " + attackSpinner.getValue());
             previewDefLabel.setText("DEF: " + defenseSpinner.getValue());
         }
-    }
-
-
-    private Spinner<Integer> createStatSpinner(int min, int max, int initial) {
-        Spinner<Integer> spinner = new Spinner<>(min, max, initial);
-        spinner.setEditable(true);
-        spinner.setPrefWidth(100);
-        return spinner;
-    }
-
-    private void setupSpinnerListeners(Spinner<Integer> hp, Spinner<Integer> atk, Spinner<Integer> def) {
-        ChangeListener<Integer> listener = (obs, oldValue, newValue) -> {
-            int currentTotal = hp.getValue() + atk.getValue() + def.getValue();
-            int pointsLeft = MAX_POINTS - currentTotal;
-
-            if (currentTotal > MAX_POINTS) {
-                ((Spinner<Integer>) obs).getValueFactory().setValue(oldValue);
-                pointsLeft = MAX_POINTS - (hp.getValue() + atk.getValue() + def.getValue());
-            }
-
-            pointsLeftLabel.setText("Points Remaining: " + pointsLeft);
-            updateCardPreview();
-        };
-
-        hp.valueProperty().addListener(listener);
-        atk.valueProperty().addListener(listener);
-        def.valueProperty().addListener(listener);
     }
 
     public File openFileChooser() {
@@ -252,10 +303,9 @@ public class CardCreationView {
     }
 
     private Label createLabel(String text, int size, String color) {
-        return createLabel(text, size, color, FontWeight.NORMAL);
-    }
+        FontWeight weight = (size >= 20) ? FontWeight.EXTRA_BOLD : FontWeight.NORMAL;
+        if (size == 24) weight = FontWeight.BOLD;
 
-    private Label createLabel(String text, int size, String color, FontWeight weight) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", weight, size));
         label.setTextFill(Color.web(color));
@@ -297,7 +347,6 @@ public class CardCreationView {
 
         return btn;
     }
-
 
     public void show() {
         primaryStage.setScene(createScene());
