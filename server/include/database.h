@@ -22,4 +22,6 @@ int db_player_exists(PGconn *conn, int id);
 
 int db_get_player_id_by_name(PGconn *conn, const char *username);
 
+void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_len);
+
 #endif

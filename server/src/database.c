@@ -222,3 +222,52 @@ int db_get_player_id_by_name(PGconn *conn, const char *username) {
     PQclear(res);
     return id;
 }
+
+void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_len) {
+    char id_str[12];
+    sprintf(id_str, "%d", owner_id);
+
+    // On récupère toutes les infos nécessaires pour l'affichage client
+    const char *query = "SELECT id, nom, attaque, defense, max_hp, hp_actuel, image_name FROM cartes WHERE owner_id = $1";
+    const char *params[1] = { id_str };
+
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        snprintf(buffer, max_len, "[]"); // Erreur ou vide
+        PQclear(res);
+        return;
+    }
+
+    int rows = PQntuples(res);
+    
+    // Début du tableau JSON
+    strcpy(buffer, "[");
+    
+    char temp[256];
+    for (int i = 0; i < rows; i++) {
+        // Construction de l'objet carte
+        // Attention à bien échapper les guillemets pour le JSON
+        snprintf(temp, sizeof(temp), 
+                 "{\"id\": %s, \"nom\": \"%s\", \"attaque\": %s, \"defense\": %s, \"pv\": %s, \"image\": \"%s\"}",
+                 PQgetvalue(res, i, 0), // id
+                 PQgetvalue(res, i, 1), // nom
+                 PQgetvalue(res, i, 2), // attaque
+                 PQgetvalue(res, i, 3), // defense (si utilisé)
+                 PQgetvalue(res, i, 5), // hp_actuel (on renvoie le HP courant comme PV)
+                 PQgetvalue(res, i, 6)  // image_name
+        );
+
+        // Ajouter au buffer principal
+        strncat(buffer, temp, max_len - strlen(buffer) - 1);
+
+        // Ajouter une virgule si ce n'est pas le dernier élément
+        if (i < rows - 1) {
+            strncat(buffer, ", ", max_len - strlen(buffer) - 1);
+        }
+    }
+
+    // Fin du tableau JSON
+    strncat(buffer, "]", max_len - strlen(buffer) - 1);
+    PQclear(res);
+}

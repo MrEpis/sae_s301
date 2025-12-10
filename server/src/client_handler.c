@@ -116,14 +116,18 @@ void process_login(int client_socket, const char *json_payload) {
         }
     }
 
-    // SENDING SUCCESS RESPONSE
+    // SENDING SUCCESS RESPONSE WITH CARDS
 
     // TODO: Get the player's cards
     // For now, return an empty hand "[]"
-    char response[1024];
+
+    char cards_json[4096];
+    db_get_player_cards_json(conn, final_id, cards_json, sizeof(cards_json));
+
+    char response[5000];
     snprintf(response, sizeof(response), 
-    "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": []}}\n", 
-    final_id, username);
+    "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": %s}}\n", 
+    final_id, username, cards_json);
 
     send(client_socket, response, strlen(response), 0);
 }
