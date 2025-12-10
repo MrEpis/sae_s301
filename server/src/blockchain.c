@@ -90,7 +90,7 @@ Blockchain* create_new_blockchain() {
 
     genesis->ID_block = 0;
     genesis->timestamp = time(NULL);
-    genesis->data_action = strdup("Genesis Block");
+    genesis->data_action = strdup("{\"action\": \"GENESIS\", \"message\": \"Premier bloc de la chaine\"}");
     genesis->nonce = 0;
     genesis->next = NULL;
     memset(genesis->previous_hash, '0', HASH_SIZE-1);

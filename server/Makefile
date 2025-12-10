@@ -25,7 +25,7 @@ OBJDIR = build
 BINDIR = bin
 
 # Fichiers source .c
-SOURCES = $(SRCDIR)/main.c $(SRCDIR)/server.c $(SRCDIR)/client_handler.c $(SRCDIR)/blockchain.c $(SRCDIR)/database.c
+SOURCES = $(SRCDIR)/main.c $(SRCDIR)/server.c $(SRCDIR)/client_handler.c $(SRCDIR)/blockchain.c $(SRCDIR)/database.c $(SRCDIR)/protocol.c
 
 # Générer les noms de fichier .o
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))

@@ -173,3 +173,52 @@ int db_save_block(PGconn *conn, Block *block) {
     printf("Block %d enregistré en BDD avec succès.\n", block->ID_block);
     return 0;
 }
+
+int db_create_player(PGconn *conn, const char *username) {
+    const char *query = "INSERT INTO joueurs (username) VALUES ($1) RETURNING id";
+    const char *params[1] = { username };
+
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        fprintf(stderr, "Erreur de création joueur: %s\n", PQerrorMessage(conn));
+        PQclear(res);
+        return -1;
+    }
+
+    int new_id = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    printf("Nouveau joueur créé : %s (ID: %d)\n", username, new_id);
+    return new_id;
+}
+
+int db_player_exists(PGconn *conn, int id) {
+    char id_str[12];
+    sprintf(id_str, "%d", id);
+
+    const char *query = "SELECT id FROM joueurs WHERE id = $1";
+    const char *params[1] = { id_str };
+
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+    int exists = (PQntuples(res) > 0);
+    PQclear(res);
+    return exists;
+}
+
+int db_get_player_id_by_name(PGconn *conn, const char *username) {
+    const char *query = "SELECT id FROM joueurs WHERE username = $1";
+    const char *params[1] = { username };
+
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+        PQclear(res);
+        return -1; // Introuvable
+    }
+
+    int id = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+    return id;
+}

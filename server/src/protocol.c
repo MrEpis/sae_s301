@@ -2,55 +2,62 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/socket.h>
 
 #include "protocol.h"
 
 
 int extract_json_value(const char *json, const char *key, char *output, int max_len) {
     char search_key[50];
-
-    // Préparation de la clé avec des guillemets pour éviter les faux positifs
     snprintf(search_key, sizeof(search_key), "\"%s\"", key);
 
     char *pos = strstr(json, search_key);
-    if (!pos) return 0; // Clé non trouvée
+    if (!pos) return 0; 
 
-    // Avancer après la clé
     pos += strlen(search_key);
-
-    // Recherche du ':'
     pos = strchr(pos, ':');
     if (!pos) return 0;
-    pos++;
+    pos++; 
 
-    // On ignore les espaces
     while (*pos && isspace(*pos)) pos++;
 
-    // Début de la valeur
     const char *start = pos;
-    const char *end;
+    const char *end = NULL;
 
-    // Si la valeur est entre guillemets (String)
+    
     if (*start == '"') {
-        start++; // Pour passer le premier guillemet
-        end = strchr(start, '"'); // La fin est le guillemet fermant
+        // Cas 1 : C'est une chaîne de caractères
+        start++; 
+        end = strchr(start, '"'); 
+    } else if (*start == '{') {
+        // Cas 2 : C'est un objet JSON (ex: le champ "data")
+        // Il faut compter les accolades pour trouver la fin
+        int brace_count = 1;
+        const char *p = start + 1;
+        while (*p && brace_count > 0) {
+            if (*p == '{') brace_count++;
+            if (*p == '}') brace_count--;
+            p++;
+        }
+        if (brace_count == 0) {
+            end = p; // p pointe juste après le '}' final
+            // On recule de 1 pour ne pas inclure le caractère après le '}'
+            // (mais strncpy prendra la longueur, donc 'end' sert de borne)
+        }
     } else {
-        // Si c'est un nombre ou un booléen (on s'arrête à la virgule ou accolade)
+        // Cas 3 : Nombre ou Booléen
         end = strpbrk(start, ",}");
     }
 
-    if (!end) return 0; // Format invalide
+    if (!end) return 0;
 
-    // Calculer la longueur à copier
     int length = end - start;
     if (length >= max_len) length = max_len - 1;
 
-    // Copier la valeur
     strncpy(output, start, length);
-    output[length] = '\0'; // Terminer la chaine
+    output[length] = '\0';
 
     return 1;
-
 }
 
 void send_error_response(int socket, const char *action, const char *message) {
