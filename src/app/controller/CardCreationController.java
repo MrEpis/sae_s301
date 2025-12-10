@@ -1,6 +1,8 @@
 package app.controller;
 
 import app.model.Player;
+import app.service.JsonUtils;
+import app.service.NetworkService;
 import app.views.CardCreationView;
 import java.io.File;
 
@@ -24,38 +26,50 @@ public class CardCreationController {
 
     public void chooseImageFile() {
         File selectedFile = creationView.openFileChooser();
-
         if (selectedFile != null) {
             this.selectedImagePath = selectedFile.toURI().toString();
-
             String fileName = selectedFile.getName();
-
-            String cardName;
-            int lastDot = fileName.lastIndexOf('.');
-            if (lastDot > 0) {
-                cardName = fileName.substring(0, lastDot);
-            } else {
-                cardName = fileName;
-            }
-
+            String cardName = fileName.lastIndexOf('.') > 0 ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
             creationView.displayImagePreview(this.selectedImagePath, cardName);
         }
     }
 
     public void saveCard(String name, int hp, int atk, int def) {
+        // 1. Validations locales
         if (selectedImagePath == null) {
-            System.err.println("Erreur: Veuillez sélectionner une image pour la carte.");
+            System.err.println("Erreur: Image manquante.");
             return;
         }
-
         if ((hp + atk + def) > CardCreationView.MAX_POINTS) {
-            System.err.println("Erreur: Total de points supérieur au maximum autorisé.");
+            System.err.println("Erreur: Total de points dépassé.");
             return;
         }
 
-        System.out.println("Carte '" + name + "' créée et ajoutée à l'inventaire avec image.");
+        String jsonData = JsonUtils.buildCardCreationData(name, hp, atk);
+        String jsonRequest = JsonUtils.buildRequest("RequestCardCreation", jsonData);
 
-        this.selectedImagePath = null;
-        backToMenu();
+        // 3. Envoi au serveur via le MainController
+        NetworkService network = mainController.getNetworkService();
+
+        if (network != null) {
+            System.out.println("Envoi de la requête : " + jsonRequest);
+
+            // Envoi et attente de la réponse (Bloquant pour l'instant)
+            String response = network.sendRequest(jsonRequest);
+
+            System.out.println("Réponse du serveur : " + response);
+
+            // TODO (Étape C): Analyser la réponse ("status": "OK") avant de fermer
+            if (response != null && response.contains("OK")) {
+                System.out.println("Succès ! Carte créée.");
+                // On pourrait créer l'objet Card localement ici aussi
+                this.selectedImagePath = null;
+                backToMenu();
+            } else {
+                System.err.println("Le serveur a refusé la création.");
+            }
+        } else {
+            System.err.println("Erreur critique : Pas de connexion réseau.");
+        }
     }
 }

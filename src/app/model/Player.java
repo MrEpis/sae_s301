@@ -14,6 +14,14 @@ public class Player {
         this.inventory = new ArrayList<>();
     }
 
+    public void setId(int id){
+        this.Id_Client = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public int getId_Client() {
         return Id_Client;
     }
