@@ -4,6 +4,6 @@
 # Exceptions : Ne pas ignorer les dossiers source et test
 !/src/
 !/test/
+!/server/
 
-# Exception : Garder le fichier .gitignore lui-même
-!/.gitignore
+*/.gitignore

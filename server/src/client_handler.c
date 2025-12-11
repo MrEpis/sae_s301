@@ -1,0 +1,253 @@
+#include "client_handler.h"
+#include "protocol.h"
+#include "database.h"
+#include "server.h"
+#include "blockchain.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <time.h>
+
+void *handle_client(void *arg) {
+    //On récupère le socket du client passé en argument
+    int client_socket = *(int*)arg;
+    free(arg); 
+    
+    char buffer[2048]; // Taille suffisante pour un JSON
+    ssize_t bytes_read;
+
+
+    //Boucle de lecture simple en mode bloquant
+    
+    while ((bytes_read = recv(client_socket, buffer, sizeof(buffer)-1, 0))> 0) { //Si on a bien reçu le message
+        buffer[bytes_read] = '\0';
+        printf("Message reçu du client %d: %s\n", client_socket, buffer);
+
+        char action_name[50];
+        if (extract_json_value(buffer, "nom", action_name, sizeof(action_name))) {
+            if (strcmp(action_name, ACTION_LOGIN) == 0) {
+                process_login(client_socket, buffer);                
+            }
+            else if (strcmp(action_name, ACTION_CREATION) == 0) {
+                printf("Action CREATION détectée\n");
+                process_card_creation(client_socket, buffer);
+            }
+            else {
+                send_error_response(client_socket, action_name, "Action inconnue");
+            }
+        } else {
+            send_error_response(client_socket, "UNKNOWN", "Format JSON invalide");
+        }
+
+        // Buffer clean up for next round
+        memset(buffer, 0, sizeof(buffer));
+    }
+    if (bytes_read == 0) {
+        printf("Client %d déconnecté.\n", client_socket);
+    } else if (bytes_read == -1) {
+        perror("recv failed");
+    }
+    close(client_socket);
+    pthread_exit(NULL);
+}
+
+void process_login(int client_socket, const char *json_payload) {
+    char data_buffer[512];
+    char id_str[20];
+    char username[50];
+    int id_client = -1;
+
+    // 1. Extract "data" object (contains {id_client:..., username:...})
+    if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
+        send_error_response(client_socket, "LOGIN", "Champ 'data' manquant");
+        return;
+    }
+
+    // 2. Extract inner fields
+    // ID (mandatory)
+    if (extract_json_value(data_buffer, "id_client", id_str, sizeof(id_str))) {
+        id_client = atoi(id_str);
+    } else {
+        // If the client only sends "data": 0
+        // Assume data_buffer directly contains the number
+        id_client = atoi(data_buffer);
+    }
+
+    // Username (mandatory for sign up (ID 0))
+    if (!extract_json_value(data_buffer, "username", username, sizeof(username))) {
+        // If no username, set it as an empty string
+        strcpy(username, "");
+    }
+
+    PGconn *conn = get_db_connection();
+    int final_id = -1;
+
+    // FOR A NEW USER (ID 0)
+    if (id_client == 0) {
+        if (strlen(username) < 1) {
+            send_error_response(client_socket, "LOGIN", "Username requis pour inscription");
+            return;
+        }
+
+        int existing_id = db_get_player_id_by_name(conn, username);
+
+        if (existing_id != -1) {
+            // First case : this player already exists -> is signed in
+            final_id = existing_id;
+            printf("Joueur existant '%s' avec ID %d (Login via ID 0)\n", username, final_id);
+        } else {
+            // Other case : this player doesn't exist yet -> is created
+            final_id = db_create_player(conn, username);
+            if (final_id == -1) {
+                send_error_response(client_socket, "LOGIN", "Erreur création joueur");
+                return;
+            }
+            printf("Nouveau joueur '%s' créé avec ID %d\n", username, final_id);
+        }
+    }
+    // FOR AN EXISTING USER (ID > 0)
+    else {
+        if (db_player_exists(conn, id_client)) {
+            final_id = id_client;
+            printf("Joueur ID %d reconnu.\n", final_id);
+        } else {
+            send_error_response(client_socket, "LOGIN", "Compte introuvable");
+            return;
+        }
+    }
+
+    // SENDING SUCCESS RESPONSE WITH CARDS
+
+    // TODO: Get the player's cards
+    // For now, return an empty hand "[]"
+
+    char cards_json[4096];
+    db_get_player_cards_json(conn, final_id, cards_json, sizeof(cards_json));
+
+    char response[5000];
+    snprintf(response, sizeof(response), 
+    "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": %s}}\n", 
+    final_id, username, cards_json);
+
+    send(client_socket, response, strlen(response), 0);
+}
+
+void process_card_creation(int client_socket, const char *json_payload) {
+    char data_buffer[1024];
+    char temp_str[100];
+    
+    // Variables pour stocker les données extraites
+    int id_client = -1;
+    char nomCarte[50] = {0};
+    int attaque = 0;
+    int pv = 0;
+    char image[50] = {0};
+
+    // 1. Extraction des données du JSON
+    if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
+        send_error_response(client_socket, "RequestCardCreation", "Donnees manquantes");
+        return;
+    }
+
+    // ID Client (qui demande la création)
+    if (extract_json_value(data_buffer, "id_client", temp_str, sizeof(temp_str))) {
+        id_client = atoi(temp_str);
+    }
+    
+    // Nom de la carte
+    extract_json_value(data_buffer, "nomCarte", nomCarte, sizeof(nomCarte));
+    
+    // Stats (Attaque, PV)
+    if (extract_json_value(data_buffer, "attaque", temp_str, sizeof(temp_str))) attaque = atoi(temp_str);
+    if (extract_json_value(data_buffer, "pv", temp_str, sizeof(temp_str))) pv = atoi(temp_str);
+    
+    // Image
+    if (!extract_json_value(data_buffer, "image", image, sizeof(image))) {
+        strcpy(image, "default.png"); // Image par défaut si non fournie
+    }
+
+    // Validation basique
+    if (id_client < 1 || strlen(nomCarte) == 0) {
+        send_error_response(client_socket, "RequestCardCreation", "Parametres invalides");
+        return;
+    }
+
+    PGconn *conn = get_db_connection();
+
+    // TODO: Vérifier MaxCardPerClient ici (Compter les cartes du joueur en BDD)
+    // int nb_cartes = db_count_player_cards(conn, id_client);
+    // if (nb_cartes >= MAX_CARDS) { ... send_error ... return; }
+
+    // 2. Insertion dans la table CARTES (Cache BDD)
+    // On met la défense à 0 par défaut pour l'instant
+    int new_card_id = db_create_card(conn, id_client, nomCarte, attaque, 0, pv, image);
+    
+    if (new_card_id == -1) {
+        send_error_response(client_socket, "CardCreated", "Erreur base de donnees");
+        return;
+    }
+
+    printf("Carte crée en BDD (ID: %d) pour le client %d\n", new_card_id, id_client);
+
+    // 3. Création et Minage du BLOC (Blockchain)
+    
+    // Allocation du bloc
+    Block *new_block = malloc(sizeof(Block));
+    if (!new_block) {
+        perror("malloc block");
+        return;
+    }
+
+    // Récupération du dernier hash (Pour lier la chaîne)
+    // NOTE: Il faudrait idéalement une fonction db_get_last_block() ou garder la blockchain en mémoire globale.
+    // Pour simplifier ici, on suppose que vous avez accès à la blockchain en mémoire ou qu'on le charge.
+    // ASTUCE TEMPORAIRE : On récupère le dernier bloc depuis la BDD pour avoir son hash
+    // (Dans une version optimisée, on utiliserait une variable globale `server_blockchain->tail`)
+    Blockchain *temp_chain = db_load_blockchain(conn); 
+    if (temp_chain && temp_chain->tail) {
+        new_block->ID_block = temp_chain->tail->ID_block + 1;
+        strncpy(new_block->previous_hash, temp_chain->tail->hash, HASH_SIZE);
+    } else {
+        // Fallback (ne devrait pas arriver si genesis existe)
+        new_block->ID_block = 1;
+        memset(new_block->previous_hash, '0', HASH_SIZE);
+    }
+    // Nettoyage de la chaîne temporaire (TODO: créer une fonction free_blockchain)
+    // free(temp_chain...); 
+
+    new_block->timestamp = time(NULL);
+    new_block->nonce = 0;
+
+    // Création du JSON pour le bloc (Preuve d'action)
+    char action_json[512];
+    snprintf(action_json, sizeof(action_json), 
+         "{\"action\": \"CreateCard\", \"client_id\": %d, \"card_id\": %d, \"card_name\": \"%s\", \"image_file\": \"%s\"}", 
+         id_client, new_card_id, nomCarte, image);
+    
+    new_block->data_action = strdup(action_json);
+
+    // Minage (Proof of Work)
+    mine_block(new_block);
+
+    // 4. Sauvegarde du bloc miné en BDD
+    if (db_save_block(conn, new_block) != 0) {
+        fprintf(stderr, "Erreur fatale: Impossible de sauvegarder le bloc !\n");
+        // En prod, il faudrait rollback la création de carte ici
+    }
+
+    // 5. Réponse au client
+    char response[512];
+    snprintf(response, sizeof(response), 
+             "{\"type\": \"response\", \"nom\": \"CardCreated\", \"status\": \"OK\", \"data\": {\"id\": %d}}\n", 
+             new_card_id);
+    
+    send(client_socket, response, strlen(response), 0);
+    
+    // Nettoyage mémoire bloc
+    free(new_block->data_action);
+    free(new_block);
+}
