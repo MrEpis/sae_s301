@@ -131,3 +131,7 @@ void process_login(int client_socket, const char *json_payload) {
 
     send(client_socket, response, strlen(response), 0);
 }
+
+void process_card_creation(int client_socket, const char *json_payload) {
+    
+}

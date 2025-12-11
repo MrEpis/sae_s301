@@ -228,7 +228,7 @@ void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_
     sprintf(id_str, "%d", owner_id);
 
     // On récupère toutes les infos nécessaires pour l'affichage client
-    const char *query = "SELECT id, nom, attaque, defense, max_hp, hp_actuel, image_name FROM cartes WHERE owner_id = $1";
+    const char *query = "SELECT id, nom, attaque, defense, max_hp, hp_actuel, nom_image FROM cartes WHERE owner_id = $1";
     const char *params[1] = { id_str };
 
     PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
