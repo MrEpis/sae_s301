@@ -26,10 +26,8 @@ public class CardCreationController {
 
     public void chooseImageFile() {
         File selectedFile = creationView.openFileChooser();
-
         if (selectedFile != null) {
             this.rawSelectedFile = selectedFile;
-
             String displayURI = selectedFile.toURI().toString();
 
             String fileName = selectedFile.getName();
@@ -40,7 +38,6 @@ public class CardCreationController {
     }
 
     public void saveCard(String name, int hp, int atk, int def) {
-        // 1. Validations
         if (rawSelectedFile == null) {
             System.err.println("Erreur: Image manquante.");
             return;
@@ -63,8 +60,8 @@ public class CardCreationController {
             System.out.println("Réponse : " + response);
 
             if (response != null && response.contains("OK")) {
-                System.out.println("Carte créée avec succès !");
-                this.rawSelectedFile = null; // Reset
+                System.out.println("Succès ! Carte créée.");
+                this.rawSelectedFile = null;
                 backToMenu();
             } else {
                 System.err.println("Échec création carte.");

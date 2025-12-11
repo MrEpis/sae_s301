@@ -132,7 +132,6 @@ public class CardCreationView {
 
         updateSpinnerLimits();
 
-        // CORRECTION : On attache un listener spécifique qui vérifie le total
         addSafeListener(hpSpinner);
         addSafeListener(attackSpinner);
         addSafeListener(defenseSpinner);
@@ -151,7 +150,6 @@ public class CardCreationView {
         UnaryOperator<TextFormatter.Change> filter = change -> {
             String newText = change.getControlNewText();
             if (newText.matches("\\d*")) {
-                // CORRECTION : On empêche d'écrire un nombre > MAX_POINTS directement
                 if (newText.isEmpty()) return change;
                 try {
                     int val = Integer.parseInt(newText);
@@ -175,7 +173,6 @@ public class CardCreationView {
         });
     }
 
-    // CORRECTION : Listener qui empêche le total de dépasser 100
     private void addSafeListener(Spinner<Integer> spinner) {
         spinner.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) return;
@@ -221,7 +218,7 @@ public class CardCreationView {
 
         VBox cardTemplate = createCardTemplate();
 
-        Button selectImageButton = createActionButton("Select Image File", "#C5CC8F", 180, 40);
+        Button selectImageButton = createActionButton("Select Image File", "#D9C6F0", 180, 40);
         selectImageButton.setOnAction(e -> controller.chooseImageFile());
 
         preview.getChildren().addAll(previewNameField, cardTemplate, selectImageButton);
@@ -235,7 +232,7 @@ public class CardCreationView {
         cardSlot.setAlignment(Pos.TOP_CENTER);
 
         cardSlot.setStyle(
-                "-fx-background-color: #EBD7D3; " +
+                "-fx-background-color: #383838; " +
                         "-fx-border-color: #D9C6F0; " +
                         "-fx-border-width: 4; " +
                         "-fx-border-radius: 10; " +

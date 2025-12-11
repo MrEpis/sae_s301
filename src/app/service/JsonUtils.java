@@ -12,7 +12,7 @@ public class JsonUtils {
 
     public static String buildCardCreationData(String nom, int pv, int atk, int def, String imagePath) {
         return String.format(
-                "{\"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d, \"defence\":%d, \"image\":\"%s\"}",
+                "{\"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d, \"defense\":%d, \"file_name\":\"%s\"}",
                 nom, pv, atk, def, imagePath
         );
     }
