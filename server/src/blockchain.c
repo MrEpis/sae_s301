@@ -15,7 +15,7 @@ void calculate_hash(const char* input, char* output_hash) {
 }
 
 /* Crée la chaine de données d'un bloc pour le hachage */
-static char* block_to_string_for_hashing(Block* block) {
+char* block_to_string_for_hashing(Block* block) {
     //Estimation simple d'allocation mémoire, à modifier
     int len = snprintf(NULL, 0, "%d%ld%s%s%d",
                         block->ID_block,
@@ -42,7 +42,7 @@ static char* block_to_string_for_hashing(Block* block) {
     return str;
 }
 
-static void mine_block(Block *block) {
+void mine_block(Block *block) {
     char hash_check[DIFFICULTY + 1];
 
     //On crée d'abord une chaine de zéros
@@ -88,9 +88,13 @@ Blockchain* create_new_blockchain() {
         return NULL;
     }
 
+    char temp_json[256];
+    snprintf(temp_json, sizeof(temp_json),
+             "{\"action\": \"GENESIS\", \"info_hash\": \"Initialisation de la chaine\", \"difficulty\": %d}", 
+             DIFFICULTY);
     genesis->ID_block = 0;
     genesis->timestamp = time(NULL);
-    genesis->data_action = strdup("{\"action\": \"GENESIS\", \"message\": \"Premier bloc de la chaine\"}");
+    genesis->data_action = strdup(temp_json);
     genesis->nonce = 0;
     genesis->next = NULL;
     memset(genesis->previous_hash, '0', HASH_SIZE-1);

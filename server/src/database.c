@@ -271,3 +271,28 @@ void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_
     strncat(buffer, "]", max_len - strlen(buffer) - 1);
     PQclear(res);
 }
+
+int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def, int hp, const char *img) {
+    const char *query = "INSERT INTO cartes (owner_id, nom, attaque, defense, max_hp, hp_actuel, nom_image) "
+                        "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id";
+    
+    char owner_str[12], atk_str[12], def_str[12], hp_str[12];
+    sprintf(owner_str, "%d", owner_id);
+    sprintf(atk_str, "%d", atk);
+    sprintf(def_str, "%d", def);
+    sprintf(hp_str, "%d", hp);
+
+    const char *params[7] = { owner_str, nom, atk_str, def_str, hp_str, hp_str, img };
+
+    PGresult *res = PQexecParams(conn, query, 7, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        fprintf(stderr, "Erreur insert carte: %s\n", PQerrorMessage(conn));
+        PQclear(res);
+        return -1;
+    }
+
+    int new_id = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+    return new_id;
+}
