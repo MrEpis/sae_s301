@@ -33,7 +33,6 @@ public class CardCreationView {
     private Spinner<Integer> defenseSpinner;
     private TextField cardNameField;
 
-    // Label pour le nom DANS la carte
     private Label previewNameLabel;
 
 
@@ -43,6 +42,11 @@ public class CardCreationView {
 
     public void setController(CardCreationController controller) {
         this.controller = controller;
+    }
+
+    // NOUVEAU : Méthode pour permettre au contrôleur de lire ce qui est écrit
+    public String getCardNameInput() {
+        return cardNameField.getText();
     }
 
     public void displayImagePreview(String imagePath, String cardName) {
@@ -121,7 +125,9 @@ public class CardCreationView {
         configureSpinnerBehavior(attackSpinner);
         configureSpinnerBehavior(defenseSpinner);
 
-        cardNameField = new TextField("Nom de la Carte");
+        // MODIFICATION ICI : Champ vide + Prompt Text
+        cardNameField = new TextField();
+        cardNameField.setPromptText("Nom de la carte");
 
         statGrid.addRow(0, createLabel("Name:", 14, "#cccccc"), cardNameField);
         statGrid.addRow(1, createLabel("Health (HP):", 14, "#cccccc"), hpSpinner);
@@ -252,7 +258,6 @@ public class CardCreationView {
 
         nameBar.getChildren().addAll(spacer, previewNameLabel);
 
-        // 2. Zone Image
         cardImageView = new ImageView();
         cardImageView.setFitWidth(150);
         cardImageView.setFitHeight(150);
@@ -270,7 +275,6 @@ public class CardCreationView {
         );
         VBox.setMargin(imageContainer, new Insets(0, 0, 5, 0));
 
-        // 3. Zone Stats
         VBox statsBox = new VBox(3);
         statsBox.setAlignment(Pos.CENTER_LEFT);
         statsBox.setPadding(new Insets(0, 0, 0, 5));

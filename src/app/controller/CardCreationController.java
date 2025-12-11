@@ -32,9 +32,18 @@ public class CardCreationController {
             String displayURI = selectedFile.toURI().toString();
 
             String fileName = selectedFile.getName();
-            String cardName = fileName.lastIndexOf('.') > 0 ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+            String defaultCardName = fileName.lastIndexOf('.') > 0 ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
 
-            creationView.displayImagePreview(displayURI, cardName);
+            String currentInput = creationView.getCardNameInput();
+            String finalName;
+
+            if (currentInput == null || currentInput.trim().isEmpty()) {
+                finalName = defaultCardName;
+            } else {
+                finalName = currentInput;
+            }
+
+            creationView.displayImagePreview(displayURI, finalName);
         }
     }
 

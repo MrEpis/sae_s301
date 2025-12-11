@@ -1,11 +1,14 @@
 package app.controller;
 
+import app.model.Card;
 import app.service.JsonUtils;
 import app.service.SessionService;
 import javafx.stage.Stage;
 import app.views.*;
 import app.model.Player;
 import app.service.NetworkService;
+
+import java.util.List;
 
 public class MainController {
 
@@ -54,55 +57,48 @@ public class MainController {
             String request = JsonUtils.buildRequest("LOGIN", jsonData);
 
             if (networkService != null) {
-                networkService.sendRequest(request);
-                showMenu();
+                String response = networkService.sendRequest(request);
+
+                if (response != null && response.contains("OK")) {
+                    List<Card> inventory = JsonUtils.parseInventoryFromLogin(response);
+
+                    localPlayer.getInventory().clear();
+                    localPlayer.getInventory().addAll(inventory);
+
+                    System.out.println("Reconnexion OK. " + inventory.size() + " cartes chargées.");
+                    showMenu();
+                } else {
+                    System.err.println("Echec reconnexion. Retour au login.");
+                    showLogin();
+                }
             }
         }
     }
 
-    public void showMenu() {
-        menuView.show();
-    }
 
+    public void showMenu() { menuView.show(); }
     public void showCombat() {
         this.combatController = new CombatController(this, localPlayer);
         CombatView combatView = new CombatView(primaryStage, this.combatController);
         combatView.show();
     }
-
     public void showInventory() {
         this.inventoryController = new InventoryController(this, localPlayer);
         InventoryView inventoryView = new InventoryView(primaryStage, this.inventoryController);
         inventoryView.show();
     }
-
-    public void showCardCreation() {
-        cardCreationView.show();
-    }
-
+    public void showCardCreation() { cardCreationView.show(); }
     public void showTrade() {
         TradeView tradeView = new TradeView(primaryStage);
         this.tradeController = new TradeController(this, localPlayer, tradeView);
         tradeView.setController(this.tradeController);
         tradeView.show();
     }
-
-    public NetworkService getNetworkService() {
-        return networkService;
-    }
-
-    public Player getLocalPlayer() {
-        return this.localPlayer;
-    }
-
+    public NetworkService getNetworkService() { return networkService; }
+    public Player getLocalPlayer() { return this.localPlayer; }
     public void quit() {
         System.out.println("Déconnexion du client...");
-
-        if (networkService != null) {
-            networkService.closeConnection();
-        }
+        if (networkService != null) networkService.closeConnection();
         primaryStage.close();
     }
-
-
 }

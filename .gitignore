@@ -1,0 +1,9 @@
+# Ignorer tous les fichiers et dossiers
+*
+
+# Exceptions : Ne pas ignorer les dossiers source et test
+!/src/
+!/test/
+
+# Exception : Garder le fichier .gitignore lui-même
+!/.gitignore
