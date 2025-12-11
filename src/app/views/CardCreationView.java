@@ -1,17 +1,13 @@
 package app.views;
 
 import app.controller.CardCreationController;
-import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -36,7 +32,9 @@ public class CardCreationView {
     private Spinner<Integer> attackSpinner;
     private Spinner<Integer> defenseSpinner;
     private TextField cardNameField;
-    private TextField previewNameField;
+
+    // Label pour le nom DANS la carte
+    private Label previewNameLabel;
 
 
     public CardCreationView(Stage primaryStage) {
@@ -56,7 +54,7 @@ public class CardCreationView {
             cardImageView.setPreserveRatio(true);
 
             cardNameField.setText(cardName);
-            previewNameField.setText(cardName);
+            previewNameLabel.setText(cardName);
 
         } catch (Exception e) {
             System.err.println("Erreur lors du chargement de l'image : " + e.getMessage());
@@ -137,7 +135,9 @@ public class CardCreationView {
         addSafeListener(defenseSpinner);
 
         cardNameField.textProperty().addListener((obs, oldV, newV) -> {
-            previewNameField.setText(newV);
+            if (previewNameLabel != null) {
+                previewNameLabel.setText(newV);
+            }
         });
 
         form.getChildren().addAll(createLabel("Card Properties", 16, "#ffffff"), pointsLeftLabel, statGrid);
@@ -179,11 +179,10 @@ public class CardCreationView {
 
             int total = hpSpinner.getValue() + attackSpinner.getValue() + defenseSpinner.getValue();
 
-            // Si le total dépasse, on annule le changement (on remet oldVal)
             if (total > MAX_POINTS) {
                 spinner.getValueFactory().setValue(oldVal);
             } else {
-                updateSpinnerLimits(); // Sinon on met à jour l'affichage
+                updateSpinnerLimits();
             }
         });
     }
@@ -207,28 +206,32 @@ public class CardCreationView {
         updateCardPreview();
     }
 
+    private void updateCardPreview() {
+        if (previewHpLabel != null && hpSpinner != null) {
+            previewHpLabel.setText("HP: " + hpSpinner.getValue());
+            previewAtkLabel.setText("ATK: " + attackSpinner.getValue());
+            previewDefLabel.setText("DEF: " + defenseSpinner.getValue());
+        }
+    }
+
     private VBox createCardPreviewArea() {
         VBox preview = new VBox(10);
         preview.setPrefSize(300, 400);
         preview.setAlignment(Pos.TOP_CENTER);
 
-        previewNameField = new TextField("NOM DE CARTE");
-        previewNameField.setEditable(false);
-        previewNameField.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-weight: bold; -fx-alignment: center;");
-
         VBox cardTemplate = createCardTemplate();
 
-        Button selectImageButton = createActionButton("Select Image File", "#D9C6F0", 180, 40);
+        Button selectImageButton = createActionButton("Select Image File", "#C5CC8F", 180, 40);
         selectImageButton.setOnAction(e -> controller.chooseImageFile());
 
-        preview.getChildren().addAll(previewNameField, cardTemplate, selectImageButton);
+        preview.getChildren().addAll(cardTemplate, selectImageButton);
         return preview;
     }
 
     private VBox createCardTemplate() {
         VBox cardSlot = new VBox(5);
         cardSlot.setPadding(new Insets(5));
-        cardSlot.setPrefSize(200, 300);
+        cardSlot.setPrefSize(170, 300);
         cardSlot.setAlignment(Pos.TOP_CENTER);
 
         cardSlot.setStyle(
@@ -239,6 +242,17 @@ public class CardCreationView {
                         "-fx-background-radius: 10;"
         );
 
+        previewNameLabel = createLabel("NOM DE CARTE", 12, "#ffffff");
+        previewNameLabel.setPadding(new Insets(2, 5, 0, 0));
+
+        HBox nameBar = new HBox();
+        nameBar.setAlignment(Pos.TOP_RIGHT);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        nameBar.getChildren().addAll(spacer, previewNameLabel);
+
+        // 2. Zone Image
         cardImageView = new ImageView();
         cardImageView.setFitWidth(150);
         cardImageView.setFitHeight(150);
@@ -254,32 +268,22 @@ public class CardCreationView {
                         "-fx-border-radius: 10; " +
                         "-fx-background-radius: 10;"
         );
-        VBox.setMargin(imageContainer, new Insets(5, 0, 5, 0));
+        VBox.setMargin(imageContainer, new Insets(0, 0, 5, 0));
 
+        // 3. Zone Stats
         VBox statsBox = new VBox(3);
         statsBox.setAlignment(Pos.CENTER_LEFT);
         statsBox.setPadding(new Insets(0, 0, 0, 5));
 
-        previewHpLabel = createLabel("HP: 10", 24, "#4CAF50");
-        previewHpLabel.setFont(Font.font("Serif", FontWeight.BOLD, 24));
-        previewAtkLabel = createLabel("ATK: 10", 24, "#F44336");
-        previewAtkLabel.setFont(Font.font("Serif", FontWeight.BOLD, 24));
-        previewDefLabel = createLabel("DEF: 10", 24, "#2196F3");
-        previewDefLabel.setFont(Font.font("Serif", FontWeight.BOLD, 24));
+        previewHpLabel = createLabel("HP: 10", 18, "#4CAF50", FontWeight.BOLD);
+        previewAtkLabel = createLabel("ATK: 10", 18, "#F44336", FontWeight.BOLD);
+        previewDefLabel = createLabel("DEF: 10", 18, "#2196F3", FontWeight.BOLD);
 
         statsBox.getChildren().addAll(previewHpLabel, previewAtkLabel, previewDefLabel);
 
-        cardSlot.getChildren().addAll(imageContainer, statsBox);
+        cardSlot.getChildren().addAll(nameBar, imageContainer, statsBox);
 
         return cardSlot;
-    }
-
-    private void updateCardPreview() {
-        if (previewHpLabel != null && hpSpinner != null) {
-            previewHpLabel.setText("HP: " + hpSpinner.getValue());
-            previewAtkLabel.setText("ATK: " + attackSpinner.getValue());
-            previewDefLabel.setText("DEF: " + defenseSpinner.getValue());
-        }
     }
 
     public File openFileChooser() {
@@ -309,9 +313,10 @@ public class CardCreationView {
     }
 
     private Label createLabel(String text, int size, String color) {
-        FontWeight weight = (size >= 20) ? FontWeight.EXTRA_BOLD : FontWeight.NORMAL;
-        if (size == 24) weight = FontWeight.BOLD;
+        return createLabel(text, size, color, FontWeight.NORMAL);
+    }
 
+    private Label createLabel(String text, int size, String color, FontWeight weight) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", weight, size));
         label.setTextFill(Color.web(color));

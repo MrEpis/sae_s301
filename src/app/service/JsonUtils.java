@@ -10,10 +10,10 @@ public class JsonUtils {
         );
     }
 
-    public static String buildCardCreationData(String nom, int pv, int atk, int def, String imagePath) {
+    public static String buildCardCreationData(int id_client, String nom, int pv, int atk, int def, String imagePath) {
         return String.format(
-                "{\"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d, \"defense\":%d, \"file_name\":\"%s\"}",
-                nom, pv, atk, def, imagePath
+                "{\"id_client\":\"%d\", \"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d, \"defense\":%d, \"image\":\"%s\"}",
+                id_client, nom, pv, atk, def, imagePath
         );
     }
 

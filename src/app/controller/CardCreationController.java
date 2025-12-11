@@ -3,6 +3,7 @@ package app.controller;
 import app.model.Player;
 import app.service.JsonUtils;
 import app.service.NetworkService;
+import app.service.SessionService;
 import app.views.CardCreationView;
 import java.io.File;
 
@@ -48,8 +49,8 @@ public class CardCreationController {
         }
 
         String serverImagePath = "src/ressources/img/" + rawSelectedFile.getName();
-
-        String jsonData = JsonUtils.buildCardCreationData(name, hp, atk, def, serverImagePath);
+        int clientId = SessionService.loadClientId();
+        String jsonData = JsonUtils.buildCardCreationData(clientId, name, hp, atk, def, serverImagePath);
         String jsonRequest = JsonUtils.buildRequest("RequestCardCreation", jsonData);
 
         NetworkService network = mainController.getNetworkService();
