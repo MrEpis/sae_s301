@@ -1,7 +1,6 @@
 package app.controller;
 
 import app.model.Player;
-
 import app.views.TradeView;
 
 public class TradeController {
@@ -10,14 +9,10 @@ public class TradeController {
     private final Player currentPlayer;
     private final TradeView tradeView;
 
-    // TODO: Ajouter NetworkService et CardList lorsque ces classes seront prêtes.
-
     public TradeController(MainController mainController, Player currentPlayer, TradeView tradeView) {
         this.mainController = mainController;
         this.currentPlayer = currentPlayer;
         this.tradeView = tradeView;
-
-        System.out.println("TradeController initialisé pour le joueur : " + currentPlayer.getName());
     }
 
     public void backToMenu() {
@@ -25,21 +20,18 @@ public class TradeController {
     }
 
     public void searchOpponent(String opponentName) {
-        // String response = networkService.sendRequest("SEARCH_PLAYER:" + opponentName);
-
         System.out.println("Recherche simulée de l'adversaire : " + opponentName);
-
-        // TODO: Mettre à jour la TradeView avec l'inventaire de l'adversaire trouvé
-        tradeView.displayStatus("Adversaire " + opponentName + " trouvé. Sélectionnez les cartes.");
+        tradeView.displayStatus("Adversaire " + opponentName + " trouvé.");
     }
 
-
-    public void sendTradeRequest(String opponentName, String offeredCardName, String requestedCardName) {
+    // RETOUR AUX IDs (int)
+    public void sendTradeRequest(String opponentName, int offeredCardId, int requestedCardId) {
 
         System.out.println("Envoi de TradeRequest au serveur...");
 
-        // TODO: Implémenter la logique NetworkService.sendRequest() ici.
+        // JSON : { "type": "request", "nom": "TradeRequest", "data": { "carteA": 1, "carteB": 2, "adversaire": "Bob" } }
+        // TODO: Utiliser JsonUtils et NetworkService ici
 
-        tradeView.displayStatus("Requête d'échange envoyée à " + opponentName + ". En attente de réponse...");
+        tradeView.displayStatus("Requête d'échange (ID " + offeredCardId + " vs ID " + requestedCardId + ") envoyée à " + opponentName);
     }
 }

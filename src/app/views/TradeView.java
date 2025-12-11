@@ -182,7 +182,7 @@ public class TradeView {
             String opponent = opponentNameField.getText().trim();
 
             if (offered != null && requested != null && !opponent.isEmpty() && controller != null) {
-                controller.sendTradeRequest(opponent, offered.getNom(), requested.getNom());
+                // controller.sendTradeRequest(opponent, offered.getNom(), requested.getNom());
             } else {
                 displayStatus("Erreur: Veuillez sélectionner une carte dans chaque liste et rechercher un adversaire.");
             }

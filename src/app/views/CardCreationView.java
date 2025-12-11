@@ -288,6 +288,15 @@ public class CardCreationView {
     public File openFileChooser() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Sélectionner l'image de la carte");
+
+        File initialDir = new File("src/ressources/img");
+
+        if (initialDir.exists() && initialDir.isDirectory()) {
+            fileChooser.setInitialDirectory(initialDir);
+        } else {
+            System.out.println("Attention : Le dossier src/ressources/img n'existe pas.");
+        }
+
         FileChooser.ExtensionFilter extFilter =
                 new FileChooser.ExtensionFilter("Fichiers images (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg");
         fileChooser.getExtensionFilters().add(extFilter);
