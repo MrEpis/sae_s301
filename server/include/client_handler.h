@@ -7,4 +7,6 @@ void process_login(int client_socket, const char *json_payload);
 
 void process_card_creation(int client_socket, const char *json_payload);
 
+void process_get_connected_users(int client_socket);
+
 #endif

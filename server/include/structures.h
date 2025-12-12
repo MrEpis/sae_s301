@@ -6,7 +6,7 @@
 
 #define HASH_SIZE 65
 #define DIFFICULTY 4
-#define MAX_CLIENTS 1
+#define MAX_CLIENTS 20
 
 typedef struct Client {
     int client_id;

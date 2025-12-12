@@ -37,6 +37,9 @@ void *handle_client(void *arg) {
                 printf("Action CREATION détectée\n");
                 process_card_creation(client_socket, buffer);
             }
+            else if (strcmp(action_name, ACTION_GET_USERS) == 0) {
+
+            }
             else {
                 send_error_response(client_socket, action_name, "Action inconnue");
             }
@@ -287,9 +290,49 @@ void process_card_creation(int client_socket, const char *json_payload) {
              new_card_id);
     
     send(client_socket, response, strlen(response), 0);
-    
-    // Nettoyage mémoire bloc
-    //free(new_block->data_action);
-    //free(new_block);
 }
 
+void process_get_connected_users(int client_socket) {
+    char json_array[4096] = "["; // Buffer large pour la liste
+    int first = 1;
+
+    pthread_mutex_lock(&clients_mutex); // Verrouillage pour lecture
+
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        // On ne liste que les sockets valides et les joueurs authentifiés (logged_in)
+        if (clients_list[i].socket != -1 && clients_list[i].logged_in == 1) {
+            
+            // Gestion de la virgule entre les éléments JSON
+            if (!first) {
+                strcat(json_array, ",");
+            }
+            
+            char user_entry[256];
+            // Format JSON : {"id_client": 1, "username": "leo"}
+            // On utilise id_client pour correspondre au champ de votre structure
+            snprintf(user_entry, sizeof(user_entry), 
+                     "{\"id_client\": %d, \"username\": \"%s\"}", 
+                     clients_list[i].client_id, 
+                     clients_list[i].username);
+            
+            // Concaténation sécurisée (vérifier limites en prod, ici simplifié)
+            strcat(json_array, user_entry);
+            first = 0;
+        }
+    }
+
+    pthread_mutex_unlock(&clients_mutex); // Déverrouillage
+
+    strcat(json_array, "]"); // Fermeture du tableau
+
+    // Envoi de la réponse au format standard
+    char response[5000];
+    snprintf(response, sizeof(response), 
+             "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
+             ACTION_GET_USERS, json_array);
+    printf("Réponse : %s\n", response);
+    fflush(stdout);
+
+    send(client_socket, response, strlen(response), 0);
+    printf("Liste des joueurs envoyée au client %d\n", client_socket);
+}
