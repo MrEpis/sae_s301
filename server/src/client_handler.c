@@ -38,7 +38,8 @@ void *handle_client(void *arg) {
                 process_card_creation(client_socket, buffer);
             }
             else if (strcmp(action_name, ACTION_GET_USERS) == 0) {
-
+                printf("Demande de liste des joueurs reçue.\n"); // Debug
+                process_get_connected_users(client_socket);
             }
             else {
                 send_error_response(client_socket, action_name, "Action inconnue");
@@ -62,10 +63,18 @@ void *handle_client(void *arg) {
             break;
         }
     }
-    pthread_mutex_unlock(&clients_mutex);
     } else if (bytes_read == -1) {
         perror("recv failed");
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients_list[i].socket == client_socket) {
+            clients_list[i].socket = -1;
+            clients_list[i].client_id = -1;
+            clients_list[i].logged_in = 0;
+            break;
+        }
     }
+    }
+    pthread_mutex_unlock(&clients_mutex);
     close(client_socket);
     pthread_exit(NULL);
 }
@@ -128,6 +137,11 @@ void process_login(int client_socket, const char *json_payload) {
     else {
         if (db_player_exists(conn, id_client)) {
             final_id = id_client;
+
+            if (db_get_username_by_id(conn, final_id, username) == -1) {
+                 send_error_response(client_socket, "LOGIN", "Erreur récupération nom");
+                 return;
+            }
             printf("Joueur ID %d reconnu.\n", final_id);
         } else {
             send_error_response(client_socket, "LOGIN", "Compte introuvable");
@@ -178,6 +192,9 @@ void process_login(int client_socket, const char *json_payload) {
     snprintf(response, sizeof(response), 
     "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": %s}}\n", 
     final_id, username, cards_json);
+
+    // For debugging
+    printf("Created player: %s\n", username);
 
     send(client_socket, response, strlen(response), 0);
 }

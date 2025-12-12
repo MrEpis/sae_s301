@@ -26,4 +26,6 @@ void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_
 
 int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def, int hp, const char *img);
 
+int db_get_username_by_id(PGconn *conn, int id, char *username_buffer);
+
 #endif

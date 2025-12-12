@@ -223,6 +223,26 @@ int db_get_player_id_by_name(PGconn *conn, const char *username) {
     return id;
 }
 
+int db_get_username_by_id(PGconn *conn, int id, char *username_buffer) {
+    char id_str[12];
+    sprintf(id_str, "%d", id);
+    const char *params[1] = { id_str };
+
+    PGresult *res = PQexecParams(conn, "SELECT username FROM joueurs WHERE id = $1", 
+                                 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+        // ID introuvable ou erreur
+        PQclear(res);
+        return -1;
+    }
+
+    strcpy(username_buffer, PQgetvalue(res, 0, 0));
+    
+    PQclear(res);
+    return 1;
+}
+
 void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_len) {
     char id_str[12];
     sprintf(id_str, "%d", owner_id);
