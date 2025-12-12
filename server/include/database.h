@@ -28,4 +28,6 @@ int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def
 
 int db_get_username_by_id(PGconn *conn, int id, char *username_buffer);
 
+int verify_consistency(PGconn *conn, Blockchain *chain);
+
 #endif

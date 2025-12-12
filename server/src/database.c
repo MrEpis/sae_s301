@@ -135,7 +135,7 @@ Blockchain* db_load_blockchain(PGconn *conn) {
 
     PQclear(res);
 
-    printf("Blockchain restaurées avec succès (Taille : %d)\n", chain->size);
+    printf("Blockchain restaurée avec succès (Taille : %d)\n", chain->size);
     return chain;
 }
 
@@ -315,4 +315,35 @@ int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def
     int new_id = atoi(PQgetvalue(res, 0, 0));
     PQclear(res);
     return new_id;
+}
+
+int verify_consistency(PGconn *conn, Blockchain *chain) {
+    printf("--- Vérification de la cohérence BDD vs Blockchain ---\n");
+    
+    // 1. Récupérer le nombre de cartes officiel selon la Blockchain
+    int cards_in_blockchain = 0;
+    Block *current = chain->head;
+    
+    while (current != NULL) {
+        // On cherche les actions de création
+        if (strstr(current->data_action, "\"action\": \"CreateCard\"") != NULL) {
+            cards_in_blockchain++;
+        }
+        current = current->next;
+    }
+
+    // 2. Récupérer le nombre de cartes dans la table SQL
+    PGresult *res = PQexec(conn, "SELECT COUNT(*) FROM cartes");
+    int cards_in_db = atoi(PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    printf("Cartes dans la Blockchain : %d\n", cards_in_blockchain);
+    printf("Cartes dans la table SQL  : %d\n", cards_in_db);
+
+    if (cards_in_blockchain != cards_in_db) {
+        return 0;
+    } else {
+        printf("--- Cohérence : OK ---\n");
+        return 1;
+    }
 }

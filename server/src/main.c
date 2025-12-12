@@ -16,6 +16,18 @@ int main() {
     if (check == 1) {
         printf("Restauration du contexte depuis la BDD...\n");
         global_blockchain = db_load_blockchain(conn);
+
+        if (!verify_blockchain_integrity(global_blockchain)) {
+            fprintf(stderr, "CRITIQUE : La blockchain est corrompue. Arrêt du serveur.\n");
+            db_close();
+            return EXIT_FAILURE;
+        }
+        if (!verify_consistency(conn, global_blockchain)) {
+            fprintf(stderr, "[ALERTE] Incohérence détectée ! La BDD contient des cartes non validées par la blockchain. Arrêt du serveur.");
+            db_close();
+            return EXIT_FAILURE;
+        }
+
     } else if (check == 0) {
         printf("Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");
         global_blockchain = create_new_blockchain();

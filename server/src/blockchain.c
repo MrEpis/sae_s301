@@ -109,3 +109,48 @@ Blockchain* create_new_blockchain() {
     printf("Blockchain créée avec le bloc Genesis.\n");
     return chain;
 }
+
+int verify_blockchain_integrity(Blockchain *chain) {
+    if (chain == NULL || chain->head == NULL) return 1; // Vide = valide
+
+    Block *current = chain->head;
+    Block *previous = NULL;
+    char calculated_hash[HASH_SIZE];
+    char *data_string;
+
+    printf("--- Démarrage de la vérification d'intégrité de la Blockchain ---\n");
+
+    while (current != NULL) {
+        // 1. Vérification du chaînage (sauf pour le Genesis)
+        if (previous != NULL) {
+            if (strcmp(current->previous_hash, previous->hash) != 0) {
+                fprintf(stderr, "[ERREUR] Rupture de chaîne au bloc %d !\n", current->ID_block);
+                fprintf(stderr, "Attendu : %s\nReçu    : %s\n", previous->hash, current->previous_hash);
+                return 0; // Invalide
+            }
+        }
+
+        // 2. Vérification du contenu (Tamper check)
+        // On recrée la string utilisée pour le hashage
+        data_string = block_to_string_for_hashing(current);
+        if (!data_string) return 0;
+
+        // On recalcule le hash
+        calculate_hash(data_string, calculated_hash);
+        free(data_string);
+
+        // On compare avec le hash stocké
+        if (strcmp(calculated_hash, current->hash) != 0) {
+            fprintf(stderr, "[ERREUR] Contenu modifié au bloc %d !\n", current->ID_block);
+            fprintf(stderr, "Hash BDD    : %s\nHash Calculé: %s\n", current->hash, calculated_hash);
+            return 0; // Invalide
+        }
+
+        // Avancer
+        previous = current;
+        current = current->next;
+    }
+
+    printf("--- Intégrité Blockchain : OK ---\n");
+    return 1; // Valide
+}
