@@ -68,9 +68,9 @@ public class ImageSelectorView {
         Scene scene = new Scene(root, 800, 600);
         stage.setScene(scene);
 
-        stage.setMinWidth(870);
+        stage.setMinWidth(800);
         stage.setMinHeight(600);
-        stage.setWidth(870);
+        stage.setWidth(800);
         stage.setHeight(600);
 
         stage.show();
@@ -84,12 +84,18 @@ public class ImageSelectorView {
         box.setStyle("-fx-background-color: #383838; -fx-border-color: #555; -fx-border-width: 2; -fx-border-radius: 8;");
 
         try {
-            ImageView iv = new ImageView(new Image(file.toURI().toString()));
-            iv.setFitWidth(100);
-            iv.setFitHeight(100);
+            Image img = new Image(file.toURI().toString(), 150, 150, true, true, true);
+
+
+            ImageView iv = new ImageView(img);
+            iv.setFitWidth(120);
+            iv.setFitHeight(120);
             iv.setPreserveRatio(true);
             box.getChildren().add(iv);
-        } catch (Exception e) { }
+
+        } catch (Exception e) {
+            System.err.println("Erreur chargement image " + file.getName());
+        }
 
         box.setOnMouseEntered(e -> box.setStyle("-fx-background-color: #505050; -fx-border-color: #7834CB; -fx-border-width: 2; -fx-border-radius: 8; -fx-cursor: hand;"));
         box.setOnMouseExited(e -> box.setStyle("-fx-background-color: #383838; -fx-border-color: #555; -fx-border-width: 2; -fx-border-radius: 8;"));

@@ -28,6 +28,7 @@ public class MainController {
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
         this.networkService = new NetworkService();
+        // On initialise avec "Inconnu" pour que l'objet existe en mémoire
         this.localPlayer = new Player(0, "Inconnu");
 
         this.menuView = new MenuView(primaryStage, this);
@@ -35,6 +36,12 @@ public class MainController {
 
         this.cardCreationController = new CardCreationController(this, localPlayer, cardCreationView);
         this.cardCreationView.setController(this.cardCreationController);
+
+        this.primaryStage.setOnCloseRequest(event -> {
+            System.out.println("Fermeture de la fenêtre (Croix)...");
+            quit();
+            System.exit(0);
+        });
     }
 
     public void showLogin() {
@@ -61,11 +68,14 @@ public class MainController {
 
                 if (response != null && response.contains("OK")) {
                     List<Card> inventory = JsonUtils.parseInventoryFromLogin(response);
+                    String username = JsonUtils.parseUsernameFromLogin(response); // Récupération du vrai nom
 
+                    // MISE A JOUR DES INFOS DU JOUEUR
+                    localPlayer.setName(username);
                     localPlayer.getInventory().clear();
                     localPlayer.getInventory().addAll(inventory);
 
-                    System.out.println("Reconnexion OK. " + inventory.size() + " cartes chargées.");
+                    System.out.println("Reconnexion OK. Joueur: " + username + ", " + inventory.size() + " cartes chargées.");
                     showMenu();
                 } else {
                     System.err.println("Echec reconnexion. Retour au login.");
@@ -75,36 +85,37 @@ public class MainController {
         }
     }
 
-
     public void showMenu() { menuView.show(); }
+
     public void showCombat() {
         this.combatController = new CombatController(this, localPlayer);
         CombatView combatView = new CombatView(primaryStage, this.combatController);
         combatView.show();
     }
+
     public void showInventory() {
         this.inventoryController = new InventoryController(this, localPlayer);
         InventoryView inventoryView = new InventoryView(primaryStage, this.inventoryController);
         inventoryView.show();
     }
+
     public void showCardCreation() { cardCreationView.show(); }
 
     public void showTrade() {
         TradeView tradeView = new TradeView(primaryStage);
         this.tradeController = new TradeController(this, localPlayer, tradeView);
         tradeView.setController(this.tradeController);
-
         tradeView.show();
-
         this.tradeController.refreshPlayerList();
     }
+
     public NetworkService getNetworkService() { return networkService; }
+
     public Player getLocalPlayer() { return this.localPlayer; }
+
     public void quit() {
         System.out.println("Déconnexion du client...");
         if (networkService != null) networkService.closeConnection();
         primaryStage.close();
     }
-
-
 }

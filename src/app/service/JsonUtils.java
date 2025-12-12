@@ -3,7 +3,6 @@ package app.service;
 import app.model.Card;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,9 +36,24 @@ public class JsonUtils {
         }
     }
 
+    public static String buildGetOpponentInventoryRequest(String opponentUsername) {
+        return String.format(
+                "{\"username\": \"%s\"}",
+                opponentUsername
+        );
+    }
+
+    public static String buildTradeRequestData(int cardAId, int cardBId, String opponentUsername) {
+        return String.format(
+                "{\"myCard\": %d, \"theirCard\": %d, \"them\": \"%s\"}",
+                cardAId,
+                cardBId,
+                opponentUsername
+        );
+    }
+
     public static List<String> parsePlayerList(String jsonResponse) {
         List<String> players = new ArrayList<>();
-
         int dataIndex = jsonResponse.indexOf("\"data\":");
         if (dataIndex == -1) return players;
 
@@ -48,21 +62,43 @@ public class JsonUtils {
 
         if (startIndex == -1 || endIndex == -1) return players;
 
-        String arrayContent = jsonResponse.substring(startIndex + 1, endIndex);
+        String dataContent = jsonResponse.substring(startIndex, endIndex + 1);
+        Pattern p = Pattern.compile("\"username\":\\s*\"([^\"]+)\"");
+        Matcher m = p.matcher(dataContent);
 
-        String[] parts = arrayContent.split(",");
-        for (String p : parts) {
-            String name = p.trim().replace("\"", "");
-            if (!name.isEmpty()) {
+        while (m.find()) {
+            String name = m.group(1);
+            if (name != null && !name.trim().isEmpty()) {
                 players.add(name);
             }
         }
         return players;
     }
 
+    public static List<Card> parseOpponentInventory(String jsonResponse) {
+        List<Card> cards = new ArrayList<>();
+        int dataIndex = jsonResponse.indexOf("\"data\":");
+        if (dataIndex == -1) return cards;
+
+        int startIndex = jsonResponse.indexOf("[", dataIndex);
+        int endIndex = jsonResponse.lastIndexOf("]");
+
+        if (startIndex == -1 || endIndex == -1) return cards;
+
+        String arrayContent = jsonResponse.substring(startIndex + 1, endIndex);
+        if (arrayContent.trim().isEmpty()) return cards;
+
+        String[] cardObjects = arrayContent.split("},");
+
+        for (String cardJson : cardObjects) {
+            if (cardJson.trim().isEmpty()) continue;
+            cards.add(extractCardFromJson(cardJson));
+        }
+        return cards;
+    }
+
     public static List<Card> parseInventoryFromLogin(String jsonResponse) {
         List<Card> cards = new ArrayList<>();
-
         int mainIndex = jsonResponse.indexOf("\"main\":");
         if (mainIndex == -1) return cards;
 
@@ -72,25 +108,32 @@ public class JsonUtils {
         if (startIndex == -1 || endIndex == -1) return cards;
 
         String arrayContent = jsonResponse.substring(startIndex + 1, endIndex);
+        if (arrayContent.trim().isEmpty()) return cards;
 
         String[] cardObjects = arrayContent.split("},");
 
         for (String cardJson : cardObjects) {
             if (cardJson.trim().isEmpty()) continue;
-
-            int id = extractInt(cardJson, "\"id\":");
-            String nom = extractString(cardJson, "\"nom\":");
-            int atk = extractInt(cardJson, "\"attaque\":");
-            int def = extractInt(cardJson, "\"defense\":");
-            int pv = extractInt(cardJson, "\"pv\":");
-            String image = extractString(cardJson, "\"image\":");
-
-            if (image != null) image = image.replace("\"", "");
-
-            cards.add(new Card(id, nom, pv, def, atk, image));
+            cards.add(extractCardFromJson(cardJson));
         }
-
         return cards;
+    }
+
+    public static String parseUsernameFromLogin(String jsonResponse) {
+        return extractString(jsonResponse, "\"username\":");
+    }
+
+    private static Card extractCardFromJson(String cardJson) {
+        int id = extractInt(cardJson, "\"id\":");
+        String nom = extractString(cardJson, "\"nom\":");
+        int atk = extractInt(cardJson, "\"attaque\":");
+        int def = extractInt(cardJson, "\"defense\":");
+        int pv = extractInt(cardJson, "\"pv\":");
+        String image = extractString(cardJson, "\"image\":");
+
+        if (image != null) image = image.replace("\"", "");
+
+        return new Card(id, nom, pv, def, atk, image);
     }
 
     private static int extractInt(String source, String key) {
