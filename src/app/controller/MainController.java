@@ -3,6 +3,8 @@ package app.controller;
 import app.model.Card;
 import app.service.JsonUtils;
 import app.service.SessionService;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 import app.views.*;
 import app.model.Player;
@@ -28,20 +30,41 @@ public class MainController {
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
         this.networkService = new NetworkService();
-        // On initialise avec "Inconnu" pour que l'objet existe en mémoire
         this.localPlayer = new Player(0, "Inconnu");
+
+        this.networkService.setNotificationListener(this::handleNotification);
 
         this.menuView = new MenuView(primaryStage, this);
         this.cardCreationView = new CardCreationView(primaryStage);
-
         this.cardCreationController = new CardCreationController(this, localPlayer, cardCreationView);
         this.cardCreationView.setController(this.cardCreationController);
 
         this.primaryStage.setOnCloseRequest(event -> {
-            System.out.println("Fermeture de la fenêtre (Croix)...");
             quit();
             System.exit(0);
         });
+    }
+
+    private void handleNotification(String message) {
+        System.out.println("Notification reçue dans MainController : " + message);
+
+        // Détection d'une demande d'échange
+        if (message.contains("TradeRequest")) {
+            // Afficher une popup pour accepter ou refuser
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Demande d'échange");
+            alert.setHeaderText("Un joueur veut échanger une carte !");
+            alert.setContentText("Message brut : " + message); // A améliorer avec le parsing JSON plus tard
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    System.out.println("Échange accepté !");
+                    // TODO: Envoyer la réponse d'acceptation au serveur
+                } else {
+                    System.out.println("Échange refusé.");
+                }
+            });
+        }
     }
 
     public void showLogin() {
