@@ -30,4 +30,6 @@ int db_get_username_by_id(PGconn *conn, int id, char *username_buffer);
 
 int verify_consistency(PGconn *conn, Blockchain *chain);
 
+int verify_card_stats_integrity(PGconn *conn, Blockchain *chain);
+
 #endif

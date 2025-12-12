@@ -46,7 +46,10 @@ int extract_json_value(const char *json, const char *key, char *output, int max_
         }
     } else {
         // Cas 3 : Nombre ou Booléen
-        end = strpbrk(start, ",}");
+        end = start;
+        while (*end && *end != ',' && *end != '}' && *end != ']' && !isspace(*end)) {
+            end++;
+        }
     }
 
     if (!end) return 0;

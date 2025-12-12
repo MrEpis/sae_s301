@@ -8,6 +8,7 @@
 #define ACTION_FIGHT "FightRequest"
 #define ACTION_GET_USERS "GET_CONNECTED_USERS"
 #define ACTION_GET_OPPONENT_INVENTORY "GET_OPPONENT_INVENTORY"
+#define ACTION_CONFIRMATION "ConfirmationRequest"
 
 int extract_json_value(const char *json, const char *key, char *output, int max_len);
 

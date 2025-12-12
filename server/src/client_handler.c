@@ -44,6 +44,9 @@ void *handle_client(void *arg) {
             else if (strcmp(action_name, ACTION_GET_OPPONENT_INVENTORY) == 0) {
                 process_get_opponent_inventory(client_socket, buffer);
             }
+            else if (strcmp(action_name, ACTION_TRADE) == 0) {
+                process_trade_request(client_socket, buffer);
+            }
             else {
                 send_error_response(client_socket, action_name, "Action inconnue");
             }
@@ -284,8 +287,8 @@ void process_card_creation(int client_socket, const char *json_payload) {
     // Création du JSON pour le bloc (Preuve d'action)
     char action_json[512];
     snprintf(action_json, sizeof(action_json), 
-         "{\"action\": \"CreateCard\", \"client_id\": %d, \"card_id\": %d, \"card_name\": \"%s\", \"image_file\": \"%s\"}", 
-         id_client, new_card_id, nomCarte, image);
+         "{\"action\": \"CreateCard\", \"client_id\": %d, \"card_id\": %d, \"card_name\": \"%s\", \"attack\": %d, \"defense\": %d, \"max_hp\": %d, \"image_file\": \"%s\"}", 
+         id_client, new_card_id, nomCarte, attaque, defense, pv, image);
     
     new_block->data_action = strdup(action_json);
 
@@ -399,3 +402,72 @@ void process_get_opponent_inventory(int client_socket, const char *json_payload)
 
     send(client_socket, response, strlen(response), 0);
 }   
+
+void process_trade_request(int client_socket, const char *json_payload) {
+    char data_buffer[512];
+    char temp_str[50];
+    
+    int id_initiator = -1;
+    int id_card_initiator = -1;
+    int id_receiver = -1;
+    int id_card_receiver = -1;
+
+    // 1. Extraction des données
+    if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
+        send_error_response(client_socket, ACTION_TRADE, "Donnees manquantes");
+        return;
+    }
+
+    if (extract_json_value(data_buffer, "id_initiator", temp_str, sizeof(temp_str))) id_initiator = atoi(temp_str);
+    if (extract_json_value(data_buffer, "id_card_initiator", temp_str, sizeof(temp_str))) id_card_initiator = atoi(temp_str);
+    if (extract_json_value(data_buffer, "id_receiver", temp_str, sizeof(temp_str))) id_receiver = atoi(temp_str);
+    if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
+
+    // Vérification basique
+    if (id_initiator == -1 || id_receiver == -1) {
+        send_error_response(client_socket, ACTION_TRADE, "IDs invalides");
+        return;
+    }
+
+    // 2. Recherche du socket du destinataire (Client B)
+    int socket_receiver = -1;
+    char receiver_username[50] = "Inconnu";
+
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        // On cherche le joueur connecté qui correspond à id_receiver
+        if (clients_list[i].logged_in && clients_list[i].client_id == id_receiver) {
+            printf("socket du destinataire dans la liste : %d\n", clients_list[i].socket);
+            socket_receiver = clients_list[i].socket;
+            strcpy(receiver_username, clients_list[i].username);
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+
+    // 3. Gestion du cas "Joueur non trouvé"
+    if (socket_receiver == -1) {
+        send_error_response(client_socket, ACTION_TRADE, "Le joueur cible n'est pas connecte");
+        return;
+    }
+
+    // 4. Construction du message pour le destinataire (Client B)
+    // On lui envoie une "ConfirmationRequest"
+    char notification[1024];
+    snprintf(notification, sizeof(notification), 
+             "{\"type\": \"request\", \"nom\": \"%s\", \"data\": {\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d}}\n",
+             ACTION_CONFIRMATION, id_initiator, id_card_initiator, id_card_receiver);
+
+    // 5. Envoi au destinataire
+    printf("[SERVEUR -> CLIENT %d (%s)] Transfert offre echange : %s", socket_receiver, receiver_username, notification);
+    send(socket_receiver, notification, strlen(notification), 0);
+
+    // 6. Confirmation à l'expéditeur (Client A)
+    char ack[256];
+    snprintf(ack, sizeof(ack), 
+             "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": \"Offre envoyee a %s\"}\n", 
+             ACTION_TRADE, receiver_username);
+    
+    printf("[SERVEUR -> CLIENT %d] Ack echange : %s", client_socket, ack);
+    send(client_socket, ack, strlen(ack), 0);
+}

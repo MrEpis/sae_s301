@@ -1,5 +1,6 @@
 #include "structures.h"
 #include "database.h"
+#include "protocol.h"
 
 #include <postgresql/libpq-fe.h>
 #include <string.h>
@@ -346,4 +347,70 @@ int verify_consistency(PGconn *conn, Blockchain *chain) {
         printf("--- Cohérence : OK ---\n");
         return 1;
     }
+}
+
+int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
+    printf("--- Vérification détaillée des stats des cartes ---\n");
+    
+    Block *current = chain->head;
+    //char buffer[1024];
+    char id_str[20], atk_str[20], def_str[20], pv_str[20]; // Buffers pour extraction JSON
+    
+    int errors = 0;
+
+    while (current != NULL) {
+        // On ne s'intéresse qu'aux blocs de création
+        if (strstr(current->data_action, "\"action\": \"CreateCard\"") != NULL) {
+            
+            // 1. Extraction des données "Vérité Blockchain"
+            // Note : Adaptez les clés selon votre format JSON exact ("attaque", "pv", etc.)
+            extract_json_value(current->data_action, "card_id", id_str, sizeof(id_str));
+            
+            // Valeurs par défaut si parsing échoue (sécurité)
+            int bc_atk = 0, bc_def = 0, bc_hp = 0;
+            
+            if (extract_json_value(current->data_action, "attack", atk_str, sizeof(atk_str))) 
+                bc_atk = atoi(atk_str);
+
+            if (extract_json_value(current->data_action, "defense", def_str, sizeof(def_str))) 
+                bc_def = atoi(def_str);
+                
+            if (extract_json_value(current->data_action, "max_hp", pv_str, sizeof(pv_str))) 
+                bc_hp = atoi(pv_str); // On suppose PV = MaxHP à la création
+
+            // 2. Récupération des données "État BDD"
+            const char *query = "SELECT attaque, max_hp, defense FROM cartes WHERE id = $1";
+            const char *params[1] = { id_str };
+            
+            PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+            if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) > 0) {
+                int db_atk = atoi(PQgetvalue(res, 0, 0));
+                int db_hp = atoi(PQgetvalue(res, 0, 1));
+                int db_def = atoi(PQgetvalue(res, 0, 2));
+
+                // 3. Comparaison
+                if (db_atk != bc_atk || db_hp != bc_hp || db_def != bc_def) {
+                    fprintf(stderr, "[ALERTE TRICHE] Incohérence Carte ID %s !\n", id_str);
+                    fprintf(stderr, "Blockchain : Atk=%d, Def=%d, HP=%d\n", bc_atk, bc_def, bc_hp);
+                    fprintf(stderr, "Base de Données : Atk=%d, Def=%d, HP=%d\n", db_atk, db_def, db_hp);
+                    errors++;
+                }
+            } else {
+                // La carte est dans la blockchain mais pas dans la BDD (Suppression illégale ?)
+                fprintf(stderr, "[ALERTE] Carte ID %s présente dans la Blockchain mais absente de la BDD.\n", id_str);
+                errors++;
+            }
+            PQclear(res);
+        }
+        current = current->next;
+    }
+
+    if (errors > 0) {
+        printf("--- ECHEC Vérification : %d incohérences trouvées ---\n", errors);
+        return 0; 
+    }
+    
+    printf("--- Stats des cartes intègres ---\n");
+    return 1;
 }
