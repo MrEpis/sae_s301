@@ -88,11 +88,15 @@ public class MainController {
         inventoryView.show();
     }
     public void showCardCreation() { cardCreationView.show(); }
+
     public void showTrade() {
         TradeView tradeView = new TradeView(primaryStage);
         this.tradeController = new TradeController(this, localPlayer, tradeView);
         tradeView.setController(this.tradeController);
+
         tradeView.show();
+
+        this.tradeController.refreshPlayerList();
     }
     public NetworkService getNetworkService() { return networkService; }
     public Player getLocalPlayer() { return this.localPlayer; }
@@ -101,4 +105,6 @@ public class MainController {
         if (networkService != null) networkService.closeConnection();
         primaryStage.close();
     }
+
+
 }

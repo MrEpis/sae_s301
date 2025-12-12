@@ -1,16 +1,15 @@
 package app.views;
 
-import app.controller.MainController;
 import app.controller.InventoryController;
-import app.model.Card; // Import Card
+import app.model.Card;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
-import javafx.scene.image.Image; // Import Image
-import javafx.scene.image.ImageView; // Import ImageView
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -19,7 +18,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import java.io.File; // Import File
+import java.io.File;
 
 public class InventoryView {
 
@@ -59,13 +58,13 @@ public class InventoryView {
         GridPane cardGrid = new GridPane();
         cardGrid.setHgap(20);
         cardGrid.setVgap(20);
-        cardGrid.setPadding(new javafx.geometry.Insets(20)); // Un peu de marge
+        cardGrid.setPadding(new javafx.geometry.Insets(20));
 
         int i = 0;
         for (Card card : controller.getPlayer().getInventory()) {
             VBox cardPlaceholder = createCardWidget(card);
             cardPlaceholder.setOnMouseClicked(e -> updateDetails(primaryStage.getScene(), card));
-            cardGrid.add(cardPlaceholder, i % 5, i / 5); // 5 colonnes au lieu de 7 pour aérer
+            cardGrid.add(cardPlaceholder, i % 5, i / 5);
             i++;
         }
 
@@ -81,7 +80,7 @@ public class InventoryView {
 
     private VBox createCardWidget(Card card) {
         VBox box = new VBox(5);
-        box.setPrefSize(140, 200);
+        box.setPrefSize(140, 220);
         box.setAlignment(Pos.TOP_CENTER);
         box.setStyle("-fx-background-color: #333333; -fx-border-color: #7834CB; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-radius: 5;");
 
@@ -98,13 +97,14 @@ public class InventoryView {
                 }
             }
         } catch(Exception e) {
-            // Ignorer si pas d'image
         }
 
         box.getChildren().addAll(
                 createLabel(card.getNom(), 14, FontWeight.BOLD, "#ffffff"),
                 imgView,
                 createLabel("ATK: " + card.getAtk(), 12, FontWeight.BOLD, "#F44336"),
+                // AJOUT DE LA DEFENSE ICI
+                createLabel("DEF: " + card.getDef(), 12, FontWeight.BOLD, "#2196F3"),
                 createLabel("HP: " + card.getHp(), 12, FontWeight.BOLD, "#4CAF50")
         );
         return box;

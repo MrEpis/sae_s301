@@ -3,6 +3,7 @@ package app.service;
 import app.model.Card;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,6 +36,30 @@ public class JsonUtils {
             );
         }
     }
+
+    public static List<String> parsePlayerList(String jsonResponse) {
+        List<String> players = new ArrayList<>();
+
+        int dataIndex = jsonResponse.indexOf("\"data\":");
+        if (dataIndex == -1) return players;
+
+        int startIndex = jsonResponse.indexOf("[", dataIndex);
+        int endIndex = jsonResponse.lastIndexOf("]");
+
+        if (startIndex == -1 || endIndex == -1) return players;
+
+        String arrayContent = jsonResponse.substring(startIndex + 1, endIndex);
+
+        String[] parts = arrayContent.split(",");
+        for (String p : parts) {
+            String name = p.trim().replace("\"", "");
+            if (!name.isEmpty()) {
+                players.add(name);
+            }
+        }
+        return players;
+    }
+
     public static List<Card> parseInventoryFromLogin(String jsonResponse) {
         List<Card> cards = new ArrayList<>();
 
