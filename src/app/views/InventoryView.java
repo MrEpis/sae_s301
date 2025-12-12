@@ -2,12 +2,15 @@ package app.views;
 
 import app.controller.MainController;
 import app.controller.InventoryController;
+import app.model.Card; // Import Card
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.image.Image; // Import Image
+import javafx.scene.image.ImageView; // Import ImageView
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -16,10 +19,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.io.File; // Import File
+
 public class InventoryView {
 
     private final Stage primaryStage;
-    private final InventoryController controller; // Doit être lié au contrôleur d'inventaire
+    private final InventoryController controller;
 
     public InventoryView(Stage primaryStage, InventoryController controller) {
         this.primaryStage = primaryStage;
@@ -54,27 +59,55 @@ public class InventoryView {
         GridPane cardGrid = new GridPane();
         cardGrid.setHgap(20);
         cardGrid.setVgap(20);
+        cardGrid.setPadding(new javafx.geometry.Insets(20)); // Un peu de marge
 
-        for (int i = 0; i < 50; i++) {
-            VBox cardPlaceholder = createCardPlaceholder("Card " + (i + 1));
-            cardPlaceholder.setOnMouseClicked(e -> updateDetails(primaryStage.getScene(), cardPlaceholder.getUserData().toString()));
-            cardGrid.add(cardPlaceholder, i % 7, i / 7);
+        int i = 0;
+        for (Card card : controller.getPlayer().getInventory()) {
+            VBox cardPlaceholder = createCardWidget(card);
+            cardPlaceholder.setOnMouseClicked(e -> updateDetails(primaryStage.getScene(), card));
+            cardGrid.add(cardPlaceholder, i % 5, i / 5); // 5 colonnes au lieu de 7 pour aérer
+            i++;
+        }
+
+        if (i == 0) {
+            cardGrid.add(createLabel("Inventaire vide.", 16, FontWeight.NORMAL, "#999999"), 0, 0);
         }
 
         ScrollPane scrollPane = new ScrollPane(cardGrid);
         scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: #222222; -fx-border-color: transparent;");
         return scrollPane;
     }
 
-    private VBox createCardPlaceholder(String name) {
-        VBox card = new VBox(5);
-        card.setPrefSize(120, 160);
-        card.setAlignment(Pos.CENTER);
-        card.setStyle("-fx-background-color: #333333; -fx-border-color: #aaaaaa; -fx-border-width: 2;");
-        card.setUserData(name);
+    private VBox createCardWidget(Card card) {
+        VBox box = new VBox(5);
+        box.setPrefSize(140, 200);
+        box.setAlignment(Pos.TOP_CENTER);
+        box.setStyle("-fx-background-color: #333333; -fx-border-color: #7834CB; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-radius: 5;");
 
-        card.getChildren().addAll(createLabel(name, 12, FontWeight.BOLD, "#ffffff"), createLabel("Click for Info", 10, FontWeight.NORMAL, "#999999"));
-        return card;
+        ImageView imgView = new ImageView();
+        imgView.setFitWidth(100);
+        imgView.setFitHeight(100);
+        imgView.setPreserveRatio(true);
+
+        try {
+            if (card.getImagePath() != null && !card.getImagePath().isEmpty()) {
+                File file = new File(card.getImagePath());
+                if(file.exists()){
+                    imgView.setImage(new Image(file.toURI().toString()));
+                }
+            }
+        } catch(Exception e) {
+            // Ignorer si pas d'image
+        }
+
+        box.getChildren().addAll(
+                createLabel(card.getNom(), 14, FontWeight.BOLD, "#ffffff"),
+                imgView,
+                createLabel("ATK: " + card.getAtk(), 12, FontWeight.BOLD, "#F44336"),
+                createLabel("HP: " + card.getHp(), 12, FontWeight.BOLD, "#4CAF50")
+        );
+        return box;
     }
 
     private VBox createCardDetailPanel() {
@@ -82,36 +115,52 @@ public class InventoryView {
         detailBox.setPrefWidth(300);
         detailBox.setStyle("-fx-background-color: #3a3a3a; -fx-border-color: #555555; -fx-border-width: 0 0 0 1;");
         detailBox.setAlignment(Pos.TOP_CENTER);
+        detailBox.setPadding(new javafx.geometry.Insets(20));
 
         Label selectedCardName = createLabel("No Card Selected", 18, FontWeight.BOLD, "#ffffff");
 
-        VBox stats = new VBox(5);
-        stats.getChildren().addAll(
-                createLabel("HP: N/A", 14, FontWeight.NORMAL, "#cccccc"),
-                createLabel("ATK: N/A", 14, FontWeight.NORMAL, "#cccccc"),
-                createLabel("DEF: N/A", 14, FontWeight.NORMAL, "#cccccc")
-        );
-        stats.setUserData(new Label[]{(Label)stats.getChildren().get(0), (Label)stats.getChildren().get(1), (Label)stats.getChildren().get(2)});
+        ImageView detailImage = new ImageView();
+        detailImage.setFitWidth(200);
+        detailImage.setFitHeight(200);
+        detailImage.setPreserveRatio(true);
 
-        detailBox.getChildren().addAll(createLabel("Card Details", 20, FontWeight.BOLD, "#FFC107"), selectedCardName, new Separator(), stats);
-        detailBox.setUserData(new Object[]{selectedCardName, stats});
+        VBox stats = new VBox(10);
+        stats.setAlignment(Pos.CENTER_LEFT);
+        stats.getChildren().addAll(
+                createLabel("HP: -", 16, FontWeight.NORMAL, "#4CAF50"),
+                createLabel("ATK: -", 16, FontWeight.NORMAL, "#F44336"),
+                createLabel("DEF: -", 16, FontWeight.NORMAL, "#2196F3")
+        );
+
+        detailBox.getChildren().addAll(createLabel("Détails de la carte", 22, FontWeight.BOLD, "#FFC107"), new Separator(), selectedCardName, detailImage, stats);
+
+        detailBox.setUserData(new Object[]{selectedCardName, detailImage, stats});
 
         return detailBox;
     }
 
-    private void updateDetails(Scene scene, String cardName) {
+    private void updateDetails(Scene scene, Card card) {
         VBox detailBox = (VBox) scene.lookup("#DetailPanel");
 
         if (detailBox != null) {
-            Label nameLabel = (Label) ((Object[])detailBox.getUserData())[0];
-            VBox statsBox = (VBox) ((Object[])detailBox.getUserData())[1];
+            Object[] refs = (Object[]) detailBox.getUserData();
+            Label nameLabel = (Label) refs[0];
+            ImageView imgView = (ImageView) refs[1];
+            VBox statsBox = (VBox) refs[2];
 
-            nameLabel.setText(cardName);
+            nameLabel.setText(card.getNom());
 
-            Label[] statLabels = (Label[]) statsBox.getUserData();
-            statLabels[0].setText("HP: 50");
-            statLabels[1].setText("ATK: 30");
-            statLabels[2].setText("DEF: 20");
+            imgView.setImage(null);
+            try {
+                if (card.getImagePath() != null) {
+                    File file = new File(card.getImagePath());
+                    if(file.exists()) imgView.setImage(new Image(file.toURI().toString()));
+                }
+            } catch(Exception e) {}
+
+            ((Label)statsBox.getChildren().get(0)).setText("HP: " + card.getHp());
+            ((Label)statsBox.getChildren().get(1)).setText("ATK: " + card.getAtk());
+            ((Label)statsBox.getChildren().get(2)).setText("DEF: " + card.getDef());
         }
     }
 

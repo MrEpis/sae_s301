@@ -3,6 +3,7 @@ package app.controller;
 import app.model.Player;
 import app.service.JsonUtils;
 import app.service.NetworkService;
+import app.service.SessionService;
 import app.views.CardCreationView;
 import java.io.File;
 
@@ -26,21 +27,27 @@ public class CardCreationController {
 
     public void chooseImageFile() {
         File selectedFile = creationView.openFileChooser();
-
         if (selectedFile != null) {
             this.rawSelectedFile = selectedFile;
-
             String displayURI = selectedFile.toURI().toString();
 
             String fileName = selectedFile.getName();
-            String cardName = fileName.lastIndexOf('.') > 0 ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
+            String defaultCardName = fileName.lastIndexOf('.') > 0 ? fileName.substring(0, fileName.lastIndexOf('.')) : fileName;
 
-            creationView.displayImagePreview(displayURI, cardName);
+            String currentInput = creationView.getCardNameInput();
+            String finalName;
+
+            if (currentInput == null || currentInput.trim().isEmpty()) {
+                finalName = defaultCardName;
+            } else {
+                finalName = currentInput;
+            }
+
+            creationView.displayImagePreview(displayURI, finalName);
         }
     }
 
     public void saveCard(String name, int hp, int atk, int def) {
-        // 1. Validations
         if (rawSelectedFile == null) {
             System.err.println("Erreur: Image manquante.");
             return;
@@ -51,8 +58,8 @@ public class CardCreationController {
         }
 
         String serverImagePath = "src/ressources/img/" + rawSelectedFile.getName();
-
-        String jsonData = JsonUtils.buildCardCreationData(name, hp, atk, def, serverImagePath);
+        int clientId = SessionService.loadClientId();
+        String jsonData = JsonUtils.buildCardCreationData(clientId, name, hp, atk, def, serverImagePath);
         String jsonRequest = JsonUtils.buildRequest("RequestCardCreation", jsonData);
 
         NetworkService network = mainController.getNetworkService();
@@ -63,8 +70,8 @@ public class CardCreationController {
             System.out.println("Réponse : " + response);
 
             if (response != null && response.contains("OK")) {
-                System.out.println("Carte créée avec succès !");
-                this.rawSelectedFile = null; // Reset
+                System.out.println("Succès ! Carte créée.");
+                this.rawSelectedFile = null;
                 backToMenu();
             } else {
                 System.err.println("Échec création carte.");

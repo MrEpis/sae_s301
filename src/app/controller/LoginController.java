@@ -1,10 +1,12 @@
 package app.controller;
 
+import app.model.Card;
 import app.service.NetworkService;
 import app.service.JsonUtils;
 import app.service.SessionService;
 import app.views.LoginView;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,9 +40,15 @@ public class LoginController {
                     newId = Integer.parseInt(matcher.group(1));
                 }
 
+                List<Card> inventory = JsonUtils.parseInventoryFromLogin(response);
+                System.out.println(inventory.size() + " cartes récupérées.");
+
                 SessionService.saveClientId(newId);
                 mainController.getLocalPlayer().setId(newId);
                 mainController.getLocalPlayer().setName(username);
+
+                mainController.getLocalPlayer().getInventory().clear();
+                mainController.getLocalPlayer().getInventory().addAll(inventory);
 
                 mainController.showMenu();
             } else {
