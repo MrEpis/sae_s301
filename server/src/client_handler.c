@@ -3,6 +3,7 @@
 #include "database.h"
 #include "server.h"
 #include "blockchain.h"
+#include "structures.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +49,17 @@ void *handle_client(void *arg) {
     }
     if (bytes_read == 0) {
         printf("Client %d déconnecté.\n", client_socket);
+
+        pthread_mutex_lock(&clients_mutex);
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients_list[i].socket == client_socket) {
+            clients_list[i].socket = -1;
+            clients_list[i].client_id = -1;
+            clients_list[i].logged_in = 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
     } else if (bytes_read == -1) {
         perror("recv failed");
     }
@@ -122,8 +134,39 @@ void process_login(int client_socket, const char *json_payload) {
 
     // SENDING SUCCESS RESPONSE WITH CARDS
 
-    // TODO: Get the player's cards
-    // For now, return an empty hand "[]"
+    // Adding the player to the list
+    pthread_mutex_lock(&clients_mutex);
+
+    int added = 0;
+    // Check if player is already connected
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients_list[i].client_id == final_id) {
+            // The player is already connected, refuse connection
+            // (we also could disconnect the previous one)
+            pthread_mutex_unlock(&clients_mutex);
+            send_error_response(client_socket, "LOGIN", "Joueur déjà connecté");
+            return;
+        }
+    }
+
+    // Find free spot
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients_list[i].socket == -1) { // Is an empty player
+            clients_list[i].socket = client_socket;
+            clients_list[i].client_id = final_id;
+            strcpy(clients_list[i].username, username);
+            clients_list[i].logged_in = 1;
+            added = -1;
+            break;
+        }
+    }
+
+    pthread_mutex_unlock(&clients_mutex);
+
+    if (!added) {
+        send_error_response(client_socket, "LOGIN", "Server at max capacity");
+        return;
+    }
 
     char cards_json[4096];
     db_get_player_cards_json(conn, final_id, cards_json, sizeof(cards_json));
@@ -246,6 +289,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
     send(client_socket, response, strlen(response), 0);
     
     // Nettoyage mémoire bloc
-    free(new_block->data_action);
-    free(new_block);
+    //free(new_block->data_action);
+    //free(new_block);
 }
+

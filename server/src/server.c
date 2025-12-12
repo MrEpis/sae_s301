@@ -10,6 +10,11 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+ConnectedPlayer clients_list[MAX_CLIENTS];
+pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t db_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t bc_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 Blockchain *global_blockchain = NULL;
 
 Blockchain* get_global_blockchain() {
@@ -21,6 +26,13 @@ int start_server() {
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
+
+    // Initialiser la liste des clients
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        clients_list[i].client_id = -1;
+        clients_list[i].socket = -1;
+        clients_list[i].logged_in = 0;
+    }
 
     //On crée le socket du serveur
     //AF_INET = IPv4, SOCK_STREAM = TCP
