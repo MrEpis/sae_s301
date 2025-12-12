@@ -1,5 +1,6 @@
 #include "server.h"
 #include "client_handler.h"
+#include "structures.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,11 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+Blockchain *global_blockchain = NULL;
+
+Blockchain* get_global_blockchain() {
+    return global_blockchain;
+}
 
 int start_server() {
     int server_fd, new_socket;

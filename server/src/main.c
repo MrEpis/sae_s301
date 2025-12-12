@@ -10,19 +10,17 @@ int main() {
         return EXIT_FAILURE;
     }
     PGconn *conn = get_db_connection();
-    Blockchain *bc = NULL;
 
     int check = db_check_for_blockchain(conn);
 
     if (check == 1) {
         printf("Restauration du contexte depuis la BDD...\n");
-        bc = db_load_blockchain(conn);
+        global_blockchain = db_load_blockchain(conn);
     } else if (check == 0) {
         printf("Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");
-        bc = create_new_blockchain();
+        global_blockchain = create_new_blockchain();
 
-        //TODO: Sauvegarder immédiatement le bloc Genesis en BDD
-        if (db_save_block(conn, bc->head) != 0) {
+        if (db_save_block(conn, global_blockchain->head) != 0) {
             perror("Echec de la sauvegarde du premier bloc.\n");
             return EXIT_FAILURE;
         }
@@ -30,6 +28,12 @@ int main() {
         fprintf(stderr, "Erreur critique de la BDD. Arrêt du serveur.\n");
         db_close();
         return EXIT_FAILURE;
+    }
+    
+    if (global_blockchain == NULL) {
+         fprintf(stderr, "Erreur critique: Blockchain non initialisée.\n");
+         db_close();
+         return EXIT_FAILURE;
     }
 
     if (start_server() != 0) {

@@ -194,7 +194,13 @@ void process_card_creation(int client_socket, const char *json_payload) {
     printf("Carte crée en BDD (ID: %d) pour le client %d\n", new_card_id, id_client);
 
     // 3. Création et Minage du BLOC (Blockchain)
-    
+
+    Blockchain *bc = get_global_blockchain();
+    if (bc == NULL) {
+    send_error_response(client_socket, "CardCreated", "Erreur: Blockchain serveur non chargee");
+    return;
+    }
+
     // Allocation du bloc
     Block *new_block = malloc(sizeof(Block));
     if (!new_block) {
@@ -202,22 +208,10 @@ void process_card_creation(int client_socket, const char *json_payload) {
         return;
     }
 
-    // Récupération du dernier hash (Pour lier la chaîne)
-    // NOTE: Il faudrait idéalement une fonction db_get_last_block() ou garder la blockchain en mémoire globale.
-    // Pour simplifier ici, on suppose que vous avez accès à la blockchain en mémoire ou qu'on le charge.
-    // ASTUCE TEMPORAIRE : On récupère le dernier bloc depuis la BDD pour avoir son hash
-    // (Dans une version optimisée, on utiliserait une variable globale `server_blockchain->tail`)
-    Blockchain *temp_chain = db_load_blockchain(conn); 
-    if (temp_chain && temp_chain->tail) {
-        new_block->ID_block = temp_chain->tail->ID_block + 1;
-        strncpy(new_block->previous_hash, temp_chain->tail->hash, HASH_SIZE);
-    } else {
-        // Fallback (ne devrait pas arriver si genesis existe)
-        new_block->ID_block = 1;
-        memset(new_block->previous_hash, '0', HASH_SIZE);
-    }
-    // Nettoyage de la chaîne temporaire (TODO: créer une fonction free_blockchain)
-    // free(temp_chain...); 
+    new_block->ID_block = bc->tail->ID_block + 1;
+
+    strncpy(new_block->previous_hash, bc->tail->hash, HASH_SIZE);
+    new_block->previous_hash[HASH_SIZE - 1] = '\0';
 
     new_block->timestamp = time(NULL);
     new_block->nonce = 0;
@@ -232,6 +226,10 @@ void process_card_creation(int client_socket, const char *json_payload) {
 
     // Minage (Proof of Work)
     mine_block(new_block);
+
+    bc->tail->next = new_block;
+    bc->tail = new_block;
+    bc->size++;
 
     // 4. Sauvegarde du bloc miné en BDD
     if (db_save_block(conn, new_block) != 0) {
