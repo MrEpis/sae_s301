@@ -9,13 +9,14 @@ import static org.junit.jupiter.api.Assertions.*;
     void testCardInitialization(){
         String realImagePath = "src/ressources/img/sword.png";
 
-        Card c = new Card(1,"Epée Légendaire", 40,20,40, realImagePath);
+        Card c = new Card(1,"Sword", 40,20,40, realImagePath);
 
         assertEquals(1,c.getId());
-        assertEquals("Epée Légendaire", c.getNom());
+        assertEquals("Sword", c.getNom());
         assertEquals(40, c.getHp());
-        assertEquals(20, c.getDef());
-        assertEquals(40, c.getAtk());
+
+        assertEquals(20, c.getDef(), "La défense (20) n'est pas au bon endroit");
+        assertEquals(40, c.getAtk(), "L'attaque (40) n'est pas au bon endroit");
         assertEquals(realImagePath, c.getImagePath());
     }
 

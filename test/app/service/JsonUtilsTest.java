@@ -13,7 +13,7 @@ class JsonUtilsTest {
     }
 
     @Test
-    void testBuildLoginDate_Reconnect() {
+    void testBuildLoginData_Reconnect() {
         String json = JsonUtils.buildLoginData(101, null);
         assertEquals("101", json, "Le format de reconnexion est incorrect");
     }
@@ -21,15 +21,16 @@ class JsonUtilsTest {
 
     @Test
     void testBuildCardCreationData() {
-        String nomCarte = "Demon";
+        int idClient = 1;
+        String nom = "Demon";
         int hp = 40;
         int atk = 40;
         int def = 20;
         String imagePath = "src/ressources/img/demon.png";
 
-        String json = JsonUtils.buildCardCreationData(nomCarte, hp, atk, def, imagePath);
+        String json = JsonUtils.buildCardCreationData(idClient,nom, hp, atk, def, imagePath);
 
-        String expected = "{\"nomCarte\": \"Demon\", \"hp\":40, \"attaque\":40, \"defense\":20, \"file_name\":\"src/ressources/img/demon.png\"}";
+        String expected = "{\"id_client\":\"1\", \"nomCarte\":\"Demon\", \"pv\":40, \"attaque\":40, \"defense\":20, \"image\":\"src/ressources/img/demon.png\"}";
         assertEquals(expected, json, "Le JSON de création de carte ne correspond pas à la structure attendue");
     }
 
@@ -38,7 +39,7 @@ class JsonUtilsTest {
         String dataPart = "{\"test\":1}";
         String fullJson = JsonUtils.buildRequest("TEST_ACTION", dataPart);
 
-        String expected = "{\"type\":\"request\", \nom\":\"TEST_ACTION\", \"data\":{\"test\":1}}";
+        String expected = "{\"type\":\"request\", \"nom\":\"TEST_ACTION\", \"data\":{\"test\":1}}";
         assertEquals(expected, fullJson, "L'enveloppe de la requête est incorrecte");
     }
 }
