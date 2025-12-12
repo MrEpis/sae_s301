@@ -1,6 +1,7 @@
 package app.service;
 
 import app.model.Card;
+import app.model.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,17 +44,19 @@ public class JsonUtils {
         );
     }
 
-    public static String buildTradeRequestData(int cardAId, int cardBId, String opponentUsername) {
+    public static String buildTradeRequestData(int initiatorId, int offeredCardId, int receiverId, int requestedCardId) {
         return String.format(
-                "{\"myCard\": %d, \"theirCard\": %d, \"them\": \"%s\"}",
-                cardAId,
-                cardBId,
-                opponentUsername
+                "{\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_receiver\": %d, \"id_card_receiver\": %d}",
+                initiatorId,
+                offeredCardId,
+                receiverId,
+                requestedCardId
         );
     }
 
-    public static List<String> parsePlayerList(String jsonResponse) {
-        List<String> players = new ArrayList<>();
+    public static List<Player> parsePlayerList(String jsonResponse) {
+        List<Player> players = new ArrayList<>();
+
         int dataIndex = jsonResponse.indexOf("\"data\":");
         if (dataIndex == -1) return players;
 
@@ -62,14 +65,17 @@ public class JsonUtils {
 
         if (startIndex == -1 || endIndex == -1) return players;
 
-        String dataContent = jsonResponse.substring(startIndex, endIndex + 1);
-        Pattern p = Pattern.compile("\"username\":\\s*\"([^\"]+)\"");
-        Matcher m = p.matcher(dataContent);
+        String arrayContent = jsonResponse.substring(startIndex + 1, endIndex);
+        if (arrayContent.trim().isEmpty()) return players;
 
-        while (m.find()) {
-            String name = m.group(1);
-            if (name != null && !name.trim().isEmpty()) {
-                players.add(name);
+        String[] playerObjects = arrayContent.split("},");
+
+        for (String pJson : playerObjects) {
+            int id = extractInt(pJson, "\"id_client\":");
+            String username = extractString(pJson, "\"username\":");
+
+            if (username != null && !username.trim().isEmpty()) {
+                players.add(new Player(id, username));
             }
         }
         return players;

@@ -44,7 +44,6 @@ public class CardCreationView {
         this.controller = controller;
     }
 
-    // NOUVEAU : Méthode pour permettre au contrôleur de lire ce qui est écrit
     public String getCardNameInput() {
         return cardNameField.getText();
     }
@@ -117,7 +116,7 @@ public class CardCreationView {
         statGrid.setHgap(10);
         statGrid.setVgap(10);
 
-        hpSpinner = new Spinner<>(0, MAX_POINTS, 10);
+        hpSpinner = new Spinner<>(1, MAX_POINTS, 10);
         attackSpinner = new Spinner<>(0, MAX_POINTS, 10);
         defenseSpinner = new Spinner<>(0, MAX_POINTS, 10);
 
@@ -125,7 +124,6 @@ public class CardCreationView {
         configureSpinnerBehavior(attackSpinner);
         configureSpinnerBehavior(defenseSpinner);
 
-        // MODIFICATION ICI : Champ vide + Prompt Text
         cardNameField = new TextField();
         cardNameField.setPromptText("Nom de la carte");
 

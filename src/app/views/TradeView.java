@@ -56,7 +56,6 @@ public class TradeView {
         }
     }
 
-    // NOUVEAU : Méthode pour remplir la liste de droite
     public void updateOpponentInventory(List<Card> cards) {
         if (opponentCardList != null) {
             opponentCardList.getItems().setAll(cards);
@@ -119,8 +118,8 @@ public class TradeView {
         tradeBox.setPadding(new Insets(10));
 
         VBox playerPanel = createInventoryPanel("Your Inventory (Offered Card)", true);
-        VBox summaryPanel = createSummaryPanel();
         VBox opponentPanel = createInventoryPanel("Opponent Inventory (Requested Card)", false);
+        VBox summaryPanel = createSummaryPanel();
 
         tradeBox.getChildren().addAll(playerPanel, summaryPanel, opponentPanel);
         return tradeBox;
@@ -133,7 +132,6 @@ public class TradeView {
 
         ListView<Card> cardListView = new ListView<>();
 
-        // --- MISE A JOUR DU FORMAT D'AFFICHAGE ---
         cardListView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(Card item, boolean empty) {
@@ -142,13 +140,11 @@ public class TradeView {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    // Nouveau format demandé
                     setText(item.getNom() + " (HP: " + item.getHp() + " ATK: " + item.getAtk() + " DEF: " + item.getDef() + ")");
                     setTextFill(Color.BLACK);
                 }
             }
         });
-        // -----------------------------------------
 
         Label selectedLabel = createLabel("Selected:", 14, "#D9C6F0", FontWeight.BOLD);
         Label cardDisplayLabel = createLabel("- None -", 16, "#ffffff", FontWeight.NORMAL);

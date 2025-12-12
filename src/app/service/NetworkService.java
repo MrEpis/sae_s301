@@ -13,7 +13,7 @@ public class NetworkService {
     private PrintWriter out;
     private BufferedReader in;
 
-    private static final String SERVER_HOST = "134.59.27.129"; // Localhost
+    private static final String SERVER_HOST = "192.168.22.7"; // Localhost
     private static final int SERVER_PORT = 8080; // Port d'écoute du serveur C
 
     public NetworkService() {

@@ -65,13 +65,8 @@ public class ImageSelectorView {
 
         root.getChildren().add(scrollPane);
 
-        Scene scene = new Scene(root, 800, 600);
+        Scene scene = new Scene(root, 850, 600);
         stage.setScene(scene);
-
-        stage.setMinWidth(800);
-        stage.setMinHeight(600);
-        stage.setWidth(800);
-        stage.setHeight(600);
 
         stage.show();
     }
