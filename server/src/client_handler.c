@@ -26,7 +26,7 @@ void *handle_client(void *arg) {
     
     while ((bytes_read = recv(client_socket, buffer, sizeof(buffer)-1, 0))> 0) { //Si on a bien reçu le message
         buffer[bytes_read] = '\0';
-        printf("Message reçu du client %d: %s\n", client_socket, buffer);
+        printf("[CLIENT -> SERVEUR] (Client %d) : %s\n", client_socket, buffer);
 
         char action_name[50];
         if (extract_json_value(buffer, "nom", action_name, sizeof(action_name))) {
@@ -38,8 +38,11 @@ void *handle_client(void *arg) {
                 process_card_creation(client_socket, buffer);
             }
             else if (strcmp(action_name, ACTION_GET_USERS) == 0) {
-                printf("Demande de liste des joueurs reçue.\n"); // Debug
+                printf("Action GET_USER détectée.\n"); // Debug
                 process_get_connected_users(client_socket);
+            }
+            else if (strcmp(action_name, ACTION_GET_OPPONENT_INVENTORY) == 0) {
+                process_get_opponent_inventory(client_socket, buffer);
             }
             else {
                 send_error_response(client_socket, action_name, "Action inconnue");
@@ -193,8 +196,7 @@ void process_login(int client_socket, const char *json_payload) {
     "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": %s}}\n", 
     final_id, username, cards_json);
 
-    // For debugging
-    printf("Created player: %s\n", username);
+    printf("[SERVEUR -> CLIENT] (Client %d) : %s\n", client_socket, response);
 
     send(client_socket, response, strlen(response), 0);
 }
@@ -206,6 +208,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
     // Variables pour stocker les données extraites
     int id_client = -1;
     char nomCarte[50] = {0};
+    int defense = 0;
     int attaque = 0;
     int pv = 0;
     char image[50] = {0};
@@ -224,10 +227,10 @@ void process_card_creation(int client_socket, const char *json_payload) {
     // Nom de la carte
     extract_json_value(data_buffer, "nomCarte", nomCarte, sizeof(nomCarte));
     
-    // Stats (Attaque, PV)
+    // Stats (Attaque, PV, Défense)
     if (extract_json_value(data_buffer, "attaque", temp_str, sizeof(temp_str))) attaque = atoi(temp_str);
     if (extract_json_value(data_buffer, "pv", temp_str, sizeof(temp_str))) pv = atoi(temp_str);
-    
+    if (extract_json_value(data_buffer, "defense", temp_str, sizeof(temp_str))) defense = atoi(temp_str);
     // Image
     if (!extract_json_value(data_buffer, "image", image, sizeof(image))) {
         strcpy(image, "default.png"); // Image par défaut si non fournie
@@ -246,8 +249,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
     // if (nb_cartes >= MAX_CARDS) { ... send_error ... return; }
 
     // 2. Insertion dans la table CARTES (Cache BDD)
-    // On met la défense à 0 par défaut pour l'instant
-    int new_card_id = db_create_card(conn, id_client, nomCarte, attaque, 0, pv, image);
+    int new_card_id = db_create_card(conn, id_client, nomCarte, attaque, defense, pv, image);
     
     if (new_card_id == -1) {
         send_error_response(client_socket, "CardCreated", "Erreur base de donnees");
@@ -305,6 +307,8 @@ void process_card_creation(int client_socket, const char *json_payload) {
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"CardCreated\", \"status\": \"OK\", \"data\": {\"id\": %d}}\n", 
              new_card_id);
+
+    printf("[SERVEUR -> CLIENT] (Client %d) : %s", client_socket, response);
     
     send(client_socket, response, strlen(response), 0);
 }
@@ -347,9 +351,51 @@ void process_get_connected_users(int client_socket) {
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
              ACTION_GET_USERS, json_array);
-    printf("Réponse : %s\n", response);
+    printf("[SERVEUR -> CLIENT] (Client %d) : %s", client_socket, response);
     fflush(stdout);
 
     send(client_socket, response, strlen(response), 0);
-    printf("Liste des joueurs envoyée au client %d\n", client_socket);
 }
+
+void process_get_opponent_inventory(int client_socket, const char *json_payload) {
+    char data_buffer[512];
+    char target_username[50];
+    
+    // 1. Extraire l'objet "data"
+    if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
+        send_error_response(client_socket, ACTION_GET_OPPONENT_INVENTORY, "Donnees manquantes");
+        return;
+    }
+
+    // 2. Extraire le "username" cible
+    if (!extract_json_value(data_buffer, "username", target_username, sizeof(target_username))) {
+        send_error_response(client_socket, ACTION_GET_OPPONENT_INVENTORY, "Username manquant");
+        return;
+    }
+
+    PGconn *conn = get_db_connection();
+
+    // 3. Trouver l'ID du joueur cible via son pseudo
+    int target_id = db_get_player_id_by_name(conn, target_username);
+    
+    if (target_id == -1) {
+        send_error_response(client_socket, ACTION_GET_OPPONENT_INVENTORY, "Joueur introuvable");
+        return;
+    }
+
+    // 4. Récupérer son inventaire
+    char cards_json[4096];
+    db_get_player_cards_json(conn, target_id, cards_json, sizeof(cards_json));
+
+    // 5. Construire et envoyer la réponse
+    char response[5000];
+    snprintf(response, sizeof(response), 
+             "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
+             ACTION_GET_OPPONENT_INVENTORY, cards_json);
+
+    printf("[SERVEUR -> CLIENT] (Client %d) Inventaire de %s envoyé : %s", 
+           client_socket, target_username, response);
+    fflush(stdout);
+
+    send(client_socket, response, strlen(response), 0);
+}   
