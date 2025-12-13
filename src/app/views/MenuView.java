@@ -38,6 +38,8 @@ public class MenuView {
         Button inventoryButton = createButton("View Inventory");
         Button createCardButton = createButton("Create New Card");
         Button tradeButton = createButton("Request Card Trade");
+        // NOUVEAU BOUTON
+        Button notificationButton = createButton("View Notifications");
         Button quitButton = createButton("Quit");
 
         combatButton.setOnAction(e -> {
@@ -56,9 +58,19 @@ public class MenuView {
             controller.showTrade();
         });
 
+        notificationButton.setOnAction(e -> controller.showNotifications());
+
         quitButton.setOnAction(e -> controller.quit());
 
-        root.getChildren().addAll(titleLabel, combatButton, inventoryButton, createCardButton, tradeButton, quitButton);
+        root.getChildren().addAll(
+                titleLabel,
+                combatButton,
+                inventoryButton,
+                createCardButton,
+                tradeButton,
+                notificationButton,
+                quitButton
+        );
 
         return new Scene(root, 600, 600);
     }

@@ -2,6 +2,7 @@ package app.service;
 
 import app.model.Card;
 import app.model.Player;
+import app.model.TradeRequestModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +110,57 @@ public class JsonUtils {
         if (mainIndex == -1) return cards;
 
         int startIndex = jsonResponse.indexOf("[", mainIndex);
+        int endIndex = jsonResponse.lastIndexOf("]");
+
+        if (startIndex == -1 || endIndex == -1) return cards;
+
+        String arrayContent = jsonResponse.substring(startIndex + 1, endIndex);
+        if (arrayContent.trim().isEmpty()) return cards;
+
+        String[] cardObjects = arrayContent.split("},");
+
+        for (String cardJson : cardObjects) {
+            if (cardJson.trim().isEmpty()) continue;
+            cards.add(extractCardFromJson(cardJson));
+        }
+        return cards;
+    }
+
+    public static TradeRequestModel parseTradeRequestNotification(String json) {
+        int initId = extractInt(json, "\"id_initiator\":");
+        int initCard = extractInt(json, "\"id_card_initiator\":");
+        int recvCard = extractInt(json, "\"id_card_receiver\":");
+
+        return new TradeRequestModel(initId, initCard, recvCard);
+    }
+
+    public static String buildTradeResponseJson(boolean accepted, TradeRequestModel request, int receiverId) {
+        return String.format(
+                "{\"accepted\": %b, \"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d, \"id_receiver\": %d}",
+                accepted,
+                request.getInitiatorId(),
+                request.getInitiatorCardId(),
+                request.getReceiverCardId(),
+                receiverId
+        );
+    }
+
+    public static String buildResponse(String actionName, String dataJson) {
+        return String.format(
+                "{\"type\":\"response\", \"nom\":\"%s\", \"data\":%s}",
+                actionName,
+                dataJson
+        );
+    }
+
+    public static List<Card> parseInventoryFromTradeResult(String jsonResponse) {
+        List<Card> cards = new ArrayList<>();
+
+        // On cherche le tableau "hand": [...]
+        int handIndex = jsonResponse.indexOf("\"hand\":");
+        if (handIndex == -1) return cards;
+
+        int startIndex = jsonResponse.indexOf("[", handIndex);
         int endIndex = jsonResponse.lastIndexOf("]");
 
         if (startIndex == -1 || endIndex == -1) return cards;

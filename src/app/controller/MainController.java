@@ -1,15 +1,22 @@
 package app.controller;
 
 import app.model.Card;
+import app.model.TradeRequestModel;
 import app.service.JsonUtils;
 import app.service.SessionService;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import app.views.*;
 import app.model.Player;
 import app.service.NetworkService;
+import javafx.util.Duration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainController {
@@ -26,6 +33,7 @@ public class MainController {
     private CardCreationView cardCreationView;
     private MenuView menuView;
     private NetworkService networkService;
+    private final List<TradeRequestModel> notifications = new ArrayList<>();
 
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -45,26 +53,109 @@ public class MainController {
         });
     }
 
+    private void showToast(String message) {
+        Platform.runLater(() -> {
+            Popup popup = new Popup();
+            Label label = new Label(message);
+            label.setStyle("-fx-background-color: #333; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #A97DDE; -fx-border-radius: 10; -fx-border-width: 2;");
+
+            popup.getContent().add(label);
+            popup.setAutoHide(true);
+
+            if (primaryStage.isShowing()) {
+                double x = primaryStage.getX() + primaryStage.getWidth() - 250;
+                double y = primaryStage.getY() + 50;
+                popup.show(primaryStage, x, y);
+            }
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(2));
+            delay.setOnFinished(e -> popup.hide());
+            delay.play();
+        });
+    }
+
     private void handleNotification(String message) {
-        System.out.println("Notification reçue dans MainController : " + message);
+        System.out.println("Notification reçue : " + message);
 
-        // Détection d'une demande d'échange
-        if (message.contains("TradeRequest")) {
-            // Afficher une popup pour accepter ou refuser
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Demande d'échange");
-            alert.setHeaderText("Un joueur veut échanger une carte !");
-            alert.setContentText("Message brut : " + message); // A améliorer avec le parsing JSON plus tard
-
-            alert.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.OK) {
-                    System.out.println("Échange accepté !");
-                    // TODO: Envoyer la réponse d'acceptation au serveur
-                } else {
-                    System.out.println("Échange refusé.");
-                }
-            });
+        if (message.contains("ConfirmationRequest")) {
+            TradeRequestModel req = JsonUtils.parseTradeRequestNotification(message);
+            notifications.add(req);
+            Platform.runLater(() -> primaryStage.setTitle("Robs Card Game - (" + notifications.size() + ") Notification(s) !"));
+            showToast("Nouvelle demande d'échange !");
         }
+
+        else if (message.contains("TradeResult") && message.contains("OK")) {
+            List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
+
+            if (!newInventory.isEmpty()) {
+                localPlayer.getInventory().clear();
+                localPlayer.getInventory().addAll(newInventory);
+
+                System.out.println("Inventaire mis à jour après échange (" + newInventory.size() + " cartes).");
+                showToast("Échange validé ! Inventaire mis à jour.");
+            }
+        }
+    }
+
+    public void fetchRemoteCardForTrade(TradeRequestModel request, TradeProposalView view) {
+        new Thread(() -> {
+            String opponentUsername = getUsernameById(request.getInitiatorId());
+
+            if (opponentUsername == null) {
+                opponentUsername = getUsernameById(request.getInitiatorId());
+            }
+
+            if (opponentUsername != null) {
+                String dataJson = JsonUtils.buildGetOpponentInventoryRequest(opponentUsername);
+                String req = JsonUtils.buildRequest("GET_OPPONENT_INVENTORY", dataJson);
+                String resp = networkService.sendRequest(req);
+
+                if (resp != null && resp.contains("OK")) {
+                    List<Card> cards = JsonUtils.parseOpponentInventory(resp);
+                    for (Card c : cards) {
+                        if (c.getId() == request.getInitiatorCardId()) {
+                            Card foundCard = c;
+                            Platform.runLater(() -> view.updateRemoteCardDisplay(foundCard));
+                            return;
+                        }
+                    }
+                }
+            }
+            Platform.runLater(() -> view.updateRemoteCardDisplay(null));
+        }).start();
+    }
+
+    public void respondToTrade(TradeRequestModel request, boolean accepted) {
+        System.out.println("Réponse échange : " + (accepted ? "OUI" : "NON"));
+
+        int myId = localPlayer.getId_Client();
+        String jsonData = JsonUtils.buildTradeResponseJson(accepted, request, myId);
+        String requestStr = JsonUtils.buildResponse("ConfirmationResponse", jsonData);
+
+        if (networkService != null) {
+            networkService.sendRequest(requestStr);
+        }
+
+        notifications.remove(request);
+        Platform.runLater(() -> primaryStage.setTitle("Robs Card Game"));
+        showNotifications();
+    }
+
+    private String getUsernameById(int id) {
+        String req = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
+        String resp = networkService.sendRequest(req);
+        if (resp != null) {
+            List<Player> players = JsonUtils.parsePlayerList(resp);
+            for(Player p : players) {
+                if (p.getId_Client() == id) return p.getName();
+            }
+        }
+        return null;
+    }
+
+    public void showNotifications() {
+        primaryStage.setTitle("Robs Card Game");
+        new NotificationView(primaryStage, this, notifications).show();
     }
 
     public void showLogin() {
@@ -93,7 +184,6 @@ public class MainController {
                     List<Card> inventory = JsonUtils.parseInventoryFromLogin(response);
                     String username = JsonUtils.parseUsernameFromLogin(response); // Récupération du vrai nom
 
-                    // MISE A JOUR DES INFOS DU JOUEUR
                     localPlayer.setName(username);
                     localPlayer.getInventory().clear();
                     localPlayer.getInventory().addAll(inventory);
