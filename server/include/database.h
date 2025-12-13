@@ -32,4 +32,6 @@ int verify_consistency(PGconn *conn, Blockchain *chain);
 
 int verify_card_stats_integrity(PGconn *conn, Blockchain *chain);
 
+int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int card_recv);
+
 #endif

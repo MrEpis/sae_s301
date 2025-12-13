@@ -47,6 +47,9 @@ void *handle_client(void *arg) {
             else if (strcmp(action_name, ACTION_TRADE) == 0) {
                 process_trade_request(client_socket, buffer);
             }
+            else if (strcmp(action_name, ACTION_TRADE_RESPONSE) == 0) {
+                process_trade_response(client_socket, buffer);
+            }
             else {
                 send_error_response(client_socket, action_name, "Action inconnue");
             }
@@ -459,7 +462,7 @@ void process_trade_request(int client_socket, const char *json_payload) {
              ACTION_CONFIRMATION, id_initiator, id_card_initiator, id_card_receiver);
 
     // 5. Envoi au destinataire
-    printf("[SERVEUR -> CLIENT %d (%s)] Transfert offre echange : %s", socket_receiver, receiver_username, notification);
+    printf("[SERVEUR -> CLIENT %d (Trade receiver)] Transfert offre echange : %s", socket_receiver, notification);
     send(socket_receiver, notification, strlen(notification), 0);
 
     // 6. Confirmation à l'expéditeur (Client A)
@@ -468,6 +471,118 @@ void process_trade_request(int client_socket, const char *json_payload) {
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": \"Offre envoyee a %s\"}\n", 
              ACTION_TRADE, receiver_username);
     
-    printf("[SERVEUR -> CLIENT %d] Ack echange : %s", client_socket, ack);
+    printf("[SERVEUR -> CLIENT %d (Trade initiator)] Ack echange : %s", client_socket, ack);
     send(client_socket, ack, strlen(ack), 0);
+}
+
+// server/src/client_handler.c
+
+void process_trade_response(int client_socket, const char *json_payload) {
+    char data_buffer[1024];
+    char temp_str[50];
+    char status_str[20];
+
+    int id_initiator = -1;
+    int id_card_initiator = -1;
+    int id_receiver = -1;
+    int id_card_receiver = -1;
+    int accepted = 0;
+
+    // 1. Extraction des données
+    if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) return;
+
+    // On regarde si c'est accepté ou refusé ("accepted": true/false ou "response": "ACCEPTED")
+    // Adapté selon votre JSON client. Ici je suppose un champ "response": "ACCEPTED"
+    if (extract_json_value(data_buffer, "accepted", status_str, sizeof(status_str))) {
+        if (strcmp(status_str, "true") == 0) accepted = 1;
+    }
+
+    if (extract_json_value(data_buffer, "id_initiator", temp_str, sizeof(temp_str))) id_initiator = atoi(temp_str);
+    if (extract_json_value(data_buffer, "id_card_initiator", temp_str, sizeof(temp_str))) id_card_initiator = atoi(temp_str);
+    if (extract_json_value(data_buffer, "id_receiver", temp_str, sizeof(temp_str))) id_receiver = atoi(temp_str);
+    if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
+
+    // 2. Retrouver le socket de l'initiateur (Celui qui a proposé l'échange)
+    int socket_initiator = -1;
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients_list[i].logged_in && clients_list[i].client_id == id_initiator) {
+            socket_initiator = clients_list[i].socket;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+
+    // 3. Traitement
+    if (!accepted) {
+        // CAS REFUSÉ
+        if (socket_initiator != -1) {
+            char msg[] = "{\"type\": \"response\", \"nom\": \"TradeResult\", \"status\": \"ERROR\", \"data\": \"Echange refuse par le joueur\"}\n";
+            send(socket_initiator, msg, strlen(msg), 0);
+        }
+        return;
+    }
+
+    // CAS ACCEPTÉ
+    PGconn *conn = get_db_connection();
+    
+    // A. Mise à jour BDD (Transaction)
+    if (db_execute_trade(conn, id_initiator, id_card_initiator, id_receiver, id_card_receiver) != 0) {
+        send_error_response(client_socket, "TradeResponse", "Echec technique de l'echange en BDD");
+        return;
+    }
+
+    // B. Ajout dans la Blockchain
+    Blockchain *bc = get_global_blockchain();
+    Block *new_block = malloc(sizeof(Block));
+    new_block->ID_block = bc->tail->ID_block + 1;
+    new_block->timestamp = time(NULL);
+    new_block->nonce = 0;
+    strncpy(new_block->previous_hash, bc->tail->hash, HASH_SIZE);
+    
+    char action_json[512];
+    snprintf(action_json, sizeof(action_json), 
+         "{\"action\": \"Trade\", \"p1\": %d, \"card1\": %d, \"p2\": %d, \"card2\": %d}", 
+         id_initiator, id_card_initiator, id_receiver, id_card_receiver);
+    new_block->data_action = strdup(action_json);
+    
+    mine_block(new_block);
+    
+    bc->tail->next = new_block;
+    bc->tail = new_block;
+    bc->size++;
+    
+    db_save_block(conn, new_block); // Sauvegarde persistante
+
+    // C. Notification de succès avec mise à jour des mains
+    
+    // 1. Pour le Receveur (Client B - celui qui a accepté)
+    // On récupère sa main mise à jour depuis la BDD
+    char hand_recv[4096];
+    db_get_player_cards_json(conn, id_receiver, hand_recv, sizeof(hand_recv));
+    
+    char msg_b[5000];
+    // On envoie un objet JSON contenant à la fois un message et la liste "hand"
+    snprintf(msg_b, sizeof(msg_b), 
+             "{\"type\": \"response\", \"nom\": \"TradeResult\", \"status\": \"OK\", \"data\": {\"message\": \"Echange valide\", \"hand\": %s}}\n", 
+             hand_recv);
+
+    printf("[SERVEUR -> CLIENT %d] Envoi nouvelle main apres echange\n", client_socket);
+    send(client_socket, msg_b, strlen(msg_b), 0); 
+
+    // 2. Pour l'Initiateur (Client A - celui qui a proposé)
+    if (socket_initiator != -1) {
+        char hand_init[4096];
+        db_get_player_cards_json(conn, id_initiator, hand_init, sizeof(hand_init));
+        
+        char msg_a[5000];
+        snprintf(msg_a, sizeof(msg_a), 
+                 "{\"type\": \"response\", \"nom\": \"TradeResult\", \"status\": \"OK\", \"data\": {\"message\": \"Offre acceptee\", \"hand\": %s}}\n", 
+                 hand_init);
+        
+        printf("[SERVEUR -> CLIENT %d] Envoi nouvelle main apres echange\n", socket_initiator);
+        send(socket_initiator, msg_a, strlen(msg_a), 0);
+    }
+
+    printf("Echange termine avec succes.\n");
 }

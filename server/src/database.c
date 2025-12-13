@@ -414,3 +414,54 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
     printf("--- Stats des cartes intègres ---\n");
     return 1;
 }
+
+// server/src/database.c
+
+int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int card_recv) {
+    PGresult *res;
+    
+    // 1. Démarrer la transaction
+    res = PQexec(conn, "BEGIN");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        PQclear(res);
+        return -1;
+    }
+    PQclear(res);
+
+    // 2. Transférer la carte de l'initiateur vers le receveur
+    const char *q1 = "UPDATE cartes SET owner_id = $1 WHERE id = $2 AND owner_id = $3";
+    char owner_recv_str[12], card_init_str[12], owner_init_str[12];
+    sprintf(owner_recv_str, "%d", id_recv);
+    sprintf(card_init_str, "%d", card_init);
+    sprintf(owner_init_str, "%d", id_init);
+    const char *p1[] = {owner_recv_str, card_init_str, owner_init_str};
+
+    res = PQexecParams(conn, q1, 3, NULL, p1, NULL, NULL, 0);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK || atoi(PQcmdTuples(res)) == 0) {
+        // Echec (ex: la carte n'appartient plus au joueur)
+        PQclear(res);
+        PQexec(conn, "ROLLBACK");
+        return -1;
+    }
+    PQclear(res);
+
+    // 3. Transférer la carte du receveur vers l'initiateur
+    const char *q2 = "UPDATE cartes SET owner_id = $1 WHERE id = $2 AND owner_id = $3";
+    char card_recv_str[12];
+    sprintf(card_recv_str, "%d", card_recv);
+    const char *p2[] = {owner_init_str, card_recv_str, owner_recv_str}; // Notez l'inversion des owners
+
+    res = PQexecParams(conn, q2, 3, NULL, p2, NULL, NULL, 0);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK || atoi(PQcmdTuples(res)) == 0) {
+        PQclear(res);
+        PQexec(conn, "ROLLBACK");
+        return -1;
+    }
+    PQclear(res);
+
+    // 4. Valider la transaction
+    res = PQexec(conn, "COMMIT");
+    PQclear(res);
+    
+    return 0; // Succès
+}
