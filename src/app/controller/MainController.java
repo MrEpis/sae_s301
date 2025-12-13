@@ -34,6 +34,7 @@ public class MainController {
     private MenuView menuView;
     private NetworkService networkService;
     private final List<TradeRequestModel> notifications = new ArrayList<>();
+    private String pendingTradeOpponentName = "l'adversaire";
 
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -57,18 +58,25 @@ public class MainController {
         Platform.runLater(() -> {
             Popup popup = new Popup();
             Label label = new Label(message);
-            label.setStyle("-fx-background-color: #333; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #A97DDE; -fx-border-radius: 10; -fx-border-width: 2;");
+
+            label.setWrapText(true);
+            label.setMaxWidth(260);
+            label.setPrefWidth(260);
+
+            String bgColor = message.contains("refusé") ? "#F44336" : (message.contains("accepté") || message.contains("validé") ? "#4CAF50" : "#A97DDE");
+
+            label.setStyle("-fx-background-color: " + bgColor + "; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: white; -fx-border-radius: 10; -fx-border-width: 2; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 0);");
 
             popup.getContent().add(label);
             popup.setAutoHide(true);
 
             if (primaryStage.isShowing()) {
-                double x = primaryStage.getX() + primaryStage.getWidth() - 250;
-                double y = primaryStage.getY() + 50;
+                double x = primaryStage.getX() + primaryStage.getWidth() - 320;
+                double y = primaryStage.getY() + 60;
                 popup.show(primaryStage, x, y);
             }
 
-            PauseTransition delay = new PauseTransition(Duration.seconds(2));
+            PauseTransition delay = new PauseTransition(Duration.seconds(4));
             delay.setOnFinished(e -> popup.hide());
             delay.play();
         });
@@ -79,20 +87,40 @@ public class MainController {
 
         if (message.contains("ConfirmationRequest")) {
             TradeRequestModel req = JsonUtils.parseTradeRequestNotification(message);
-            notifications.add(req);
-            Platform.runLater(() -> primaryStage.setTitle("Robs Card Game - (" + notifications.size() + ") Notification(s) !"));
-            showToast("Nouvelle demande d'échange !");
+
+            new Thread(() -> {
+                String name = getUsernameById(req.getInitiatorId());
+                if (name != null) {
+                    req.setInitiatorUsername(name);
+                }
+
+                Platform.runLater(() -> {
+                    notifications.add(req);
+                    primaryStage.setTitle("Robs Card Game - (" + notifications.size() + ") Notification(s) !");
+                    showToast("Nouvelle demande d'échange de " + req.getInitiatorUsername() + " !");
+
+                });
+            }).start();
         }
 
-        else if (message.contains("TradeResult") && message.contains("OK")) {
-            List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
+        else if (message.contains("TradeResult")) {
 
-            if (!newInventory.isEmpty()) {
-                localPlayer.getInventory().clear();
-                localPlayer.getInventory().addAll(newInventory);
+            if (message.contains("ERROR")) {
+                Platform.runLater(() -> {
+                    showToast("Échange refusé par " + pendingTradeOpponentName + ".");
+                });
+            }
 
-                System.out.println("Inventaire mis à jour après échange (" + newInventory.size() + " cartes).");
-                showToast("Échange validé ! Inventaire mis à jour.");
+            else if (message.contains("OK")) {
+                List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
+
+                if (!newInventory.isEmpty()) {
+                    localPlayer.getInventory().clear();
+                    localPlayer.getInventory().addAll(newInventory);
+                    Platform.runLater(() -> {
+                        showToast("Échange accepté par " + pendingTradeOpponentName + " ! Inventaire mis à jour.");
+                    });
+                }
             }
         }
     }
@@ -125,19 +153,19 @@ public class MainController {
         }).start();
     }
 
-    public void respondToTrade(TradeRequestModel request, boolean accepted) {
+    public void respondToTrade(TradeRequestModel request, boolean accepted, int myId) {
         System.out.println("Réponse échange : " + (accepted ? "OUI" : "NON"));
 
-        int myId = localPlayer.getId_Client();
         String jsonData = JsonUtils.buildTradeResponseJson(accepted, request, myId);
-        String requestStr = JsonUtils.buildResponse("ConfirmationResponse", jsonData);
+        String responseStr = JsonUtils.buildResponse("ConfirmationResponse", jsonData);
 
         if (networkService != null) {
-            networkService.sendRequest(requestStr);
+            networkService.sendMessage(responseStr);
         }
 
         notifications.remove(request);
         Platform.runLater(() -> primaryStage.setTitle("Robs Card Game"));
+
         showNotifications();
     }
 
@@ -150,7 +178,7 @@ public class MainController {
                 if (p.getId_Client() == id) return p.getName();
             }
         }
-        return null;
+        return "Joueur " + id;
     }
 
     public void showNotifications() {
@@ -230,5 +258,9 @@ public class MainController {
         System.out.println("Déconnexion du client...");
         if (networkService != null) networkService.closeConnection();
         primaryStage.close();
+    }
+
+    public void setPendingTradeOpponent(String name) {
+        this.pendingTradeOpponentName = name;
     }
 }

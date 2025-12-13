@@ -97,6 +97,8 @@ public class TradeController {
             return;
         }
 
+        mainController.setPendingTradeOpponent(opponentName);
+
         tradeView.displayStatus("Envoi de la demande d'échange à " + opponentName + " (ID: " + opponentId + ")...");
 
         String dataJson = JsonUtils.buildTradeRequestData(

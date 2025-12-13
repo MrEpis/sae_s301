@@ -85,6 +85,13 @@ public class NetworkService {
         }
     }
 
+    public void sendMessage(String jsonMessage) {
+        if (socket != null && !socket.isClosed()) {
+            System.out.println("[ENVOI ASYNC] : " + jsonMessage);
+            out.println(jsonMessage);
+        }
+    }
+
     public void closeConnection() {
         isRunning = false;
         try {
