@@ -21,7 +21,7 @@ public class NetworkService {
 
     private Consumer<String> notificationListener;
 
-    private static final String SERVER_HOST = "192.168.22.3";
+    private static final String SERVER_HOST = "134.59.27.129";
     private static final int SERVER_PORT = 8080;
     private boolean isRunning = false;
 
