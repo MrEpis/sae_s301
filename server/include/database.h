@@ -34,4 +34,10 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain);
 
 int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int card_recv);
 
+int db_count_player_cards(PGconn *conn, int id_client);
+
+int db_get_card_stats(PGconn *conn, int card_id, int *atk, int *def, int *hp);
+
+int db_update_card_hp(PGconn *conn, int card_id, int new_hp);
+
 #endif

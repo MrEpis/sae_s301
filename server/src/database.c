@@ -465,3 +465,62 @@ int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int 
     
     return 0; // Succès
 }
+
+int db_count_player_cards(PGconn *conn, int id_client) {
+    char id_str[12];
+    sprintf(id_str, "%d", id_client);
+
+    const char *query = "SELECT COUNT(*) FROM cartes WHERE owner_id = $1";
+    const char *params[1] = { id_str };
+
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+    int client_cards = atoi(PQgetvalue(res, 0, 0));
+
+    PQclear(res);
+    return client_cards;
+}
+
+int db_get_card_stats(PGconn *conn, int card_id, int *atk, int *def, int *hp) {
+    char id_str[12];
+    sprintf(id_str, "%d", card_id);
+    const char *params[1] = { id_str };
+
+    // On récupère hp_actuel (pas max_hp) car les dégâts sont persistants
+    PGresult *res = PQexecParams(conn, "SELECT attaque, defense, hp_actuel FROM cartes WHERE id = $1", 
+                                 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+        PQclear(res);
+        return -1; // Carte introuvable
+    }
+
+    *atk = atoi(PQgetvalue(res, 0, 0));
+    *def = atoi(PQgetvalue(res, 0, 1));
+    *hp  = atoi(PQgetvalue(res, 0, 2)); // PV Actuels
+
+    PQclear(res);
+    return 0;
+}
+
+// Met à jour les PV et gère la mort de la carte
+int db_update_card_hp(PGconn *conn, int card_id, int new_hp) {
+    char id_str[12], hp_str[12];
+    sprintf(id_str, "%d", card_id);
+    
+    // Règle : Si PV <= 0, on supprime la carte (ou on met owner_id à NULL)
+    // Ici, supprimons-la pour faire simple et propre.
+    if (new_hp <= 0) {
+        const char *params[1] = { id_str };
+        PGresult *res = PQexecParams(conn, "DELETE FROM cartes WHERE id = $1", 
+                                     1, NULL, params, NULL, NULL, 0);
+        PQclear(res);
+        return 0; // Carte morte
+    } else {
+        sprintf(hp_str, "%d", new_hp);
+        const char *params[2] = { hp_str, id_str };
+        PGresult *res = PQexecParams(conn, "UPDATE cartes SET hp_actuel = $1 WHERE id = $2", 
+                                     2, NULL, params, NULL, NULL, 0);
+        PQclear(res);
+        return 1; // Carte vivante
+    }
+}

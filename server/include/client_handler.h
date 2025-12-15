@@ -15,4 +15,8 @@ void process_trade_request(int client_socket, const char *json_payload);
 
 void process_trade_response(int client_socket, const char *json_payload);
 
+void process_fight_request(int client_socket, const char *json_payload);
+
+void process_fight_response(int client_socket, const char *json_payload);
+
 #endif
