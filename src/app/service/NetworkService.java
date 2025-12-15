@@ -52,7 +52,13 @@ public class NetworkService {
                 while (isRunning && (message = in.readLine()) != null) {
                     System.out.println("[RECU BRUT] : " + message);
 
-                    if (message.contains("\"type\": \"response\"") || message.contains("\"type\":\"response\"")) {
+                    if (message.contains("TradeResult")) {
+                        String finalMessage = message;
+                        if (notificationListener != null) {
+                            Platform.runLater(() -> notificationListener.accept(finalMessage));
+                        }
+                    }
+                    else if (message.contains("\"type\": \"response\"") || message.contains("\"type\":\"response\"")) {
                         responseQueue.put(message);
                     }
                     else {

@@ -205,4 +205,32 @@ public class JsonUtils {
         Matcher m = p.matcher(source);
         return m.find() ? m.group(1) : "Inconnu";
     }
+
+    public static String buildFightRequestData(int initiatorId, int cardInitiatorId, int receiverId, int cardReceiverId) {
+        return String.format(
+                "{\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_receiver\": %d, \"id_card_receiver\": %d}",
+                initiatorId,
+                cardInitiatorId,
+                receiverId,
+                cardReceiverId
+        );
+    }
+
+    public static TradeRequestModel parseFightRequestNotification(String json) {
+
+        TradeRequestModel req = parseTradeRequestNotification(json);
+        req.setFight(true);
+        return req;
+    }
+
+    public static String buildFightResponseJson(boolean accepted, TradeRequestModel request, int receiverId) {
+        return String.format(
+                "{\"accepted\": %b, \"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d, \"id_receiver\": %d}",
+                accepted,
+                request.getInitiatorId(),
+                request.getInitiatorCardId(),
+                request.getReceiverCardId(),
+                receiverId
+        );
+    }
 }

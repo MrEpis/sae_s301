@@ -1,78 +1,123 @@
 package app.controller;
 
 import app.model.Card;
-import app.model.Game;
 import app.model.Player;
+import app.service.JsonUtils;
+import app.service.NetworkService;
 import app.views.CombatView;
-import javafx.collections.FXCollections;
-import javafx.scene.control.ListView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CombatController {
 
     private final MainController mainController;
-    private final Player playerLocal;
-    private Player playerAdversaire;
-    private Game currentGame;
+    private final Player currentPlayer;
     private CombatView combatView;
+
+    // Liste pour mapper Nom -> ID
+    private List<Player> connectedPlayers = new ArrayList<>();
 
     public CombatController(MainController mainController, Player player) {
         this.mainController = mainController;
-        this.playerLocal = player;
-
-        this.playerAdversaire = new Player(999, "Adversaire IA");
-
-        if (this.playerAdversaire.getInventory().isEmpty()) {
-            this.playerAdversaire.getInventory().add(new Card(3, "Golem", 30, 8, 7, null));
-            this.playerAdversaire.getInventory().add(new Card(4, "Voleur", 10, 2, 12, null));
-        }
+        this.currentPlayer = player;
     }
 
     public void setView(CombatView view) {
         this.combatView = view;
     }
 
-    public ListView<Card> getPlayerInventory() {
-        ListView<Card> listView = new ListView<>();
-        listView.setItems(FXCollections.observableArrayList(playerLocal.getInventory()));
-        return listView;
+    public void backToMenu() {
+        mainController.showMenu();
     }
 
-    public ListView<Card> getOpponentInventory() {
-        ListView<Card> listView = new ListView<>();
-        listView.setItems(FXCollections.observableArrayList(playerAdversaire.getInventory()));
-        return listView;
+    public List<Card> getLocalPlayerInventory() {
+        return currentPlayer.getInventory();
     }
 
-    public void searchOpponent(String name) {
-        System.out.println("Recherche de l'adversaire : " + name);
-        this.playerAdversaire = new Player(202, name);
-        this.playerAdversaire.getInventory().add(new Card(5, "Monstre de " + name, 25, 5, 5, null));
-    }
+    // 1. Récupérer la liste des joueurs (identique à TradeController)
+    public void refreshPlayerList() {
+        System.out.println("Combat: Récupération liste joueurs...");
+        String request = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
 
-    public void setupDuel(Card cardPlayer, Card cardOpponent) {
-        Card c1 = new Card(cardPlayer.getId(), cardPlayer.getNom(), cardPlayer.getHp(), cardPlayer.getDef(), cardPlayer.getAtk(), cardPlayer.getImagePath());
-        Card c2 = new Card(cardOpponent.getId(), cardOpponent.getNom(), cardOpponent.getHp(), cardOpponent.getDef(), cardOpponent.getAtk(), cardOpponent.getImagePath());
-        this.currentGame = new Game(playerLocal, playerAdversaire, c1, c2);
-    }
+        NetworkService net = mainController.getNetworkService();
+        if (net != null) {
+            String response = net.sendRequest(request);
+            if (response != null && response.contains("OK")) {
+                List<Player> allPlayers = JsonUtils.parsePlayerList(response);
 
-    public void launchInstantFight() {
-        if (currentGame == null) return;
-        Card carte1 = currentGame.getCardPlayer1();
-        Card carte2 = currentGame.getCardPlayer2();
-        int score1 = carte1.getHp() + carte1.getAtk() - carte2.getDef();
-        int score2 = carte2.getHp() + carte2.getAtk() - carte1.getDef();
-        if (score1 > score2) {
-            System.out.println(playerLocal.getName() + " GAGNE !");
-            carte2.setHp(0);
-        } else if (score2 > score1) {
-            System.out.println(playerAdversaire.getName() + " GAGNE !");
-            carte1.setHp(0);
-        } else {
-            System.out.println("ÉGALITÉ !");
+                this.connectedPlayers.clear();
+                List<String> names = new ArrayList<>();
+
+                for (Player p : allPlayers) {
+                    if (p.getId_Client() != currentPlayer.getId_Client()) {
+                        this.connectedPlayers.add(p);
+                        names.add(p.getName());
+                    }
+                }
+                combatView.updatePlayerList(names);
+                combatView.displayStatus(connectedPlayers.size() + " adversaire(s) trouvé(s).");
+            }
         }
     }
 
-    public void backToMenu() {
-        mainController.showMenu();
+    // 2. Charger l'inventaire adverse pour choisir la cible
+    public void loadOpponentInventory(String opponentName) {
+        combatView.displayStatus("Espionnage de l'inventaire de " + opponentName + "...");
+        String dataJson = JsonUtils.buildGetOpponentInventoryRequest(opponentName);
+        String request = JsonUtils.buildRequest("GET_OPPONENT_INVENTORY", dataJson);
+
+        NetworkService net = mainController.getNetworkService();
+        if (net != null) {
+            String response = net.sendRequest(request);
+            if (response != null && response.contains("OK")) {
+                List<Card> cards = JsonUtils.parseOpponentInventory(response);
+                combatView.updateOpponentInventory(cards);
+                combatView.displayStatus("Cible verrouillée : " + opponentName);
+            }
+        }
+    }
+
+    // 3. Envoyer la demande de combat
+    public void sendFightRequest(String opponentName, int myCardId, int targetCardId) {
+        // Retrouver l'ID de l'adversaire
+        int opponentId = -1;
+        for(Player p : connectedPlayers) {
+            if(p.getName().equals(opponentName)) {
+                opponentId = p.getId_Client();
+                break;
+            }
+        }
+
+        if (opponentId == -1) {
+            combatView.displayStatus("Erreur : Adversaire introuvable.");
+            return;
+        }
+
+        System.out.println("Envoi FightRequest à " + opponentName);
+        combatView.displayStatus("Envoi du défi à " + opponentName + "...");
+
+        // Construction de la requête
+        String dataJson = JsonUtils.buildFightRequestData(
+                currentPlayer.getId_Client(),
+                myCardId,
+                opponentId,
+                targetCardId
+        );
+
+        String request = JsonUtils.buildRequest("FightRequest", dataJson);
+
+        NetworkService net = mainController.getNetworkService();
+        if (net != null) {
+            // On utilise sendMessage (Async) ou sendRequest (Sync) selon votre choix
+            // Ici sendRequest pour avoir l'ACK immédiat du serveur
+            String response = net.sendRequest(request);
+
+            if (response != null && response.contains("OK")) {
+                combatView.displayStatus("Défi envoyé ! En attente de réponse...");
+            } else {
+                combatView.displayStatus("Erreur lors de l'envoi du défi.");
+            }
+        }
     }
 }

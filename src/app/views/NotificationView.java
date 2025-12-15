@@ -51,8 +51,13 @@ public class NotificationView {
                     setText(null);
                     setStyle("-fx-background-color: transparent;");
                 } else {
-                    setText("Échange proposé par " + item.getInitiatorUsername());
-                    setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+                    if (item.isFight()) {
+                        setText("⚔️ DÉFI DE COMBAT reçu de " + item.getInitiatorUsername());
+                        setStyle("-fx-text-fill: #FF5252; -fx-font-size: 14px; -fx-padding: 10; -fx-font-weight: bold;");
+                    } else {
+                        setText("🤝 Échange proposé par " + item.getInitiatorUsername());
+                        setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+                    }
                 }
             }
         });
@@ -61,7 +66,11 @@ public class NotificationView {
         listView.setOnMouseClicked(e -> {
             TradeRequestModel selected = listView.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                new TradeProposalView(primaryStage, controller, selected).show();
+                if (selected.isFight()) {
+                    new FightProposalView(primaryStage, controller, selected).show();
+                } else {
+                    new TradeProposalView(primaryStage, controller, selected).show();
+                }
             }
         });
 
