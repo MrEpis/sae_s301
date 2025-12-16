@@ -40,4 +40,6 @@ int db_get_card_stats(PGconn *conn, int card_id, int *atk, int *def, int *hp);
 
 int db_update_card_hp(PGconn *conn, int card_id, int new_hp);
 
+void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_len);
+
 #endif

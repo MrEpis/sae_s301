@@ -53,6 +53,9 @@ void *handle_client(void *arg) {
             else if (strcmp(action_name, ACTION_FIGHT) == 0) {
                 process_fight_request(client_socket, buffer);
             }
+            else if (strcmp(action_name, ACTION_FIGHT_RESPONSE) == 0) {
+                process_fight_response(client_socket, buffer);
+            }
             else {
                 send_error_response(client_socket, action_name, "Action inconnue");
             }
@@ -702,6 +705,13 @@ void process_fight_response(int client_socket, const char *json_payload) {
 
     // 3. EXECUTION DU COMBAT
     PGconn *conn = get_db_connection();
+
+    char json_card_initiator[1024];
+    char json_card_receiver[1024];
+
+    db_get_single_card_json(conn, id_card_initiator, json_card_initiator, sizeof(json_card_initiator));
+    db_get_single_card_json(conn, id_card_receiver, json_card_receiver, sizeof(json_card_receiver));    
+
     int atk1, def1, hp1, atk2, def2, hp2;
 
     // Récup stats
@@ -711,21 +721,23 @@ void process_fight_response(int client_socket, const char *json_payload) {
         return; 
     }
 
-    // Algorithme de combat (Attaque vs Défense + Facteur aléatoire +/- 20%)
-    // Dégâts reçus par 2 = Attaque 1 * Rand - Défense 2
-    srand(time(NULL));
-    float rand1 = 0.8 + ((float)rand() / RAND_MAX) * 0.4; // entre 0.8 et 1.2
-    float rand2 = 0.8 + ((float)rand() / RAND_MAX) * 0.4;
+    printf("Défense carte 1 : %d\n", def1);
+    printf("Défense carte 2 : %d\n", def2);
+    printf("Attaque carte 1 : %d\n", atk1);
+    printf("Attaque carte 2 : %d\n", atk2);
 
-    int dmg_to_2 = (int)(atk1 * rand1) - def2;
-    int dmg_to_1 = (int)(atk2 * rand2) - def1;
+    float dmg_to_2 = atk1 - (atk1 * (def2/100.0));
+    float dmg_to_1 = atk2 - (atk2 * (def1/100.0));
+    printf("Dégats infligés à 1 : %f\n", dmg_to_1);
+    printf("Dégats infligés à 2 : %f\n", dmg_to_2);
+
 
     if (dmg_to_2 < 0) dmg_to_2 = 0; // Pas de soin par attaque
     if (dmg_to_1 < 0) dmg_to_1 = 0;
 
     // Application des dégâts
-    int new_hp1 = hp1 - dmg_to_1;
-    int new_hp2 = hp2 - dmg_to_2;
+    int new_hp1 = hp1 - ((int) dmg_to_1);
+    int new_hp2 = hp2 - ((int) dmg_to_2);
 
     // Mise à jour BDD (et suppression si mort)
     int status1 = db_update_card_hp(conn, id_card_initiator, new_hp1);
@@ -745,7 +757,7 @@ void process_fight_response(int client_socket, const char *json_payload) {
 
     snprintf(action_json, sizeof(action_json), 
          "{\"action\": \"Fight\", \"p1\": %d, \"dmg1\": %d, \"p2\": %d, \"dmg2\": %d, \"winner\": %d}", 
-         id_initiator, dmg_to_1, id_receiver, dmg_to_2, winner_id);
+         id_initiator, ((int) dmg_to_1), id_receiver, ((int) dmg_to_2), winner_id);
     
     new_block->data_action = strdup(action_json);
     mine_block(new_block);
@@ -760,21 +772,21 @@ void process_fight_response(int client_socket, const char *json_payload) {
     db_get_player_cards_json(conn, id_initiator, hand_init, sizeof(hand_init));
     db_get_player_cards_json(conn, id_receiver, hand_recv, sizeof(hand_recv));
 
-    char result_msg[5000];
+    char result_msg[6000];
     
     // Message pour le Receveur (B)
     snprintf(result_msg, sizeof(result_msg), 
-             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"log\": \"Combat termine. Tu as subi %d degats.\", \"hand\": %s}}\n", 
-             dmg_to_2, hand_recv);
+             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"log\": \"Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
+             ((int) dmg_to_2), ((int) dmg_to_1), hand_recv, json_card_initiator);
     send(client_socket, result_msg, strlen(result_msg), 0);
 
     // Message pour l'Initiateur (A)
     if (socket_initiator != -1) {
         snprintf(result_msg, sizeof(result_msg), 
-             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"log\": \"Combat termine. Tu as subi %d degats.\", \"hand\": %s}}\n", 
-             dmg_to_1, hand_init);
+             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"log\": \"Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
+             ((int) dmg_to_1), ((int) dmg_to_2), hand_init, json_card_receiver);
         send(socket_initiator, result_msg, strlen(result_msg), 0);
     }
 
-    printf("Combat termine : %d vs %d (Dmg: %d - %d)\n", id_initiator, id_receiver, dmg_to_1, dmg_to_2);
+    printf("Combat termine : %d vs %d (Dmg: %d - %d)\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2));
 }

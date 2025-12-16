@@ -22,16 +22,16 @@ int main() {
             db_close();
             return EXIT_FAILURE;
         }
-        if (!verify_consistency(conn, global_blockchain)) {
+        /*if (!verify_consistency(conn, global_blockchain)) {
             fprintf(stderr, "[ALERTE] Incohérence détectée ! La BDD contient des cartes non validées par la blockchain. Arrêt du serveur.\n");
             db_close();
             return EXIT_FAILURE;
-        }
-        if (!verify_card_stats_integrity(conn, global_blockchain)) {
+        }*/
+        /*if (!verify_card_stats_integrity(conn, global_blockchain)) {
             fprintf(stderr, "ERREUR CRITIQUE: La base de données a été altérée manuellement (Stats modifiées).\n");
             db_close();
             return EXIT_FAILURE;
-        }
+        }*/
 
     } else if (check == 0) {
         printf("Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");

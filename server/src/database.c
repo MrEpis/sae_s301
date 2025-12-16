@@ -524,3 +524,32 @@ int db_update_card_hp(PGconn *conn, int card_id, int new_hp) {
         return 1; // Carte vivante
     }
 }
+
+void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_len) {
+    char id_str[12];
+    sprintf(id_str, "%d", card_id);
+    const char *params[1] = { id_str };
+
+    // On récupère les infos visuelles et les stats
+    const char *query = "SELECT id, nom, attaque, defense, max_hp, hp_actuel, nom_image FROM cartes WHERE id = $1";
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+        snprintf(buffer, max_len, "{}"); // Objet vide si non trouvé
+        PQclear(res);
+        return;
+    }
+
+    // Construction de l'objet JSON unique
+    snprintf(buffer, max_len, 
+             "{\"id\": %s, \"nom\": \"%s\", \"attaque\": %s, \"defense\": %s, \"pv\": %s, \"image\": \"%s\"}",
+             PQgetvalue(res, 0, 0),
+             PQgetvalue(res, 0, 1),
+             PQgetvalue(res, 0, 2),
+             PQgetvalue(res, 0, 3),
+             PQgetvalue(res, 0, 5), // hp_actuel
+             PQgetvalue(res, 0, 6)
+    );
+
+    PQclear(res);
+}
