@@ -26,7 +26,7 @@ void *handle_client(void *arg) {
     
     while ((bytes_read = recv(client_socket, buffer, sizeof(buffer)-1, 0))> 0) { //Si on a bien reçu le message
         buffer[bytes_read] = '\0';
-        printf("[CLIENT -> SERVEUR] (Client %d) : %s\n", client_socket, buffer);
+        printf("[CLIENT -> SERVEUR] (Socket client %d) : %s\n", client_socket, buffer);
 
         char action_name[50];
         if (extract_json_value(buffer, "nom", action_name, sizeof(action_name))) {
@@ -34,11 +34,9 @@ void *handle_client(void *arg) {
                 process_login(client_socket, buffer);                
             }
             else if (strcmp(action_name, ACTION_CREATION) == 0) {
-                printf("Action CREATION détectée\n");
                 process_card_creation(client_socket, buffer);
             }
             else if (strcmp(action_name, ACTION_GET_USERS) == 0) {
-                printf("Action GET_USER détectée.\n"); // Debug
                 process_get_connected_users(client_socket);
             }
             else if (strcmp(action_name, ACTION_GET_OPPONENT_INVENTORY) == 0) {
@@ -67,7 +65,7 @@ void *handle_client(void *arg) {
         memset(buffer, 0, sizeof(buffer));
     }
     if (bytes_read == 0) {
-        printf("Client %d déconnecté.\n", client_socket);
+        printf("[INFO] Socket client %d déconnecté.\n", client_socket);
 
         pthread_mutex_lock(&clients_mutex);
         for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -79,7 +77,7 @@ void *handle_client(void *arg) {
         }
     }
     } else if (bytes_read == -1) {
-        perror("recv failed");
+        perror("[INFO] recv failed (Client déconnecté)\n");
         for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_list[i].socket == client_socket) {
             clients_list[i].socket = -1;
@@ -137,7 +135,7 @@ void process_login(int client_socket, const char *json_payload) {
         if (existing_id != -1) {
             // First case : this player already exists -> is signed in
             final_id = existing_id;
-            printf("Joueur existant '%s' avec ID %d (Login via ID 0)\n", username, final_id);
+            printf("[INFO] Joueur existant '%s' avec ID %d (Login via ID 0)\n", username, final_id);
         } else {
             // Other case : this player doesn't exist yet -> is created
             final_id = db_create_player(conn, username);
@@ -145,7 +143,7 @@ void process_login(int client_socket, const char *json_payload) {
                 send_error_response(client_socket, "LOGIN", "Erreur création joueur");
                 return;
             }
-            printf("Nouveau joueur '%s' créé avec ID %d\n", username, final_id);
+            printf("[INFO] Nouveau joueur '%s' créé avec ID %d\n", username, final_id);
         }
     }
     // FOR AN EXISTING USER (ID > 0)
@@ -208,7 +206,7 @@ void process_login(int client_socket, const char *json_payload) {
     "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": %s}}\n", 
     final_id, username, cards_json);
 
-    printf("[SERVEUR -> CLIENT] (Client %d) : %s\n", client_socket, response);
+    printf("[SERVEUR -> CLIENT] (Socket client %d) : %s\n", client_socket, response);
 
     send(client_socket, response, strlen(response), 0);
 }
@@ -271,7 +269,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
         return;
     }
 
-    printf("Carte crée en BDD (ID: %d) pour le client %d\n", new_card_id, id_client);
+    printf("[INFO] Carte crée en BDD (ID: %d) pour le joueur %d\n", new_card_id, id_client);
 
     // 3. Création et Minage du BLOC (Blockchain)
 
@@ -313,7 +311,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
 
     // 4. Sauvegarde du bloc miné en BDD
     if (db_save_block(conn, new_block) != 0) {
-        fprintf(stderr, "Erreur fatale: Impossible de sauvegarder le bloc !\n");
+        fprintf(stderr, "[ERREUR] Impossible de sauvegarder le bloc\n");
         // En prod, il faudrait rollback la création de carte ici
     }
 
@@ -323,7 +321,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
              "{\"type\": \"response\", \"nom\": \"CardCreated\", \"status\": \"OK\", \"data\": {\"id\": %d}}\n", 
              new_card_id);
 
-    printf("[SERVEUR -> CLIENT] (Client %d) : %s", client_socket, response);
+    printf("[SERVEUR -> CLIENT] (socket client %d) : %s", client_socket, response);
     
     send(client_socket, response, strlen(response), 0);
 }
@@ -366,7 +364,7 @@ void process_get_connected_users(int client_socket) {
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
              ACTION_GET_USERS, json_array);
-    printf("[SERVEUR -> CLIENT] (Client %d) : %s", client_socket, response);
+    printf("[SERVEUR -> CLIENT] (Socket client %d) : %s", client_socket, response);
     fflush(stdout);
 
     send(client_socket, response, strlen(response), 0);
@@ -408,7 +406,7 @@ void process_get_opponent_inventory(int client_socket, const char *json_payload)
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
              ACTION_GET_OPPONENT_INVENTORY, cards_json);
 
-    printf("[SERVEUR -> CLIENT] (Client %d) Inventaire de %s envoyé : %s", 
+    printf("[SERVEUR -> CLIENT] (Socket client %d) Inventaire de %s envoyé : %s", 
            client_socket, target_username, response);
     fflush(stdout);
 
@@ -449,7 +447,6 @@ void process_trade_request(int client_socket, const char *json_payload) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         // On cherche le joueur connecté qui correspond à id_receiver
         if (clients_list[i].logged_in && clients_list[i].client_id == id_receiver) {
-            printf("socket du destinataire dans la liste : %d\n", clients_list[i].socket);
             socket_receiver = clients_list[i].socket;
             strcpy(receiver_username, clients_list[i].username);
             break;
@@ -593,7 +590,7 @@ void process_trade_response(int client_socket, const char *json_payload) {
         send(socket_initiator, msg_a, strlen(msg_a), 0);
     }
 
-    printf("Echange termine avec succes.\n");
+    printf("[INFO] Echange termine avec succes.\n");
 }
 
 void process_fight_request(int client_socket, const char *json_payload) {
@@ -721,16 +718,8 @@ void process_fight_response(int client_socket, const char *json_payload) {
         return; 
     }
 
-    printf("Défense carte 1 : %d\n", def1);
-    printf("Défense carte 2 : %d\n", def2);
-    printf("Attaque carte 1 : %d\n", atk1);
-    printf("Attaque carte 2 : %d\n", atk2);
-
     float dmg_to_2 = atk1 - (atk1 * (def2/100.0));
     float dmg_to_1 = atk2 - (atk2 * (def1/100.0));
-    printf("Dégats infligés à 1 : %f\n", dmg_to_1);
-    printf("Dégats infligés à 2 : %f\n", dmg_to_2);
-
 
     if (dmg_to_2 < 0) dmg_to_2 = 0; // Pas de soin par attaque
     if (dmg_to_1 < 0) dmg_to_1 = 0;
@@ -740,8 +729,8 @@ void process_fight_response(int client_socket, const char *json_payload) {
     int new_hp2 = hp2 - ((int) dmg_to_2);
 
     // Mise à jour BDD (et suppression si mort)
-    int status1 = db_update_card_hp(conn, id_card_initiator, new_hp1);
-    int status2 = db_update_card_hp(conn, id_card_receiver, new_hp2);
+    db_update_card_hp(conn, id_card_initiator, new_hp1);
+    db_update_card_hp(conn, id_card_receiver, new_hp2);
 
     // 4. Enregistrement Blockchain
     Blockchain *bc = get_global_blockchain();
@@ -788,5 +777,5 @@ void process_fight_response(int client_socket, const char *json_payload) {
         send(socket_initiator, result_msg, strlen(result_msg), 0);
     }
 
-    printf("Combat termine : %d vs %d (Dmg: %d - %d)\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2));
+    printf("[INFO] Combat termine : %d vs %d (Dmg: %d - %d)\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2));
 }

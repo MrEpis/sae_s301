@@ -76,7 +76,7 @@ int start_server() {
             continue; //Ici on continue juste à écouter
         }
 
-        printf("Nouvelle connexion acceptée, socket client : %d\n", new_socket);
+        printf("[INFO] Nouvelle connexion acceptée, socket client : %d\n", new_socket);
 
         //On instancie un nouveau thread pour ce client
         pthread_t client_thread;

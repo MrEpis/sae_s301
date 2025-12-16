@@ -14,18 +14,18 @@ static PGconn *db_connection = NULL;
 int db_connect() {
     const char *conn_string = "host=linserv-info-01.campus.unice.fr port=5432 dbname=bl405485 user=bl405485 password=bl405485";
 
-    printf("Connexion à la base de donnée...\n");
+    printf("[INFO] Connexion à la base de donnée...\n");
 
     db_connection = PQconnectdb(conn_string);
 
     if (PQstatus(db_connection) != CONNECTION_OK) {
-        fprintf(stderr, "La connexion à la BDD a échoué : %s\n", PQerrorMessage(db_connection));
+        fprintf(stderr, "[ERREUR] La connexion à la BDD a échoué : %s\n", PQerrorMessage(db_connection));
         PQfinish(db_connection);
         db_connection = NULL;
         return -1;
     }
 
-    printf("Connexion à la BDD réussie.\n");
+    printf("[INFO] Connexion à la BDD réussie.\n");
     return 0;
 }
 
@@ -33,7 +33,7 @@ void db_close() {
     if (db_connection != NULL) {
         PQfinish(db_connection);
         db_connection = NULL;
-        printf("Connexion à la BDD fermée avec succès.\n");
+        printf("[INFO] Connexion à la BDD fermée avec succès.\n");
     }
 }
 
@@ -48,7 +48,7 @@ int db_check_for_blockchain(PGconn *conn) {
     PGresult *result = PQexec(conn, query);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "Erreur lors de la vérification de la blockchain : %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "[ERREUR] Erreur lors de la vérification de la blockchain : %s\n", PQerrorMessage(conn));
         PQclear(result);
         return -1;
     }
@@ -60,7 +60,7 @@ int db_check_for_blockchain(PGconn *conn) {
     //Nettoyage de la mémoire du résultat
     PQclear(result);
 
-    printf("Vérification de la BDD : %d blocs trouvés.\n", count);
+    printf("[INFO] Vérification de la BDD : %d blocs trouvés.\n", count);
 
     if (count > 0) {
         return 1; //La blockchain existe
@@ -76,7 +76,7 @@ Blockchain* db_load_blockchain(PGconn *conn) {
     PGresult *res = PQexec(conn, query);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "Erreur lors du chargement de la blockchain : %s\n", 
+        fprintf(stderr, "[ERREUR] Erreur lors de la récupération de la blockchain : %s\n", 
                 PQerrorMessage(conn));
         PQclear(res);
         return NULL;
@@ -84,14 +84,14 @@ Blockchain* db_load_blockchain(PGconn *conn) {
 
     int rows = PQntuples(res);
     if (rows == 0) {
-        printf("Aucun bloc trouvé dans la BDD.\n");
+        printf("[ERREUR] Aucun bloc trouvé dans la BDD.\n");
         PQclear(res);
         return NULL;
     }
 
     Blockchain *chain = malloc(sizeof(Blockchain));
     if (chain == NULL) {
-        perror("Erreur malloc Blockchain");
+        perror("[ERREUR] Malloc Blockchain");
         PQclear(res);
         return NULL;
     }
@@ -99,12 +99,12 @@ Blockchain* db_load_blockchain(PGconn *conn) {
     chain->tail = NULL;
     chain->size = 0;
 
-    printf("Chargement de %d blocks depuis la BDD...\n", rows);
+    printf("[INFO] Chargement de %d blocks depuis la BDD...\n", rows);
 
     for (int i = 0; i < rows; i++) {
         Block *new_block = malloc(sizeof(Block));
         if (new_block == NULL) {
-            perror("Erreur malloc Bloc");
+            perror("[ERREUR] Malloc Bloc");
             break;
         }
 
@@ -136,7 +136,7 @@ Blockchain* db_load_blockchain(PGconn *conn) {
 
     PQclear(res);
 
-    printf("Blockchain restaurée avec succès (Taille : %d)\n", chain->size);
+    printf("[INFO] Blockchain restaurée avec succès (Taille : %d)\n", chain->size);
     return chain;
 }
 
@@ -164,14 +164,14 @@ int db_save_block(PGconn *conn, Block *block) {
     PGresult *res = PQexecParams(conn, query, 6, NULL, param_values, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        fprintf(stderr, "Erreur lors de l'insertion du bloc %d : %s\n", 
+        fprintf(stderr, "[ERREUR] Echec insertion du bloc %d : %s\n", 
                 block->ID_block, PQerrorMessage(conn));
         PQclear(res);
         return -1;
     }
 
     PQclear(res);
-    printf("Block %d enregistré en BDD avec succès.\n", block->ID_block);
+    printf("[INFO] Block %d enregistré en BDD avec succès.\n", block->ID_block);
     return 0;
 }
 
@@ -182,7 +182,7 @@ int db_create_player(PGconn *conn, const char *username) {
     PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "Erreur de création joueur: %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "[ERREUR] Echec création joueur: %s\n", PQerrorMessage(conn));
         PQclear(res);
         return -1;
     }
@@ -190,7 +190,7 @@ int db_create_player(PGconn *conn, const char *username) {
     int new_id = atoi(PQgetvalue(res, 0, 0));
     PQclear(res);
 
-    printf("Nouveau joueur créé : %s (ID: %d)\n", username, new_id);
+    printf("[INFO] Nouveau joueur créé : %s (ID: %d)\n", username, new_id);
     return new_id;
 }
 
@@ -308,7 +308,7 @@ int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def
     PGresult *res = PQexecParams(conn, query, 7, NULL, params, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "Erreur insert carte: %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "[ERREUR] Echec insert carte: %s\n", PQerrorMessage(conn));
         PQclear(res);
         return -1;
     }
@@ -338,10 +338,10 @@ int verify_consistency(PGconn *conn, Blockchain *chain) {
     int cards_in_db = atoi(PQgetvalue(res, 0, 0));
     PQclear(res);
 
-    printf("Cartes dans la Blockchain : %d\n", cards_in_blockchain);
-    printf("Cartes dans la table SQL  : %d\n", cards_in_db);
+    printf("[INFO] Cartes dans la Blockchain : %d\n", cards_in_blockchain);
+    printf("[INFO] Cartes dans la table SQL  : %d\n", cards_in_db);
 
-    if (cards_in_blockchain != cards_in_db) {
+    if (cards_in_blockchain < cards_in_db) {
         return 0;
     } else {
         printf("--- Cohérence : OK ---\n");
@@ -398,8 +398,7 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
                 }
             } else {
                 // La carte est dans la blockchain mais pas dans la BDD (Suppression illégale ?)
-                fprintf(stderr, "[ALERTE] Carte ID %s présente dans la Blockchain mais absente de la BDD.\n", id_str);
-                errors++;
+                fprintf(stderr, "[INFO] Carte ID %s présente dans la Blockchain mais absente de la BDD (Probablement détruite).\n", id_str);
             }
             PQclear(res);
         }

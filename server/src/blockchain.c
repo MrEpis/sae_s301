@@ -51,7 +51,7 @@ void mine_block(Block *block) {
     memset(target, '0', DIFFICULTY);
     target[DIFFICULTY] = '\0';
 
-    printf("Minage du bloc %d...\n", block->ID_block);
+    printf("[INFO] Minage du bloc %d...\n", block->ID_block);
 
     block->nonce = 0;
     while (1) {
@@ -66,7 +66,7 @@ void mine_block(Block *block) {
         hash_check[DIFFICULTY] = '\0';
 
         if (strcmp(hash_check, target) == 0) {
-            printf("Block miné. Hash: %s\n", block->hash);
+            printf("[INFO] Block miné. Hash: %s\n", block->hash);
             break; //Hash valide trouvé
         }
 
@@ -77,14 +77,14 @@ void mine_block(Block *block) {
 Blockchain* create_new_blockchain() {
     Blockchain* chain = malloc(sizeof(Blockchain));
     if (!chain) {
-        perror("malloc chain");
+        perror("[ERREUR] Malloc blockchain\n");
         return NULL;
     }
     chain->size = 1;
 
     Block* genesis = malloc(sizeof(Block));
     if (!genesis) {
-        perror("malloc genesis");
+        perror("[ERREUR] Malloc bloc genesis\n");
         free(chain);
         return NULL;
     }
@@ -106,7 +106,7 @@ Blockchain* create_new_blockchain() {
     chain->head = genesis;
     chain->tail = genesis;
 
-    printf("Blockchain créée avec le bloc Genesis.\n");
+    printf("[INFO] Blockchain créée avec le bloc Genesis.\n");
     return chain;
 }
 

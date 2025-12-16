@@ -18,43 +18,43 @@ int main() {
         global_blockchain = db_load_blockchain(conn);
 
         if (!verify_blockchain_integrity(global_blockchain)) {
-            fprintf(stderr, "CRITIQUE : La blockchain est corrompue. Arrêt du serveur.\n");
+            fprintf(stderr, "[CRITIQUE] La blockchain est corrompue. Arrêt du serveur.\n");
             db_close();
             return EXIT_FAILURE;
         }
-        /*if (!verify_consistency(conn, global_blockchain)) {
-            fprintf(stderr, "[ALERTE] Incohérence détectée ! La BDD contient des cartes non validées par la blockchain. Arrêt du serveur.\n");
+        if (!verify_consistency(conn, global_blockchain)) {
+            fprintf(stderr, "[CRITIQUE] Incohérence détectée ! La BDD contient des cartes non validées par la blockchain. Arrêt du serveur.\n");
             db_close();
             return EXIT_FAILURE;
-        }*/
-        /*if (!verify_card_stats_integrity(conn, global_blockchain)) {
-            fprintf(stderr, "ERREUR CRITIQUE: La base de données a été altérée manuellement (Stats modifiées).\n");
+        }
+         if (!verify_card_stats_integrity(conn, global_blockchain)) {
+            fprintf(stderr, "[CRITIQUE] La base de données a été altérée manuellement (Stats modifiées).\n");
             db_close();
             return EXIT_FAILURE;
-        }*/
+        }
 
     } else if (check == 0) {
-        printf("Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");
+        printf("[INFO] Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");
         global_blockchain = create_new_blockchain();
 
         if (db_save_block(conn, global_blockchain->head) != 0) {
-            perror("Echec de la sauvegarde du premier bloc.\n");
+            perror("[ERREUR] Echec de la sauvegarde du premier bloc.\n");
             return EXIT_FAILURE;
         }
     } else {
-        fprintf(stderr, "Erreur critique de la BDD. Arrêt du serveur.\n");
+        fprintf(stderr, "[CRITIQUE] Erreur critique de la BDD. Arrêt du serveur.\n");
         db_close();
         return EXIT_FAILURE;
     }
     
     if (global_blockchain == NULL) {
-         fprintf(stderr, "Erreur critique: Blockchain non initialisée.\n");
+         fprintf(stderr, "[CRITIQUE] Blockchain non initialisée.\n");
          db_close();
          return EXIT_FAILURE;
     }
 
     if (start_server() != 0) {
-        perror("Le serveur n'a pas pu démarrer ou s'est arrêté avec une erreur\n");
+        perror("[CRITIQUE] Le serveur n'a pas pu démarrer ou s'est arrêté avec une erreur\n");
         return EXIT_FAILURE;
     }
     db_close();

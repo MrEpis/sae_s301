@@ -70,6 +70,6 @@ void send_error_response(int socket, const char *action, const char *message) {
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"ERROR\", \"data\": \"%s\"}\n", 
              action, message);
     
-    printf("[SERVEUR -> CLIENT] (Client %d) [ERREUR] : %s", socket, response);
+    printf("[SERVEUR -> CLIENT] (Socket client %d) [ERREUR] %s\n", socket, response);
     send(socket, response, strlen(response), 0);
 }
