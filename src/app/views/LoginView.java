@@ -50,6 +50,12 @@ public class LoginView {
             }
         });
 
+        usernameField.setOnAction(e -> {
+            if (controller != null) {
+                controller.handleFirstConnection(usernameField.getText());
+            }
+        });
+
         root.getChildren().addAll(title, subtitle, usernameField, validateButton);
         Scene scene = new Scene(root, 600, 400);
         primaryStage.setScene(scene);

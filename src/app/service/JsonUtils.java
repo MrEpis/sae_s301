@@ -1,6 +1,7 @@
 package app.service;
 
 import app.model.Card;
+import app.model.FightResultModel;
 import app.model.Player;
 import app.model.TradeRequestModel;
 
@@ -232,5 +233,24 @@ public class JsonUtils {
                 request.getReceiverCardId(),
                 receiverId
         );
+    }
+
+    public static FightResultModel parseFightResult(String json) {
+        String log = extractString(json, "\"log\":");
+
+        int oppIndex = json.indexOf("\"opponent_card\":");
+        Card oppCard = null;
+
+        if (oppIndex != -1) {
+            int startIndex = json.indexOf("{", oppIndex);
+            int endIndex = json.indexOf("}", startIndex);
+
+            if (startIndex != -1 && endIndex != -1) {
+                String cardJson = json.substring(startIndex, endIndex + 1);
+                oppCard = extractCardFromJson(cardJson);
+            }
+        }
+
+        return new FightResultModel(log, oppCard);
     }
 }

@@ -1,6 +1,7 @@
 package app.controller;
 
 import app.model.Card;
+import app.model.FightResultModel;
 import app.model.Player;
 import app.model.TradeRequestModel;
 import app.service.JsonUtils;
@@ -34,6 +35,7 @@ public class MainController {
     private NetworkService networkService;
     private final List<TradeRequestModel> notifications = new ArrayList<>();
     private String pendingTradeOpponentName = "l'adversaire";
+    private int lastMyCardIdEngaged = -1;
 
     private boolean isInCombat = false;
 
@@ -150,6 +152,34 @@ public class MainController {
                 }
             }
         }
+
+        else if (message.contains("FightResult")) {
+            List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
+            localPlayer.getInventory().clear();
+            localPlayer.getInventory().addAll(newInventory);
+            FightResultModel result = JsonUtils.parseFightResult(message);
+            Card myCardUpdated = null;
+            if (this.lastMyCardIdEngaged != -1) {
+                for (Card c : localPlayer.getInventory()) {
+                    if (c.getId() == this.lastMyCardIdEngaged) {
+                        myCardUpdated = c;
+                        break;
+                    }
+                }
+            }
+
+            final Card myFinalCard = myCardUpdated; // Pour le lambda
+
+            Platform.runLater(() -> {
+                Runnable openView = () -> new FightResultView(primaryStage, this, result, myFinalCard).show();
+
+                if (!isInCombat) {
+                    openView.run();
+                } else {
+                    showToast("Combat terminé ! (Cliquez pour voir)", openView);
+                }
+            });
+        }
     }
 
     public void fetchRemoteCardForTrade(TradeRequestModel request, app.views.TradeProposalView view) {
@@ -251,4 +281,5 @@ public class MainController {
     public NetworkService getNetworkService() { return networkService; }
     public Player getLocalPlayer() { return localPlayer; }
     public void setPendingTradeOpponent(String name) { this.pendingTradeOpponentName = name; }
+    public void setLastMyCardIdEngaged(int id) { this.lastMyCardIdEngaged = id; }
 }
