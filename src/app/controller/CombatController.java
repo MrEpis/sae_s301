@@ -94,6 +94,9 @@ public class CombatController {
             return;
         }
 
+        mainController.setPendingTradeOpponent(opponentName);
+        mainController.setLastMyCardIdEngaged(myCardId);
+
         System.out.println("Envoi FightRequest à " + opponentName);
         combatView.displayStatus("Envoi du défi à " + opponentName + "...");
 

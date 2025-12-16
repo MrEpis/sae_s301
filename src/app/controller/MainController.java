@@ -35,9 +35,9 @@ public class MainController {
     private NetworkService networkService;
     private final List<TradeRequestModel> notifications = new ArrayList<>();
     private String pendingTradeOpponentName = "l'adversaire";
-    private int lastMyCardIdEngaged = -1;
 
     private boolean isInCombat = false;
+    private int lastMyCardIdEngaged = -1; // Pour retrouver sa carte au résultat
 
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -67,7 +67,7 @@ public class MainController {
             label.setPrefWidth(260);
 
             String bgColor = message.contains("refusé") ? "#F44336" : (message.contains("accepté") || message.contains("validé") ? "#4CAF50" : "#A97DDE");
-            if (message.contains("COMBAT")) bgColor = "#FF5252";
+            if (message.contains("COMBAT") || message.contains("terminé")) bgColor = "#FF5252";
 
             label.setStyle("-fx-background-color: " + bgColor + "; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: white; -fx-border-radius: 10; -fx-border-width: 2; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 5, 0, 0, 0);");
 
@@ -76,10 +76,8 @@ public class MainController {
                 label.setOnMouseExited(e -> label.setCursor(Cursor.DEFAULT));
 
                 label.setOnMouseClicked(e -> {
-                    if (!isInCombat) {
-                        onClickAction.run();
-                        popup.hide();
-                    }
+                    onClickAction.run();
+                    popup.hide();
                 });
             } else {
                 label.setOnMouseClicked(e -> popup.hide());
@@ -104,7 +102,7 @@ public class MainController {
         System.out.println("Notification reçue : " + message);
 
         if (message.contains("FightConfirmationRequest")) {
-            TradeRequestModel req = JsonUtils.parseFightRequestNotification(message); // isFight = true
+            TradeRequestModel req = JsonUtils.parseFightRequestNotification(message);
 
             new Thread(() -> {
                 String name = getUsernameById(req.getInitiatorId());
@@ -113,16 +111,14 @@ public class MainController {
                 Platform.runLater(() -> {
                     notifications.add(req);
                     primaryStage.setTitle("Robs Card Game - (" + notifications.size() + ") Notification(s) !");
-
                     showToast("⚔️ DÉFI DE COMBAT de " + req.getInitiatorUsername() + " !", () -> {
                         new FightProposalView(primaryStage, this, req).show();
                     });
                 });
             }).start();
         }
-
         else if (message.contains("ConfirmationRequest")) {
-            TradeRequestModel req = JsonUtils.parseTradeRequestNotification(message); // isFight = false
+            TradeRequestModel req = JsonUtils.parseTradeRequestNotification(message);
 
             new Thread(() -> {
                 String name = getUsernameById(req.getInitiatorId());
@@ -131,12 +127,45 @@ public class MainController {
                 Platform.runLater(() -> {
                     notifications.add(req);
                     primaryStage.setTitle("Robs Card Game - (" + notifications.size() + ") Notification(s) !");
-
                     showToast("Nouvelle demande d'échange de " + req.getInitiatorUsername() + " !", () -> {
                         new TradeProposalView(primaryStage, this, req).show();
                     });
                 });
             }).start();
+        }
+        else if (message.contains("FightResult")) {
+            List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
+            localPlayer.getInventory().clear();
+            localPlayer.getInventory().addAll(newInventory);
+
+            FightResultModel result = JsonUtils.parseFightResult(message);
+
+            Card myCardUpdated = null;
+            if (this.lastMyCardIdEngaged != -1) {
+                for(Card c : localPlayer.getInventory()) {
+                    if (c.getId() == this.lastMyCardIdEngaged) {
+                        myCardUpdated = c;
+                        break;
+                    }
+                }
+            }
+            result.setMyCard(myCardUpdated);
+
+            Platform.runLater(() -> {
+                TradeRequestModel notif = new TradeRequestModel(0, 0, 0);
+                notif.setFightResult(result);
+
+                // --- CORRECTION : Utilisation du nom sauvegardé ---
+                notif.setInitiatorUsername(this.pendingTradeOpponentName);
+                // --------------------------------------------------
+
+                notifications.add(notif);
+                primaryStage.setTitle("Robs Card Game - (" + notifications.size() + ") Notification(s) !");
+
+                showToast("Combat terminé ! Voir le résultat", () -> {
+                    new FightResultView(primaryStage, this, result, result.getMyCard()).show();
+                });
+            });
         }
 
         else if (message.contains("TradeResult")) {
@@ -151,34 +180,6 @@ public class MainController {
                     Platform.runLater(() -> showToast("Action acceptée ! Inventaire mis à jour.", null));
                 }
             }
-        }
-
-        else if (message.contains("FightResult")) {
-            List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
-            localPlayer.getInventory().clear();
-            localPlayer.getInventory().addAll(newInventory);
-            FightResultModel result = JsonUtils.parseFightResult(message);
-            Card myCardUpdated = null;
-            if (this.lastMyCardIdEngaged != -1) {
-                for (Card c : localPlayer.getInventory()) {
-                    if (c.getId() == this.lastMyCardIdEngaged) {
-                        myCardUpdated = c;
-                        break;
-                    }
-                }
-            }
-
-            final Card myFinalCard = myCardUpdated; // Pour le lambda
-
-            Platform.runLater(() -> {
-                Runnable openView = () -> new FightResultView(primaryStage, this, result, myFinalCard).show();
-
-                if (!isInCombat) {
-                    openView.run();
-                } else {
-                    showToast("Combat terminé ! (Cliquez pour voir)", openView);
-                }
-            });
         }
     }
 
@@ -218,8 +219,12 @@ public class MainController {
     public void respondToFight(TradeRequestModel request, boolean accepted, int myId) {
         System.out.println("Réponse Combat : " + (accepted ? "OUI" : "NON"));
 
-        String jsonData = JsonUtils.buildFightResponseJson(accepted, request, myId);
+        if (accepted) {
+            this.setLastMyCardIdEngaged(request.getReceiverCardId());
+            this.setPendingTradeOpponent(request.getInitiatorUsername());
+        }
 
+        String jsonData = JsonUtils.buildFightResponseJson(accepted, request, myId);
         String responseStr = JsonUtils.buildResponse("ResponseFightRequest", jsonData);
 
         if (networkService != null) networkService.sendMessage(responseStr);
@@ -273,10 +278,14 @@ public class MainController {
         }
     }
     public void showMenu() { this.isInCombat = false; menuView.show(); }
-    public void showCombat() { this.isInCombat = true; combatController = new CombatController(this, localPlayer); new CombatView(primaryStage, combatController).show(); }
+    public void showCombat() {
+        this.isInCombat = true;
+        combatController = new CombatController(this, localPlayer);
+        new CombatView(primaryStage, combatController).show();
+    }
     public void showInventory() { this.isInCombat = false; inventoryController = new InventoryController(this, localPlayer); new InventoryView(primaryStage, inventoryController).show(); }
     public void showCardCreation() { this.isInCombat = false; cardCreationView.show(); }
-    public void showTrade() { this.isInCombat = false; tradeController = new TradeController(this, localPlayer, new TradeView(primaryStage)); new TradeView(primaryStage).setController(tradeController); tradeController = new TradeController(this, localPlayer, new TradeView(primaryStage)); TradeView t = new TradeView(primaryStage); tradeController = new TradeController(this, localPlayer, t); t.setController(tradeController); t.show(); tradeController.refreshPlayerList(); }
+    public void showTrade() { this.isInCombat = false; tradeController = new TradeController(this, localPlayer, new TradeView(primaryStage)); TradeView t = new TradeView(primaryStage); t.setController(tradeController); t.show(); tradeController.refreshPlayerList(); }
     public void quit() { if(networkService!=null) networkService.closeConnection(); primaryStage.close(); }
     public NetworkService getNetworkService() { return networkService; }
     public Player getLocalPlayer() { return localPlayer; }

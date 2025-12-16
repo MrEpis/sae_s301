@@ -1,7 +1,6 @@
 package app.service;
 
 import javafx.application.Platform;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,25 +15,19 @@ public class NetworkService {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
-
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
-
     private Consumer<String> notificationListener;
+    private boolean isRunning = false;
 
     private static final String SERVER_HOST = "134.59.27.129";
     private static final int SERVER_PORT = 8080;
-    private boolean isRunning = false;
 
     public NetworkService() {
         try {
             this.socket = new Socket(SERVER_HOST, SERVER_PORT);
             this.out = new PrintWriter(socket.getOutputStream(), true);
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            System.out.println("Connexion établie.");
-
             startListening();
-
         } catch (IOException e) {
             System.err.println("Erreur connexion: " + e.getMessage());
         }
@@ -52,41 +45,37 @@ public class NetworkService {
                 while (isRunning && (message = in.readLine()) != null) {
                     System.out.println("[RECU BRUT] : " + message);
 
-                    if (message.contains("TradeResult")) {
-                        String finalMessage = message;
-                        if (notificationListener != null) {
-                            Platform.runLater(() -> notificationListener.accept(finalMessage));
-                        }
+                    if (message.contains("TradeResult") || message.contains("FightResult")) {
+                        notifyListener(message);
                     }
                     else if (message.contains("\"type\": \"response\"") || message.contains("\"type\":\"response\"")) {
                         responseQueue.put(message);
                     }
                     else {
-                        String finalMessage = message;
-                        if (notificationListener != null) {
-                            Platform.runLater(() -> notificationListener.accept(finalMessage));
-                        }
+                        notifyListener(message);
                     }
                 }
             } catch (Exception e) {
-                if (isRunning) System.out.println("Connexion interrompue : " + e.getMessage());
+                if (isRunning) System.out.println("Connexion interrompue.");
             }
         });
         listeningThread.setDaemon(true);
         listeningThread.start();
     }
 
+    private void notifyListener(String message) {
+        if (notificationListener != null) {
+            Platform.runLater(() -> notificationListener.accept(message));
+        }
+    }
+
     public String sendRequest(String jsonRequest) {
         if (socket == null || socket.isClosed()) return null;
-
         try {
-            System.out.println("[ENVOI] : " + jsonRequest);
+            System.out.println("[ENVOI SYNC] : " + jsonRequest);
             out.println(jsonRequest);
-
             return responseQueue.take();
-
         } catch (InterruptedException e) {
-            System.err.println("Erreur d'attente de réponse.");
             return null;
         }
     }
@@ -102,8 +91,6 @@ public class NetworkService {
         isRunning = false;
         try {
             if (socket != null) socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) {}
     }
 }

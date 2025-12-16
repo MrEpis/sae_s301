@@ -1,6 +1,7 @@
 package app.views;
 
 import app.controller.MainController;
+import app.model.FightResultModel;
 import app.model.TradeRequestModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -51,24 +52,35 @@ public class NotificationView {
                     setText(null);
                     setStyle("-fx-background-color: transparent;");
                 } else {
-                    if (item.isFight()) {
+                    if (item.isFightResult()) {
+                        setText("🏆 Résultat du combat contre " + item.getInitiatorUsername());
+                        setStyle("-fx-text-fill: #FFC107; -fx-font-size: 14px; -fx-padding: 10; -fx-font-weight: bold; -fx-border-color: #FFC107; -fx-border-width: 0 0 1 0;");
+                    }
+                    else if (item.isFight()) {
                         setText("⚔️ DÉFI DE COMBAT reçu de " + item.getInitiatorUsername());
                         setStyle("-fx-text-fill: #FF5252; -fx-font-size: 14px; -fx-padding: 10; -fx-font-weight: bold;");
-                    } else {
+                    }
+                    else {
                         setText("🤝 Échange proposé par " + item.getInitiatorUsername());
                         setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
                     }
                 }
             }
         });
+
         listView.setStyle("-fx-background-color: #333; -fx-control-inner-background: #333;");
 
         listView.setOnMouseClicked(e -> {
             TradeRequestModel selected = listView.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                if (selected.isFight()) {
+                if (selected.isFightResult()) {
+                    FightResultModel result = selected.getFightResult();
+                    new FightResultView(primaryStage, controller, result, result.getMyCard()).show();
+                }
+                else if (selected.isFight()) {
                     new FightProposalView(primaryStage, controller, selected).show();
-                } else {
+                }
+                else {
                     new TradeProposalView(primaryStage, controller, selected).show();
                 }
             }
