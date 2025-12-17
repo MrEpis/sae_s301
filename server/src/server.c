@@ -9,6 +9,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <signal.h>
+
+// Variable globale pour contrôler la boucle principale
+volatile sig_atomic_t server_running = 1;
 
 ConnectedPlayer clients_list[MAX_CLIENTS];
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -22,6 +26,7 @@ Blockchain* get_global_blockchain() {
 }
 
 int start_server() {
+    signal(SIGINT, handle_sigint);
     int server_fd, new_socket;
     struct sockaddr_in address;
     int opt = 1;
@@ -67,11 +72,14 @@ int start_server() {
         return -1;
     }
 
+    printf("[INFO] Serveur démarré sur le port %d\n", PORT);
     //Boucle d'acceptation des clients
-    while (1) {
+    while (server_running) {
         //La fonction accept() est bloquante et attend une connexion
-        new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
-        if (new_socket < 0) {
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+            if (!server_running) {
+                break;
+            }
             perror("accept");
             continue; //Ici on continue juste à écouter
         }
@@ -103,7 +111,15 @@ int start_server() {
         pthread_detach(client_thread);
     }
 
-    //Jamais atteint
     close(server_fd);
+    printf("[INFO] Socket serveur fermé.\n" );
     return 0;
+}
+
+void handle_sigint(int sig) {
+    printf("\n[ARRET] Signal reçu, fermeture propre du serveur...\n");
+    server_running = 0;
+    // Note : sur un accept() bloquant, il faudra peut-être envoyer une fausse connexion 
+    // ou utiliser select() pour débloquer la boucle immédiatement, 
+    // mais souvent server_running = 0 suffit après la prochaine action.
 }

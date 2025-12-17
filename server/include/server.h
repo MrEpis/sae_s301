@@ -12,4 +12,6 @@ Blockchain* get_global_blockchain();
 
 int start_server();
 
+void handle_sigint(int sig);
+
 #endif

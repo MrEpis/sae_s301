@@ -1,10 +1,15 @@
 #include "server.h"
 #include "blockchain.h"
 #include "database.h"
+#include "structures.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
 int main() {
+
+    // Enregistrement du signal
+
     if (db_connect() != 0) {
         fprintf(stderr, "Echec de l'initialisation de la BDD. Arrêt.\n");
         return EXIT_FAILURE;
@@ -57,6 +62,34 @@ int main() {
         perror("[CRITIQUE] Le serveur n'a pas pu démarrer ou s'est arrêté avec une erreur\n");
         return EXIT_FAILURE;
     }
-    db_close();
-    return 0;
+
+
+    printf("\n[MAIN] Début du nettoyage des ressources...\n");
+
+    // A. Libération de la Blockchain (Liste chaînée)
+    if (global_blockchain != NULL) {
+        Block *current = global_blockchain->head;
+        while (current != NULL) {
+            Block *next = current->next;
+            
+            // Si data_action a été alloué dynamiquement (strdup), il faut le libérer
+            if (current->data_action != NULL) {
+                free(current->data_action);
+            }
+            
+            free(current); // Libération du bloc
+            current = next;
+        }
+        free(global_blockchain); // Libération de la structure de contrôle
+        printf("[MAIN] Mémoire Blockchain libérée.\n");
+    }
+
+    // B. Fermeture de la Base de Données
+    db_close(); 
+    // Note: db_close appelle PQfinish(conn), donc pas besoin de le refaire ici 
+    // si votre db_close utilise la variable statique interne, sinon passez 'conn'.
+    printf("[MAIN] Connexion BDD fermée.\n");
+
+    printf("[MAIN] Arrêt complet du programme. Au revoir !\n");
+    return EXIT_SUCCESS;
 }
