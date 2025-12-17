@@ -1,15 +1,17 @@
-package app.views;
+package app;
 
 import app.controller.MainController;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
-public class MainView extends Application {
+public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Crée le MainController et lance l'application
+        // On instancie le chef d'orchestre (MainController)
         MainController mainController = new MainController(primaryStage);
+
+        // On lance la logique de démarrage (vérification session, login, etc.)
         mainController.start();
     }
 
