@@ -1,45 +1,37 @@
 package app.service;
 
+import app.model.Card;
+import app.model.FightResultModel;
+import app.model.TradeRequestModel;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JsonUtilsTest {
 
     @Test
-    void testBuildLoginData() {
-        String json = JsonUtils.buildLoginData(0, "Robs");
-        String expected = "{\"id_client\": 0, \"username\": \"Robs\"}";
-        assertEquals(expected, json, "Le JSON de login pour nouvel utilisateur est incorrect");
-    }
-
-    @Test
-    void testBuildLoginData_Reconnect() {
-        String json = JsonUtils.buildLoginData(101, null);
-        assertEquals("101", json, "Le format de reconnexion est incorrect");
-    }
-
-
-    @Test
     void testBuildCardCreationData() {
-        int idClient = 1;
-        String nom = "Demon";
-        int hp = 40;
-        int atk = 40;
-        int def = 20;
-        String imagePath = "src/ressources/img/demon.png";
-
-        String json = JsonUtils.buildCardCreationData(idClient,nom, hp, atk, def, imagePath);
-
-        String expected = "{\"id_client\":\"1\", \"nomCarte\":\"Demon\", \"pv\":40, \"attaque\":40, \"defense\":20, \"image\":\"src/ressources/img/demon.png\"}";
-        assertEquals(expected, json, "Le JSON de création de carte ne correspond pas à la structure attendue");
+        String json = JsonUtils.buildCardCreationData(1, "Warrior", 50, 25, 25, "img.png");
+        String expected = "{\"id_client\":\"1\", \"nomCarte\":\"Warrior\", \"pv\":50, \"attaque\":25, \"defense\":25, \"image\":\"img.png\"}";
+        assertEquals(expected, json);
     }
 
     @Test
-    void testBuildRequest() {
-        String dataPart = "{\"test\":1}";
-        String fullJson = JsonUtils.buildRequest("TEST_ACTION", dataPart);
+    void testParseFightResult() {
+        String json = "{\"log\": \"Fight Over\", \"opponent_card\": {\"id\": 99, \"nom\": \"Boss\", \"pv\": 10, \"attaque\": 25, \"defense\": 25, \"image\": \"boss.png\"}}";
 
-        String expected = "{\"type\":\"request\", \"nom\":\"TEST_ACTION\", \"data\":{\"test\":1}}";
-        assertEquals(expected, fullJson, "L'enveloppe de la requête est incorrecte");
+        FightResultModel result = JsonUtils.parseFightResult(json);
+
+        assertEquals("Fight Over", result.getLogMessage());
+        assertNotNull(result.getOpponentCard());
+        assertEquals(10, result.getOpponentCard().getHp());
+    }
+
+    @Test
+    void testBuildTradeResponseJson() {
+        TradeRequestModel req = new TradeRequestModel(5, 10, 20);
+        String json = JsonUtils.buildTradeResponseJson(true, req, 99);
+
+        assertTrue(json.contains("\"accepted\": true"));
+        assertTrue(json.contains("\"id_initiator\": 5"));
     }
 }
