@@ -29,6 +29,8 @@ public class BotController {
         this.networkService = new NetworkService();
         this.botPlayer = new Player(0, "roblobot");
 
+        loadImagesFromFolder();
+
         this.networkService.setNotificationListener(this::handleNotification);
     }
 
@@ -38,7 +40,7 @@ public class BotController {
 
             if (folder.exists() && folder.isDirectory()) {
                 File[] files = folder.listFiles((dir, name) ->
-                        name.toLowerCase().endsWith(".png"));
+                        name.toLowerCase().endsWith(".png") || name.toLowerCase().endsWith(".jpg"));
 
                 if (files != null) {
                     for (File file : files) {
@@ -59,7 +61,7 @@ public class BotController {
     }
 
     public void start() {
-        view.setStatus("Connexion au serveur...");
+        Platform.runLater(() -> view.setStatus("Connexion au serveur..."));
 
         String loginData = "{\"id_client\": 0, \"username\": \"roblobot\"}";
         String request = JsonUtils.buildRequest("LOGIN", loginData);
@@ -143,10 +145,12 @@ public class BotController {
 
     private void createRandomCard() {
         String name = "BotCard-" + random.nextInt(1000);
-        int hp = 1 + random.nextInt(99);
-        int atk = random.nextInt(99-hp);
-        int def = random.nextInt(99-hp-atk);
-        hp += 99 - hp - atk - def;
+
+        int hp = random.nextInt(98) + 1;
+        int reste = 100 - hp;
+        int atk = random.nextInt(reste - 1) + 1;
+        int def = reste - atk;
+
         String imgName = availableImages.get(random.nextInt(availableImages.size()));
         String imgPath = "src/ressources/img/" + imgName;
 
@@ -160,7 +164,6 @@ public class BotController {
         );
 
         String req = JsonUtils.buildRequest("RequestCardCreation", jsonPayload);
-
         String resp = networkService.sendRequest(req);
         System.out.println("[BOT] Création carte : " + resp);
     }

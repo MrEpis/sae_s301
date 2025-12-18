@@ -349,6 +349,11 @@ public class CardCreationView {
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Card Creation");
+
+        primaryStage.setMinWidth(800);
+        primaryStage.setMinHeight(600);
+
+        primaryStage.sizeToScene();
         primaryStage.show();
     }
 }

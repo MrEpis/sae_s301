@@ -285,7 +285,14 @@ public class MainController {
     }
     public void showInventory() { this.isInCombat = false; inventoryController = new InventoryController(this, localPlayer); new InventoryView(primaryStage, inventoryController).show(); }
     public void showCardCreation() { this.isInCombat = false; cardCreationView.show(); }
-    public void showTrade() { this.isInCombat = false; tradeController = new TradeController(this, localPlayer, new TradeView(primaryStage)); TradeView t = new TradeView(primaryStage); t.setController(tradeController); t.show(); tradeController.refreshPlayerList(); }
+    public void showTrade() {
+        this.isInCombat = false;
+        TradeView t = new TradeView(primaryStage);
+        this.tradeController = new TradeController(this, localPlayer, t);
+        t.setController(tradeController);
+        t.show();
+        tradeController.refreshPlayerList();
+    }
     public void quit() { if(networkService!=null) networkService.closeConnection(); primaryStage.close(); }
     public NetworkService getNetworkService() { return networkService; }
     public Player getLocalPlayer() { return localPlayer; }
