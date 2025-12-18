@@ -37,5 +37,9 @@ run: compile
 	@echo "Lancement..."
 	$(JVM) $(JFX_FLAGS) -cp $(BIN_DIR) $(MAIN_CLASS)
 
+run-bot: compile
+	@echo "Lancement de ROBLOBOT..."
+	$(JVM) $(JFX_FLAGS) -cp $(BIN_DIR) $(MAIN_CLASS) bot
+
 clean:
 	rm -rf $(BIN_DIR)
