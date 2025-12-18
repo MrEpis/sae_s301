@@ -733,8 +733,8 @@ void process_fight_response(int client_socket, const char *json_payload) {
     int new_hp2 = hp2 - ((int) dmg_to_2);
 
     // Mise à jour BDD (et suppression si mort)
-    db_update_card_hp(conn, id_card_initiator, new_hp1);
-    db_update_card_hp(conn, id_card_receiver, new_hp2);
+    int status1 = db_update_card_hp(conn, id_card_initiator, new_hp1);
+    int status2 = db_update_card_hp(conn, id_card_receiver, new_hp2);
 
     // 4. Enregistrement Blockchain
     Blockchain *bc = get_global_blockchain();
@@ -749,8 +749,17 @@ void process_fight_response(int client_socket, const char *json_payload) {
     strncpy(new_block->previous_hash, bc->tail->hash, HASH_SIZE);
 
     char action_json[512];
-    // On détermine le gagnant pour le log (celui qui a fait le plus de dégats ou tué l'autre)
-    int winner_id = (dmg_to_2 > dmg_to_1) ? id_initiator : id_receiver;
+
+    // On détermine le gagnant (celui qui a fait le plus de dégats ou tué l'autre)
+    int winner_id;
+    if ((status1 && status2) || (!status1 && !status2)) {
+        winner_id = (dmg_to_2 > dmg_to_1) ? id_initiator : id_receiver;
+    } else if (!status1 && status2) {
+        winner_id = id_receiver;
+    } else if (status1 && !status2) {
+        winner_id = id_initiator;
+    }
+    
 
     snprintf(action_json, sizeof(action_json), 
          "{\"action\": \"Fight\", \"p1\": %d, \"dmg1\": %d, \"p2\": %d, \"dmg2\": %d, \"winner\": %d}", 
@@ -769,21 +778,25 @@ void process_fight_response(int client_socket, const char *json_payload) {
     db_get_player_cards_json(conn, id_initiator, hand_init, sizeof(hand_init));
     db_get_player_cards_json(conn, id_receiver, hand_recv, sizeof(hand_recv));
 
+    const char *res_receiver = (id_receiver == winner_id) ? "VICTOIRE" : "DEFAITE";
+    const char *res_initiator = (id_initiator == winner_id) ? "VICTOIRE" : "DEFAITE";
+
     char result_msg[6000];
     
     // Message pour le Receveur (B)
+
     snprintf(result_msg, sizeof(result_msg), 
-             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"log\": \"Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
-             ((int) dmg_to_2), ((int) dmg_to_1), hand_recv, json_card_initiator);
+             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"result\": \"%s\", \"log\": \"[%s] Combat termine. Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
+             res_receiver, res_receiver, ((int) dmg_to_2), ((int) dmg_to_1), hand_recv, json_card_initiator);
     send(client_socket, result_msg, strlen(result_msg), 0);
 
     // Message pour l'Initiateur (A)
     if (socket_initiator != -1) {
         snprintf(result_msg, sizeof(result_msg), 
-             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"log\": \"Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
-             ((int) dmg_to_1), ((int) dmg_to_2), hand_init, json_card_receiver);
+             "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"result\": \"%s\", \"log\": \"[%s] Combat termine. Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
+             res_initiator, res_initiator, ((int) dmg_to_1), ((int) dmg_to_2), hand_init, json_card_receiver);
         send(socket_initiator, result_msg, strlen(result_msg), 0);
     }
 
-    printf("[INFO] Combat termine : %d vs %d (Dmg: %d - %d)\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2));
+    printf("[INFO] Combat termine : %d vs %d (Dmg: %d - %d). Gagnant : %d\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2), winner_id);
 }
