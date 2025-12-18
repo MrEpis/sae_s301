@@ -62,11 +62,14 @@ public class ImageSelectorView {
         scrollPane.setStyle("-fx-background: #2e2e2e; -fx-border-color: transparent; -fx-background-color: #2e2e2e;");
 
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
         root.getChildren().add(scrollPane);
 
         Scene scene = new Scene(root, 850, 600);
         stage.setScene(scene);
+
+        stage.setMinWidth(850);
+        stage.setMinHeight(600);
+        stage.sizeToScene();
 
         stage.show();
     }
