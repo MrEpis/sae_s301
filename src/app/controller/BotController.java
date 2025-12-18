@@ -40,7 +40,7 @@ public class BotController {
 
             if (folder.exists() && folder.isDirectory()) {
                 File[] files = folder.listFiles((dir, name) ->
-                        name.toLowerCase().endsWith(".png") || name.toLowerCase().endsWith(".jpg"));
+                        name.toLowerCase().endsWith(".png"));
 
                 if (files != null) {
                     for (File file : files) {
@@ -53,7 +53,7 @@ public class BotController {
         }
 
         if (availableImages.isEmpty()) {
-            System.err.println("[BOT] Attention : Aucune image trouvée dans src/ressources/img !");
+            System.err.println("[BOT] Attention : Aucune image trouvée dans src/ressources/img");
             availableImages.add("acorn.png");
         } else {
             System.out.println("[BOT] " + availableImages.size() + " images chargées.");

@@ -107,4 +107,8 @@ public class CardCreationController {
             }
         }
     }
+
+    public Player getLocalPlayer() {
+        return mainController.getLocalPlayer();
+    }
 }

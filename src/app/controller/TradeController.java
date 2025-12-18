@@ -124,4 +124,8 @@ public class TradeController {
             tradeView.displayStatus("Erreur critique : Pas de connexion réseau.");
         }
     }
+
+    public Player getLocalPlayer() {
+        return mainController.getLocalPlayer();
+    }
 }

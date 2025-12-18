@@ -1,5 +1,6 @@
 package app.views;
 
+import app.controller.MainController;
 import app.controller.TradeController;
 import app.model.Card;
 import javafx.geometry.Insets;
@@ -55,7 +56,11 @@ public class TradeView {
     }
 
     private VBox createTopControlArea() {
-        VBox topBox = new VBox(15); topBox.setAlignment(Pos.CENTER); topBox.setPadding(new Insets(10, 0, 20, 0));
+        VBox topBox = new VBox(15);
+        topBox.setAlignment(Pos.CENTER);
+        topBox.setPadding(new Insets(10, 0, 20, 0));
+
+
         Label titleLabel = createLabel("Card Trade System", 28, "#ffffff", FontWeight.EXTRA_BOLD);
         statusLabel = createLabel("Select an opponent to trade with.", 14, "#FFC107", FontWeight.NORMAL);
         HBox searchBox = new HBox(10); searchBox.setAlignment(Pos.CENTER);
@@ -73,20 +78,30 @@ public class TradeView {
     }
 
     private HBox createTradeSelectionArea() {
-        HBox tradeBox = new HBox(20); tradeBox.setAlignment(Pos.TOP_CENTER); tradeBox.setPadding(new Insets(10));
-        VBox playerPanel = createInventoryPanel("Your Inventory (Offered Card)", true);
-        VBox opponentPanel = createInventoryPanel("Opponent Inventory (Requested Card)", false);
+        HBox tradeBox = new HBox(20);
+        tradeBox.setAlignment(Pos.CENTER); // Centrage global
+        tradeBox.setPadding(new Insets(10));
+
+        VBox playerPanel = createInventoryPanel("Your Inventory", true);
+        VBox opponentPanel = createInventoryPanel("Opponent Inventory", false);
         VBox summaryPanel = createSummaryPanel();
+
+        HBox.setHgrow(playerPanel, Priority.ALWAYS);
+        HBox.setHgrow(opponentPanel, Priority.ALWAYS);
+
+        summaryPanel.setMinWidth(200);
+
         tradeBox.getChildren().addAll(playerPanel, summaryPanel, opponentPanel);
         return tradeBox;
     }
 
     private VBox createInventoryPanel(String title, boolean isLocalPlayer) {
         VBox panel = new VBox(10);
-        panel.setPrefSize(400, 550);
-        panel.setStyle("-fx-background-color: #4a4a4a; -fx-padding: 10; -fx-border-radius: 5;");
+        panel.setMinWidth(300);
+        panel.setMaxWidth(Double.MAX_VALUE);
 
         ListView<Card> cardListView = new ListView<>();
+        VBox.setVgrow(cardListView, Priority.ALWAYS);
         cardListView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(Card item, boolean empty) {

@@ -69,19 +69,27 @@ public class CardCreationView {
         root.setStyle("-fx-background-color: #2e2e2e;");
 
         Label titleLabel = createTitleLabel("Create Your Card");
+        titleLabel.setPadding(new Insets(30, 0, 30, 0));
         BorderPane.setAlignment(titleLabel, Pos.CENTER);
         root.setTop(titleLabel);
 
-        HBox centerBox = new HBox(30);
+        HBox centerBox = new HBox(60);
         centerBox.setAlignment(Pos.CENTER);
+        centerBox.setPadding(new Insets(20));
 
         VBox formBox = createStatDistributionForm();
         VBox previewBox = createCardPreviewArea();
 
+        HBox.setHgrow(formBox, Priority.ALWAYS);
+        HBox.setHgrow(previewBox, Priority.ALWAYS);
+        formBox.setMaxWidth(600);
+        previewBox.setMaxWidth(600);
+
         centerBox.getChildren().addAll(formBox, previewBox);
         root.setCenter(centerBox);
 
-        HBox bottomBox = new HBox(20);
+        HBox bottomBox = new HBox(40);
+        bottomBox.setPadding(new Insets(30));
         bottomBox.setAlignment(Pos.CENTER);
 
         Button saveButton = createActionButton("Save Card", "#7834CB", 180, 40);
@@ -101,17 +109,20 @@ public class CardCreationView {
         bottomBox.getChildren().addAll(saveButton, backButton);
         root.setBottom(bottomBox);
 
-        return new Scene(root, 800, 600);
+        return new Scene(root, 1000, 800);
     }
 
     private VBox createStatDistributionForm() {
-        VBox form = new VBox(15);
-        form.setPadding(new Insets(15));
-        form.setPrefWidth(350);
+        VBox form = new VBox(25);
+        form.setPadding(new Insets(30));
+        form.setMinWidth(400);
+        form.setMaxWidth(Double.MAX_VALUE);
+        form.setAlignment(Pos.CENTER_LEFT);
+        // On permet au formulaire de prendre toute la hauteur pour centrer le contenu
+        VBox.setVgrow(form, Priority.ALWAYS);
         form.setStyle("-fx-background-color: #383838; -fx-border-color: #555555; -fx-border-width: 1;");
 
-        pointsLeftLabel = createLabel("Points Remaining: " + (MAX_POINTS - 30), 14, "#FFC107");
-
+        pointsLeftLabel = createLabel("Points Remaining: 70", 20, "#FFC107", FontWeight.BOLD);
         GridPane statGrid = new GridPane();
         statGrid.setHgap(10);
         statGrid.setVgap(10);
@@ -233,9 +244,9 @@ public class CardCreationView {
     }
 
     private VBox createCardTemplate() {
-        VBox cardSlot = new VBox(5);
-        cardSlot.setPadding(new Insets(5));
-        cardSlot.setPrefSize(170, 300);
+        VBox cardSlot = new VBox(10);
+        cardSlot.setPadding(new Insets(20));
+        cardSlot.setPrefSize(300, 500);
         cardSlot.setAlignment(Pos.TOP_CENTER);
 
         cardSlot.setStyle(
@@ -246,7 +257,7 @@ public class CardCreationView {
                         "-fx-background-radius: 10;"
         );
 
-        previewNameLabel = createLabel("NOM DE CARTE", 12, "#ffffff");
+        previewNameLabel = createLabel("NOM DE CARTE", 22, "#ffffff", FontWeight.BOLD);
         previewNameLabel.setPadding(new Insets(2, 5, 0, 0));
 
         HBox nameBar = new HBox();
@@ -257,8 +268,8 @@ public class CardCreationView {
         nameBar.getChildren().addAll(spacer, previewNameLabel);
 
         cardImageView = new ImageView();
-        cardImageView.setFitWidth(150);
-        cardImageView.setFitHeight(150);
+        cardImageView.setFitWidth(250);
+        cardImageView.setFitHeight(250);
 
         VBox imageContainer = new VBox(cardImageView);
         imageContainer.setAlignment(Pos.CENTER);
@@ -273,17 +284,13 @@ public class CardCreationView {
         );
         VBox.setMargin(imageContainer, new Insets(0, 0, 5, 0));
 
-        VBox statsBox = new VBox(3);
-        statsBox.setAlignment(Pos.CENTER_LEFT);
-        statsBox.setPadding(new Insets(0, 0, 0, 5));
-
-        previewHpLabel = createLabel("HP: 10", 18, "#4CAF50", FontWeight.BOLD);
-        previewAtkLabel = createLabel("ATK: 10", 18, "#F44336", FontWeight.BOLD);
-        previewDefLabel = createLabel("DEF: 10", 18, "#2196F3", FontWeight.BOLD);
+        VBox statsBox = new VBox(15);
+        previewHpLabel = createLabel("HP: 10", 28, "#4CAF50", FontWeight.BOLD);
+        previewAtkLabel = createLabel("ATK: 10", 28, "#F44336", FontWeight.BOLD);
+        previewDefLabel = createLabel("DEF: 10", 28, "#2196F3", FontWeight.BOLD);
 
         statsBox.getChildren().addAll(previewHpLabel, previewAtkLabel, previewDefLabel);
-
-        cardSlot.getChildren().addAll(nameBar, imageContainer, statsBox);
+        cardSlot.getChildren().addAll(previewNameLabel, imageContainer, statsBox);
 
         return cardSlot;
     }
@@ -294,7 +301,7 @@ public class CardCreationView {
 
     private Label createTitleLabel(String text) {
         Label label = new Label(text);
-        label.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 32));
+        label.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
         label.setTextFill(Color.web("#ffffff"));
         return label;
     }

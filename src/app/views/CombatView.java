@@ -108,12 +108,17 @@ public class CombatView {
 
     private HBox createSelectionArea() {
         HBox box = new HBox(20);
-        box.setAlignment(Pos.TOP_CENTER);
+        box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(10));
 
         VBox playerPanel = createCardListPanel("Your Fighter", true);
         VBox opponentPanel = createCardListPanel("Target Card", false);
         VBox centerPanel = createSummaryPanel();
+
+        HBox.setHgrow(playerPanel, Priority.ALWAYS);
+        HBox.setHgrow(opponentPanel, Priority.ALWAYS);
+
+        centerPanel.setMinWidth(200);
 
         box.getChildren().addAll(playerPanel, centerPanel, opponentPanel);
         return box;
@@ -121,10 +126,12 @@ public class CombatView {
 
     private VBox createCardListPanel(String title, boolean isLocalPlayer) {
         VBox panel = new VBox(10);
-        panel.setPrefSize(400, 550);
+        panel.setMinWidth(300);
+        panel.setMaxWidth(Double.MAX_VALUE);
         panel.setStyle("-fx-background-color: #333; -fx-padding: 10; -fx-border-radius: 5; -fx-border-color: #D32F2F; -fx-border-width: 2;");
 
         ListView<Card> cardListView = new ListView<>();
+        VBox.setVgrow(cardListView, Priority.ALWAYS);
 
         cardListView.setCellFactory(param -> new ListCell<>() {
             @Override

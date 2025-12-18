@@ -123,4 +123,8 @@ public class CombatController {
             }
         }
     }
+
+    public Player getLocalPlayer() {
+        return mainController.getLocalPlayer();
+    }
 }
