@@ -64,7 +64,7 @@ int main() {
     }
 
 
-    printf("\n[MAIN] Début du nettoyage des ressources...\n");
+    printf("\n[INFO] Début du nettoyage des ressources...\n");
 
     // A. Libération de la Blockchain (Liste chaînée)
     if (global_blockchain != NULL) {
@@ -81,15 +81,14 @@ int main() {
             current = next;
         }
         free(global_blockchain); // Libération de la structure de contrôle
-        printf("[MAIN] Mémoire Blockchain libérée.\n");
+        printf("[INFO] Mémoire Blockchain libérée.\n");
     }
 
     // B. Fermeture de la Base de Données
     db_close(); 
     // Note: db_close appelle PQfinish(conn), donc pas besoin de le refaire ici 
     // si votre db_close utilise la variable statique interne, sinon passez 'conn'.
-    printf("[MAIN] Connexion BDD fermée.\n");
 
-    printf("[MAIN] Arrêt complet du programme. Au revoir !\n");
+    printf("[INFO] Arrêt complet du programme. Au revoir !\n");
     return EXIT_SUCCESS;
 }

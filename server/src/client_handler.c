@@ -280,9 +280,9 @@ void process_card_creation(int client_socket, const char *json_payload) {
     }
 
     // Allocation du bloc
-    Block *new_block = malloc(sizeof(Block));
-    if (!new_block) {
-        perror("malloc block");
+    Block *new_block = calloc(1, sizeof(Block));
+    if (new_block == NULL) {
+        perror("calloc failed");
         return;
     }
 
@@ -540,7 +540,11 @@ void process_trade_response(int client_socket, const char *json_payload) {
 
     // B. Ajout dans la Blockchain
     Blockchain *bc = get_global_blockchain();
-    Block *new_block = malloc(sizeof(Block));
+    Block *new_block = calloc(1, sizeof(Block));
+    if (new_block == NULL) {
+        perror("calloc failed");
+        return;
+    }
     new_block->ID_block = bc->tail->ID_block + 1;
     new_block->timestamp = time(NULL);
     new_block->nonce = 0;
@@ -734,7 +738,11 @@ void process_fight_response(int client_socket, const char *json_payload) {
 
     // 4. Enregistrement Blockchain
     Blockchain *bc = get_global_blockchain();
-    Block *new_block = malloc(sizeof(Block));
+    Block *new_block = calloc(1, sizeof(Block));
+    if (new_block == NULL) {
+        perror("calloc failed");
+        return;
+    }
     new_block->ID_block = bc->tail->ID_block + 1;
     new_block->timestamp = time(NULL);
     new_block->nonce = 0;
