@@ -8,10 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -30,7 +27,6 @@ public class CombatView {
     private ListView<Card> playerCardList;
     private ListView<Card> opponentCardList;
 
-    // Labels du panneau central
     private Label myFighterLabel;
     private Label targetLabel;
 
@@ -63,11 +59,16 @@ public class CombatView {
         root.setPadding(new Insets(10));
         root.setStyle("-fx-background-color: #222222;");
 
+        // HEADER
+        Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, "#FF5252", FontWeight.BOLD);
         VBox topBox = createTopControlArea();
-        root.setTop(topBox);
 
-        HBox tradeBox = createSelectionArea();
-        root.setCenter(tradeBox);
+        StackPane header = new StackPane(topBox, pseudoLabel);
+        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        root.setTop(header);
+
+        HBox selectionArea = createSelectionArea();
+        root.setCenter(selectionArea);
 
         HBox buttonBox = createBottomButtonArea();
         root.setBottom(buttonBox);

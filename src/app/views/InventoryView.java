@@ -2,6 +2,7 @@ package app.views;
 
 import app.controller.InventoryController;
 import app.model.Card;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -12,6 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -32,17 +34,22 @@ public class InventoryView {
 
     public Scene createScene() {
         BorderPane root = new BorderPane();
+        root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #222222;");
 
-        VBox topBox = new VBox(10);
-        topBox.setAlignment(Pos.CENTER);
-        topBox.setStyle("-fx-background-color: #1a1a1a;");
+        Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, FontWeight.BOLD, "#A97DDE");
+
+        VBox titleBox = new VBox(10);
+        titleBox.setAlignment(Pos.CENTER);
+        Label title = createLabel("Player Inventory", 28, FontWeight.BOLD, "#ffffff");
 
         Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
         backButton.setOnAction(e -> controller.backToMenu());
+        titleBox.getChildren().addAll(title, backButton);
 
-        topBox.getChildren().addAll(createLabel("Player Inventory", 28, FontWeight.BOLD, "#ffffff"), backButton);
-        root.setTop(topBox);
+        StackPane header = new StackPane(titleBox, pseudoLabel);
+        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        root.setTop(header);
 
         VBox detailBox = createCardDetailPanel();
         detailBox.setId("DetailPanel");

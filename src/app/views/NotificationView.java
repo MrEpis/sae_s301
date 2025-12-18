@@ -1,16 +1,14 @@
 package app.views;
 
 import app.controller.MainController;
-import app.model.FightResultModel;
 import app.model.TradeRequestModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -22,81 +20,104 @@ public class NotificationView {
 
     private final Stage primaryStage;
     private final MainController controller;
-    private final List<TradeRequestModel> requests;
+    private final List<TradeRequestModel> notifications;
 
-    public NotificationView(Stage primaryStage, MainController controller, List<TradeRequestModel> requests) {
+    public NotificationView(Stage primaryStage, MainController controller, List<TradeRequestModel> notifications) {
         this.primaryStage = primaryStage;
         this.controller = controller;
-        this.requests = requests;
+        this.notifications = notifications;
+    }
+
+    public Scene createScene() {
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(20));
+        root.setStyle("-fx-background-color: #222222;");
+
+        Label pseudoLabel = new Label("Utilisateur : " + controller.getLocalPlayer().getName());
+        pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        pseudoLabel.setTextFill(Color.web("#A97DDE"));
+
+        Label titleLabel = new Label("NOTIFICATIONS");
+        titleLabel.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 32));
+        titleLabel.setTextFill(Color.web("#ffffff"));
+
+        StackPane header = new StackPane(titleLabel, pseudoLabel);
+        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        StackPane.setAlignment(titleLabel, Pos.CENTER);
+        root.setTop(header);
+
+        VBox notificationList = new VBox(15);
+        notificationList.setAlignment(Pos.TOP_CENTER);
+        notificationList.setPadding(new Insets(30, 0, 0, 0));
+
+        if (notifications.isEmpty()) {
+            Label emptyLabel = new Label("Aucune notification pour le moment.");
+            emptyLabel.setTextFill(Color.GRAY);
+            notificationList.getChildren().add(emptyLabel);
+        } else {
+            for (TradeRequestModel req : notifications) {
+                notificationList.getChildren().add(createNotificationItem(req));
+            }
+        }
+
+        ScrollPane scrollPane = new ScrollPane(notificationList);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        root.setCenter(scrollPane);
+
+        Button backBtn = new Button("Back to Menu");
+        backBtn.setPrefSize(200, 45);
+        backBtn.setStyle("-fx-background-color: #D9C6F0; -fx-font-weight: bold;");
+        backBtn.setOnAction(e -> controller.showMenu());
+
+        HBox bottomBox = new HBox(backBtn);
+        bottomBox.setAlignment(Pos.CENTER);
+        bottomBox.setPadding(new Insets(20));
+        root.setBottom(bottomBox);
+
+        return new Scene(root, 850, 650);
+    }
+
+    private HBox createNotificationItem(TradeRequestModel req) {
+        HBox item = new HBox(20);
+        item.setAlignment(Pos.CENTER_LEFT);
+        item.setPadding(new Insets(15));
+        item.setStyle("-fx-background-color: #333333; -fx-border-color: #555555; -fx-border-radius: 10;");
+
+        String text;
+        if (req.getFightResult() != null) {
+            // Nouveau format : Résultat de combat contre (id) disponible
+            text = "Résultat de combat contre " + req.getInitiatorId() + " disponible";
+        } else {
+            text = (req.isFight() ? "Combat contre " : "Échange avec ") +
+                    (req.getInitiatorUsername() != null ? req.getInitiatorUsername() : "Joueur " + req.getInitiatorId());
+        }
+
+        Label desc = new Label(text);
+        desc.setTextFill(Color.WHITE);
+        desc.setFont(Font.font("Arial", 16));
+        HBox.setHgrow(desc, Priority.ALWAYS);
+
+        Button actionBtn = new Button("Voir");
+        actionBtn.setStyle("-fx-background-color: #A97DDE; -fx-text-fill: white; -fx-font-weight: bold;");
+        actionBtn.setOnAction(e -> {
+            if (req.getFightResult() != null) {
+                new FightResultView(primaryStage, controller, req.getFightResult(), req.getFightResult().getMyCard()).show();
+            } else if (req.isFight()) {
+                new FightProposalView(primaryStage, controller, req).show();
+            } else {
+                new TradeProposalView(primaryStage, controller, req).show();
+            }
+        });
+
+        item.getChildren().addAll(desc, actionBtn);
+        return item;
     }
 
     public void show() {
-        BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #222;");
-        root.setPadding(new Insets(20));
-
-        Label title = new Label("Notifications");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        title.setTextFill(Color.WHITE);
-        BorderPane.setAlignment(title, Pos.CENTER);
-        root.setTop(title);
-
-        ListView<TradeRequestModel> listView = new ListView<>();
-        listView.getItems().addAll(requests);
-
-        listView.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(TradeRequestModel item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("-fx-background-color: transparent;");
-                } else {
-                    if (item.isFightResult()) {
-                        setText("🏆 Résultat du combat contre " + item.getInitiatorUsername());
-                        setStyle("-fx-text-fill: #FFC107; -fx-font-size: 14px; -fx-padding: 10; -fx-font-weight: bold; -fx-border-color: #FFC107; -fx-border-width: 0 0 1 0;");
-                    }
-                    else if (item.isFight()) {
-                        setText("⚔️ DÉFI DE COMBAT reçu de " + item.getInitiatorUsername());
-                        setStyle("-fx-text-fill: #FF5252; -fx-font-size: 14px; -fx-padding: 10; -fx-font-weight: bold;");
-                    }
-                    else {
-                        setText("🤝 Échange proposé par " + item.getInitiatorUsername());
-                        setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
-                    }
-                }
-            }
-        });
-
-        listView.setStyle("-fx-background-color: #333; -fx-control-inner-background: #333;");
-
-        listView.setOnMouseClicked(e -> {
-            TradeRequestModel selected = listView.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                if (selected.isFightResult()) {
-                    FightResultModel result = selected.getFightResult();
-                    new FightResultView(primaryStage, controller, result, result.getMyCard()).show();
-                }
-                else if (selected.isFight()) {
-                    new FightProposalView(primaryStage, controller, selected).show();
-                }
-                else {
-                    new TradeProposalView(primaryStage, controller, selected).show();
-                }
-            }
-        });
-
-        root.setCenter(listView);
-
-        Button backBtn = new Button("Retour au menu");
-        backBtn.setStyle("-fx-background-color: #A97DDE; -fx-text-fill: black; -fx-font-weight: bold;");
-        backBtn.setOnAction(e -> controller.showMenu());
-        BorderPane.setAlignment(backBtn, Pos.CENTER);
-        BorderPane.setMargin(backBtn, new Insets(10));
-        root.setBottom(backBtn);
-
-        primaryStage.setScene(new Scene(root, 600, 400));
-        primaryStage.setTitle("Mes Notifications");
+        primaryStage.setScene(createScene());
+        primaryStage.setTitle("Notifications");
+        primaryStage.sizeToScene();
         primaryStage.show();
     }
 }

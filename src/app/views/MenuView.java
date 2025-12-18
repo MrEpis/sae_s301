@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -27,28 +28,26 @@ public class MenuView {
     }
 
     public Scene createScene() {
-
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #1e1e1e;");
 
-        Label pseudoLabel = new Label("Utilisateur : " + controller.getLocalPlayer().getName());
+        // HEADER : Pseudo à gauche et Titre au centre
+        Label pseudoLabel = new Label("👤 " + controller.getLocalPlayer().getName());
         pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         pseudoLabel.setTextFill(Color.web("#A97DDE"));
-        HBox topBar = new HBox(pseudoLabel);
-        topBar.setAlignment(Pos.TOP_LEFT);
-        root.setTop(topBar);
-
-        VBox mainContent = new VBox(40);
-        mainContent.setAlignment(Pos.CENTER);
 
         Label titleLabel = new Label("ROBS CARD GAME");
         titleLabel.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 60));
         titleLabel.setTextFill(Color.web("#f0f0f0"));
 
+        StackPane header = new StackPane(titleLabel, pseudoLabel);
+        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        root.setTop(header);
+
         VBox buttonContainer = new VBox(20);
         buttonContainer.setAlignment(Pos.CENTER);
-        buttonContainer.setMaxWidth(450);
+        buttonContainer.setMaxWidth(600);
 
         Button combatButton = createButton("Launch Combat");
         Button inventoryButton = createButton("View Inventory");
@@ -58,33 +57,18 @@ public class MenuView {
         Button quitButton = createButton("Quit");
 
         for (Button b : new Button[]{combatButton, inventoryButton, createCardButton, tradeButton, notificationButton, quitButton}) {
-            b.setMaxWidth(Double.MAX_VALUE);
+            b.setMaxWidth(450);
         }
-        combatButton.setOnAction(e -> {
-            controller.showCombat();
-        });
 
-        inventoryButton.setOnAction(e -> {
-            controller.showInventory();
-        });
-
-        createCardButton.setOnAction(e -> {
-            controller.showCardCreation();
-        });
-
-        tradeButton.setOnAction(e -> {
-            controller.showTrade();
-        });
-
+        combatButton.setOnAction(e -> controller.showCombat());
+        inventoryButton.setOnAction(e -> controller.showInventory());
+        createCardButton.setOnAction(e -> controller.showCardCreation());
+        tradeButton.setOnAction(e -> controller.showTrade());
         notificationButton.setOnAction(e -> controller.showNotifications());
-
         quitButton.setOnAction(e -> controller.quit());
 
-
-        buttonContainer.getChildren().addAll(combatButton, inventoryButton, createCardButton, tradeButton, notificationButton, quitButton);
-        mainContent.getChildren().addAll(titleLabel, buttonContainer);
-
-        root.setCenter(mainContent);
+        buttonContainer.getChildren().addAll(titleLabel, combatButton, inventoryButton, createCardButton, tradeButton, notificationButton, quitButton);
+        root.setCenter(buttonContainer);
 
         return new Scene(root, 800, 700);
     }

@@ -9,10 +9,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority; // IMPORT AJOUTÉ POUR L'ALIGNEMENT
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -47,11 +44,22 @@ public class TradeView {
 
     public Scene createScene() {
         BorderPane root = new BorderPane();
-        root.setPadding(new Insets(10));
+        root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #383838;");
-        VBox topBox = createTopControlArea(); root.setTop(topBox);
-        HBox tradeBox = createTradeSelectionArea(); root.setCenter(tradeBox);
-        HBox buttonBox = createBottomButtonArea(); root.setBottom(buttonBox);
+
+        Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, "#FFC107", FontWeight.BOLD);
+        VBox topBox = createTopControlArea();
+
+        StackPane header = new StackPane(topBox, pseudoLabel);
+        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        root.setTop(header);
+
+        HBox tradeBox = createTradeSelectionArea();
+        root.setCenter(tradeBox);
+
+        HBox buttonBox = createBottomButtonArea();
+        root.setBottom(buttonBox);
+
         return new Scene(root, 1100, 750);
     }
 
@@ -139,33 +147,24 @@ public class TradeView {
         return panel;
     }
 
-    // --- MODIFICATION PRINCIPALE ICI ---
     private HBox createCardListWidget(Card card) {
         HBox cardBox = new HBox(15);
         cardBox.setAlignment(Pos.CENTER_LEFT);
         cardBox.setPadding(new Insets(5));
 
-        // 1. Image
         ImageView imgView = new ImageView();
         imgView.setFitWidth(60); imgView.setFitHeight(60); imgView.setPreserveRatio(true);
         try { if (card.getImagePath() != null) { File file = new File(card.getImagePath()); if(file.exists()) imgView.setImage(new Image(file.toURI().toString())); } } catch(Exception e) {}
 
-        // 2. Infos principales (Nom)
         VBox infoBox = new VBox(5);
         infoBox.setAlignment(Pos.CENTER_LEFT);
-        // CHANGEMENT DE COULEUR : #FFFFFF -> #FFC107 (Or) pour meilleure visibilité
         Label nameLbl = createLabel(card.getNom(), 16, "#FFC107", FontWeight.BOLD);
         infoBox.getChildren().add(nameLbl);
 
-        // CORRECTION ALIGNEMENT : On dit à la boîte du nom de prendre toute la place disponible
-        // Cela poussera la boîte des stats vers la droite.
         HBox.setHgrow(infoBox, Priority.ALWAYS);
 
-        // 3. Stats (HP, ATK, DEF)
         VBox statsBox = new VBox(2);
-        // On aligne le contenu à droite dans cette boîte
         statsBox.setAlignment(Pos.CENTER_RIGHT);
-        // On fixe une largeur minimale pour que les stats soient bien alignées verticalement entre elles
         statsBox.setMinWidth(90);
 
         statsBox.getChildren().addAll(
@@ -178,9 +177,7 @@ public class TradeView {
         cardBox.getChildren().addAll(imgView, infoBox, statsBox);
         return cardBox;
     }
-    // -----------------------------------
 
-    // ... (Le reste du fichier est inchangé) ...
     private VBox createSummaryPanel() {
         VBox panel = new VBox(20); panel.setAlignment(Pos.CENTER); panel.setPrefWidth(200);
         Label arrow = createLabel("⇄", 48, "#D9C6F0", FontWeight.BOLD);

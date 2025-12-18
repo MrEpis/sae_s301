@@ -19,4 +19,8 @@ public class InventoryController {
     public Player getPlayer() {
         return playerLocal;
     }
+
+    public Player getLocalPlayer() {
+        return mainController.getLocalPlayer();
+    }
 }

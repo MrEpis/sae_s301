@@ -67,15 +67,23 @@ public class CardCreationView {
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #2e2e2e;");
+        root.setPadding(new Insets(20));
 
+        Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, "#A97DDE", FontWeight.BOLD);
         Label titleLabel = createTitleLabel("Create Your Card");
-        titleLabel.setPadding(new Insets(30, 0, 30, 0));
-        BorderPane.setAlignment(titleLabel, Pos.CENTER);
-        root.setTop(titleLabel);
+
+        StackPane header = new StackPane(titleLabel, pseudoLabel);
+        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        root.setTop(header);
 
         HBox centerBox = new HBox(60);
         centerBox.setAlignment(Pos.CENTER);
         centerBox.setPadding(new Insets(20));
+
+        Region leftSpacer = new Region();
+        Region rightSpacer = new Region();
+        HBox.setHgrow(leftSpacer, Priority.ALWAYS);
+        HBox.setHgrow(rightSpacer, Priority.ALWAYS);
 
         VBox formBox = createStatDistributionForm();
         VBox previewBox = createCardPreviewArea();
@@ -85,7 +93,7 @@ public class CardCreationView {
         formBox.setMaxWidth(600);
         previewBox.setMaxWidth(600);
 
-        centerBox.getChildren().addAll(formBox, previewBox);
+        centerBox.getChildren().addAll(leftSpacer, formBox, previewBox, rightSpacer);
         root.setCenter(centerBox);
 
         HBox bottomBox = new HBox(40);
@@ -95,21 +103,13 @@ public class CardCreationView {
         Button saveButton = createActionButton("Save Card", "#7834CB", 180, 40);
         Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
 
-        saveButton.setOnAction(e -> {
-            controller.saveCard(
-                    cardNameField.getText(),
-                    hpSpinner.getValue(),
-                    attackSpinner.getValue(),
-                    defenseSpinner.getValue()
-            );
-        });
-
+        saveButton.setOnAction(e -> controller.saveCard(cardNameField.getText(), hpSpinner.getValue(), attackSpinner.getValue(), defenseSpinner.getValue()));
         backButton.setOnAction(e -> controller.backToMenu());
 
         bottomBox.getChildren().addAll(saveButton, backButton);
         root.setBottom(bottomBox);
 
-        return new Scene(root, 1000, 800);
+        return new Scene(root, 1100, 800);
     }
 
     private VBox createStatDistributionForm() {
