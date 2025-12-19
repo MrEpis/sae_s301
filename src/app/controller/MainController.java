@@ -139,7 +139,7 @@ public class MainController {
             FightResultModel result = JsonUtils.parseFightResult(message);
 
             if (message.contains("ERROR") || message.contains("REFUSED")) {
-                result = new app.model.FightResultModel("L'adversaire a fuit le combat", null);
+                result = new app.model.FightResultModel("L'adversaire a fui le combat", null);
             }
 
             int opponentId = -1;
@@ -149,10 +149,7 @@ public class MainController {
             Card myCardUpdated = null;
             if (this.lastMyCardIdEngaged != -1) {
                 for (Card c : localPlayer.getInventory()) {
-                    if (c.getId() == this.lastMyCardIdEngaged) {
-                        myCardUpdated = c;
-                        break;
-                    }
+                    if (c.getId() == this.lastMyCardIdEngaged) { myCardUpdated = c; break; }
                 }
             }
             result.setMyCard(myCardUpdated);
@@ -160,17 +157,22 @@ public class MainController {
             final int finalOpponentId = opponentId;
             final app.model.FightResultModel finalResult = result;
 
-            Platform.runLater(() -> {
-                TradeRequestModel notif = new TradeRequestModel(finalOpponentId, 0, 0);
-                notif.setFightResult(finalResult);
-                notifications.add(notif);
+            new Thread(() -> {
+                String opponentName = getUsernameById(finalOpponentId);
 
-                if (primaryStage.getTitle().contains("Notifications")) showNotifications();
+                Platform.runLater(() -> {
+                    TradeRequestModel notif = new TradeRequestModel(finalOpponentId, 0, 0);
+                    notif.setInitiatorUsername(opponentName); // On enregistre le pseudo trouvé
+                    notif.setFightResult(finalResult);
+                    notifications.add(notif);
 
-                showToast("Combat terminé ! Voir le résultat", () -> {
-                    new FightResultView(primaryStage, this, finalResult, finalResult.getMyCard()).show();
+                    if (primaryStage.getTitle().contains("Notifications")) showNotifications();
+
+                    showToast("Combat terminé contre " + opponentName, () -> {
+                        new FightResultView(primaryStage, this, finalResult, finalResult.getMyCard()).show();
+                    });
                 });
-            });
+            }).start();
         }
     }
 

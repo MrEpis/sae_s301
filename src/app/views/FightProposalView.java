@@ -36,7 +36,6 @@ public class FightProposalView {
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #222222; -fx-border-color: #D32F2F; -fx-border-width: 4;");
 
-        // --- HEADER : Pseudo à gauche et Titre centré ---
         Label pseudoLabel = new Label("Utilisateur : " + controller.getLocalPlayer().getName());
         pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         pseudoLabel.setTextFill(Color.web("#A97DDE"));
@@ -50,7 +49,6 @@ public class FightProposalView {
         StackPane.setAlignment(titleLabel, Pos.CENTER);
         root.setTop(header);
 
-        // --- CENTRE : Cartes et sous-titre ---
         VBox centerContent = new VBox(20);
         centerContent.setAlignment(Pos.CENTER);
         centerContent.setPadding(new Insets(20, 0, 0, 0));
@@ -78,7 +76,6 @@ public class FightProposalView {
         centerContent.getChildren().addAll(subtitle, cardsBox);
         root.setCenter(centerContent);
 
-        // --- BOTTOM : Boutons d'action ---
         HBox buttonsBox = new HBox(20);
         buttonsBox.setAlignment(Pos.CENTER);
         buttonsBox.setPadding(new Insets(20, 0, 0, 0));
@@ -165,8 +162,9 @@ public class FightProposalView {
             }
 
             box.getChildren().addAll(titleLbl, nameLbl, imgView,
+                    createStatLabel("HP: " + card.getHp()),
                     createStatLabel("ATK: " + card.getAtk()),
-                    createStatLabel("HP: " + card.getHp())
+                    createStatLabel("DEF: " + card.getDef())
             );
         }
         return box;

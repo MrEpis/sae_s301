@@ -86,9 +86,9 @@ public class NotificationView {
 
         String text;
         if (req.getFightResult() != null) {
-            // Nouveau format : Résultat de combat contre (id) disponible
-            text = "Résultat de combat contre " + req.getInitiatorId() + " disponible";
-        } else {
+            String name = (req.getInitiatorUsername() != null) ? req.getInitiatorUsername() : "Joueur " + req.getInitiatorId();
+            text = "Résultat de combat contre " + name + " disponible";
+        }else {
             text = (req.isFight() ? "Combat contre " : "Échange avec ") +
                     (req.getInitiatorUsername() != null ? req.getInitiatorUsername() : "Joueur " + req.getInitiatorId());
         }
