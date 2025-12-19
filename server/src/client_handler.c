@@ -710,8 +710,7 @@ void process_fight_response(int client_socket, const char *json_payload) {
     char json_card_initiator[1024];
     char json_card_receiver[1024];
 
-    db_get_single_card_json(conn, id_card_initiator, json_card_initiator, sizeof(json_card_initiator));
-    db_get_single_card_json(conn, id_card_receiver, json_card_receiver, sizeof(json_card_receiver));    
+    
 
     int atk1, def1, hp1, atk2, def2, hp2;
 
@@ -782,6 +781,9 @@ void process_fight_response(int client_socket, const char *json_payload) {
     const char *res_initiator = (id_initiator == winner_id) ? "VICTOIRE" : "DEFAITE";
 
     char result_msg[6000];
+    
+    db_get_single_card_json(conn, id_card_initiator, json_card_initiator, sizeof(json_card_initiator));
+    db_get_single_card_json(conn, id_card_receiver, json_card_receiver, sizeof(json_card_receiver));    
     
     // Message pour le Receveur (B)
 
