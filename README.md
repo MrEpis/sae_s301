@@ -1,8 +1,12 @@
 # SAE S3.01 - Jeu de Cartes - Groupe B
 
+## Présentation du jeu Random Objects Battle Simulator (R.O.B.S)
+
 Ce projet implémente un jeu de cartes multijoueur avec une architecture client-serveur.
 - **Serveur** : Codé en C, il gère la logique du jeu, la base de données (PostgreSQL) et la Blockchain.
 - **Client** : Codé en Java avec JavaFX, il fournit l'interface graphique aux joueurs.
+
+Le joueur peut attribuer des images d'objets divers et variés à ses cartes.
 
 ## Organisation des répertoires
 
