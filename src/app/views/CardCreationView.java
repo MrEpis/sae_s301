@@ -33,8 +33,8 @@ public class CardCreationView {
     private Spinner<Integer> attackSpinner;
     private Spinner<Integer> defenseSpinner;
     private TextField cardNameField;
-
     private Label previewNameLabel;
+    private Label errorLabel;
 
 
     public CardCreationView(Stage primaryStage) {
@@ -65,6 +65,12 @@ public class CardCreationView {
         }
     }
 
+    public void displayError(String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+        }
+    }
+
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #2e2e2e;");
@@ -76,6 +82,10 @@ public class CardCreationView {
         StackPane header = new StackPane(titleLabel, pseudoLabel);
         StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
         root.setTop(header);
+
+        errorLabel = new Label("");
+        errorLabel.setTextFill(Color.web("#FF5252"));
+        errorLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
         HBox centerBox = new HBox(60);
         centerBox.setAlignment(Pos.CENTER);
@@ -97,9 +107,16 @@ public class CardCreationView {
         centerBox.getChildren().addAll(leftSpacer, formBox, previewBox, rightSpacer);
         root.setCenter(centerBox);
 
+        VBox footer = new VBox(10);
+        footer.setAlignment(Pos.CENTER);
+        footer.setPadding(new Insets(0, 0, 20, 0));
+
         HBox bottomBox = new HBox(40);
         bottomBox.setPadding(new Insets(30));
         bottomBox.setAlignment(Pos.CENTER);
+
+
+
 
         Button saveButton = createActionButton("Sauvegarder la carte", "#7834CB", 180, 40);
         Button backButton = createActionButton("Retour au Menu", "#D9C6F0", 180, 40);
@@ -108,7 +125,8 @@ public class CardCreationView {
         backButton.setOnAction(e -> controller.backToMenu());
 
         bottomBox.getChildren().addAll(saveButton, backButton);
-        root.setBottom(bottomBox);
+        footer.getChildren().addAll(errorLabel, bottomBox);
+        root.setBottom(footer);
 
         return new Scene(root, 1100, 800);
     }

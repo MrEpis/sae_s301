@@ -12,11 +12,11 @@ ADDR ?= 134.59.27.129
 DEFAULT_FX := $(shell find $(HOME) -name 'javafx.controls.jar' -print -quit 2>/dev/null)
 
 ifndef JAVAFX_PATH
-ifneq ($(DEFAULT_FX),)
-JAVAFX_PATH := $(dir $(DEFAULT_FX))
-else
-JAVAFX_PATH := /usr/share/openjfx/lib
-endif
+    ifneq ($(DEFAULT_FX),)
+        JAVAFX_PATH := $(dir $(DEFAULT_FX))
+    else
+        JAVAFX_PATH := /usr/share/openjfx/lib
+    endif
 endif
 
 # --- CONFIGURATION ---

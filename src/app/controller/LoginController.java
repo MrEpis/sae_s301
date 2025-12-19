@@ -52,6 +52,12 @@ public class LoginController {
 
                 mainController.showMenu();
             } else {
+                // Vérification si l'erreur vient d'un serveur plein
+                if (response != null && response.contains("Server at max capacity")) {
+                    view.displayError("Impossible de se connecter, serveur plein.");
+                } else {
+                    view.displayError("Erreur de connexion serveur");
+                }
                 System.err.println("Erreur de connexion serveur");
             }
         }

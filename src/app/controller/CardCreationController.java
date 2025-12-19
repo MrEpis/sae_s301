@@ -103,6 +103,11 @@ public class CardCreationController {
                 this.rawSelectedFile = null;
                 backToMenu();
             } else {
+                if (response != null && response.contains("Nombre de cartes max atteint")) {
+                    creationView.displayError("Nombre de cartes maximum atteint");
+                } else {
+                    creationView.displayError("Échec de la création de la carte");
+                }
                 System.err.println("Échec création carte.");
             }
         }

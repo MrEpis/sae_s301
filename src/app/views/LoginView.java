@@ -18,6 +18,8 @@ public class LoginView {
     private final Stage primaryStage;
     private LoginController controller;
     private TextField usernameField;
+    // Ajout d'un label pour afficher les erreurs à l'utilisateur
+    private Label errorLabel;
 
     public LoginView(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -25,6 +27,13 @@ public class LoginView {
 
     public void setController(LoginController controller) {
         this.controller = controller;
+    }
+
+    // Méthode pour afficher un message d'erreur sur la page
+    public void displayError(String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+        }
     }
 
     public void show() {
@@ -51,6 +60,11 @@ public class LoginView {
             return change;
         }));
 
+        // Initialisation du label d'erreur (vide par défaut)
+        errorLabel = new Label("");
+        errorLabel.setTextFill(Color.web("#FF5252"));
+        errorLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+
         Button validateButton = new Button("ça part !!!");
         validateButton.setStyle("-fx-background-color: #7834CB; -fx-text-fill: white; -fx-font-weight: bold;");
         validateButton.setOnAction(e -> {
@@ -65,7 +79,8 @@ public class LoginView {
             }
         });
 
-        root.getChildren().addAll(title, subtitle, usernameField, validateButton);
+        // On ajoute le label d'erreur à la fin de la liste
+        root.getChildren().addAll(title, subtitle, usernameField, validateButton, errorLabel);
         Scene scene = new Scene(root, 600, 400);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Première Connexion");
