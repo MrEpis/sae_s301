@@ -41,5 +41,9 @@ run-bot: compile
 	@echo "Lancement du bot sur $(ADDR)..."
 	$(JVM) $(JFX_FLAGS) -Dserver.addr=$(ADDR) -cp $(BIN_DIR) $(MAIN_CLASS) bot
 
+run-new: compile
+	@echo "Lancement d'une instance vierge sur $(ADDR)..."
+	$(JVM) $(JFX_FLAGS) -Dserver.addr=$(ADDR) -Dnosession=true -cp $(BIN_DIR) $(MAIN_CLASS)
+
 clean:
 	rm -rf $(BIN_DIR)

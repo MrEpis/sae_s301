@@ -15,7 +15,6 @@ public class CombatController {
     private final Player currentPlayer;
     private CombatView combatView;
 
-    // Liste pour mapper Nom -> ID
     private List<Player> connectedPlayers = new ArrayList<>();
 
     public CombatController(MainController mainController, Player player) {
@@ -35,7 +34,7 @@ public class CombatController {
         return currentPlayer.getInventory();
     }
 
-    // 1. Récupérer la liste des joueurs (identique à TradeController)
+
     public void refreshPlayerList() {
         System.out.println("Combat: Récupération liste joueurs...");
         String request = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
@@ -61,7 +60,6 @@ public class CombatController {
         }
     }
 
-    // 2. Charger l'inventaire adverse pour choisir la cible
     public void loadOpponentInventory(String opponentName) {
         combatView.displayStatus("Espionnage de l'inventaire de " + opponentName + "...");
         String dataJson = JsonUtils.buildGetOpponentInventoryRequest(opponentName);
@@ -78,9 +76,7 @@ public class CombatController {
         }
     }
 
-    // 3. Envoyer la demande de combat
     public void sendFightRequest(String opponentName, int myCardId, int targetCardId) {
-        // Retrouver l'ID de l'adversaire
         int opponentId = -1;
         for (Player p : connectedPlayers) {
             if (p.getName().equals(opponentName)) {
@@ -100,7 +96,6 @@ public class CombatController {
         System.out.println("Envoi FightRequest à " + opponentName);
         combatView.displayStatus("Envoi du défi à " + opponentName + "...");
 
-        // Construction de la requête
         String dataJson = JsonUtils.buildFightRequestData(
                 currentPlayer.getId_Client(),
                 myCardId,

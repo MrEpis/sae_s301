@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -41,6 +42,14 @@ public class LoginView {
         usernameField = new TextField();
         usernameField.setMaxWidth(300);
         usernameField.setPromptText("Pseudo...");
+
+        usernameField.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if(newText.length() > 20 || !newText.matches("[0-9a-zA-ZàâäéèêëîïôöùûüÿçÀÂÄÉÈÊËÎÏÔÖÙÛÜŸÇ_-]*")) {
+                return null;
+            }
+            return change;
+        }));
 
         Button validateButton = new Button("ça part !!!");
         validateButton.setStyle("-fx-background-color: #7834CB; -fx-text-fill: white; -fx-font-weight: bold;");

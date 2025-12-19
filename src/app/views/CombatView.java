@@ -90,7 +90,7 @@ public class CombatView {
         searchBox.setAlignment(Pos.CENTER);
 
         opponentSelector = new ComboBox<>();
-        opponentSelector.setPromptText("Séléctionner un adversaire...");
+        opponentSelector.setPromptText("Sélectionner un adversaire...");
         opponentSelector.setPrefWidth(200);
 
         Button refreshButton = createActionButton("Rafraichir la liste", "#fca503", 180, 40);
@@ -155,7 +155,7 @@ public class CombatView {
             }
         });
 
-        Label selectedLabel = createLabel("Séléction:", 14, "#AAAAAA", FontWeight.BOLD);
+        Label selectedLabel = createLabel("Sélection:", 14, "#AAAAAA", FontWeight.BOLD);
         Label displayLabel = createLabel("- pas de sélection -", 16, "#ffffff", FontWeight.NORMAL);
 
         if (isLocalPlayer) {

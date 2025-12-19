@@ -69,7 +69,7 @@ public class CardCreationController {
         }
 
         String serverImagePath = "src/ressources/img/" + rawSelectedFile.getName();
-        int clientId = SessionService.loadClientId();
+        int clientId = player.getId_Client();
         String jsonData = JsonUtils.buildCardCreationData(clientId, name, hp, atk, def, serverImagePath);
         String jsonRequest = JsonUtils.buildRequest("RequestCardCreation", jsonData);
 

@@ -156,6 +156,14 @@ public class CardCreationView {
             }
         });
 
+        cardNameField.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if(newText.length() > 20 || !newText.matches("[0-9a-zA-ZàâäéèêëîïôöùûüÿçÀÂÄÉÈÊËÎÏÔÖÙÛÜŸÇ_-]*")) {
+                return null;
+            }
+            return change;
+        }));
+
         form.getChildren().addAll(createLabel("Statistique des Cartes", 16, "#ffffff"), pointsLeftLabel, statGrid);
         return form;
     }

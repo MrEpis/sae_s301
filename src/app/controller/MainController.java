@@ -248,18 +248,24 @@ public class MainController {
 
     public void start() {
         int storedId = SessionService.loadClientId();
-        if (storedId == 0) showLogin();
-        else {
+        if (storedId == 0) {
+            showLogin();
+        } else {
             localPlayer.setId(storedId);
-            String resp = networkService.sendRequest(JsonUtils.buildRequest("LOGIN", JsonUtils.buildLoginData(storedId, null)));
+            String resp = networkService.sendRequest(JsonUtils.buildRequest("LOGIN", JsonUtils.buildLoginData(storedId, null))); //
+
             if (resp != null && resp.contains("OK")) {
                 localPlayer.setName(JsonUtils.parseUsernameFromLogin(resp));
+                localPlayer.getInventory().clear();
                 localPlayer.getInventory().addAll(JsonUtils.parseInventoryFromLogin(resp));
                 showMenu();
-            } else showLogin();
+            } else {
+                localPlayer.setId(0);
+                localPlayer.getInventory().clear();
+                showLogin();
+            }
         }
     }
-
     public void showMenu() {
         menuView.show();
     }
