@@ -84,7 +84,7 @@ Compiler et exécuter le client :
 `make run`
 
 Pour spécifier l'adresse du serveur, ajouter cette option :
-`SERVER_ADDR=<ADRESSE_IP_DU_SERVEUR>`
+`ADDR=<ADRESSE_IP_DU_SERVEUR>`
 
 Pour lancer en mode bot : 
 `make run-bot`
