@@ -65,7 +65,7 @@ public class NotificationView {
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
         root.setCenter(scrollPane);
 
-        Button backBtn = new Button("Back to Menu");
+        Button backBtn = new Button("Retour au Menu");
         backBtn.setPrefSize(200, 45);
         backBtn.setStyle("-fx-background-color: #D9C6F0; -fx-font-weight: bold;");
         backBtn.setOnAction(e -> controller.showMenu());

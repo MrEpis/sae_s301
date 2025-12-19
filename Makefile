@@ -5,18 +5,18 @@ SRC_DIR = src
 BIN_DIR = bin
 MAIN_CLASS = app.Main
 
+# Adresse par défaut si ADDR n'est pas précisé
+ADDR ?= 134.59.27.129
+
 # --- DÉTECTION JAVAFX ---
-# 1. Valeur par défaut (Pour toi : cherche dans TON home)
 DEFAULT_FX := $(shell find $(HOME) -name 'javafx.controls.jar' -print -quit 2>/dev/null)
 
-# 2. Si l'utilisateur (le prof) définit JAVAFX_PATH en ligne de commande, on l'utilise.
-# Sinon, on utilise le résultat de la recherche automatique.
 ifndef JAVAFX_PATH
-    ifneq ($(DEFAULT_FX),)
-        JAVAFX_PATH := $(dir $(DEFAULT_FX))
-    else
-        JAVAFX_PATH := /usr/share/openjfx/lib
-    endif
+ifneq ($(DEFAULT_FX),)
+JAVAFX_PATH := $(dir $(DEFAULT_FX))
+else
+JAVAFX_PATH := /usr/share/openjfx/lib
+endif
 endif
 
 # --- CONFIGURATION ---
@@ -30,16 +30,16 @@ default: compile
 
 compile:
 	@mkdir -p $(BIN_DIR)
-	@echo "Config JavaFX utilisée : $(JAVAFX_PATH)"
+	@echo "Config JavaFX : $(JAVAFX_PATH)"
 	$(JC) $(JFLAGS) $(SOURCES)
 
 run: compile
-	@echo "Lancement..."
-	$(JVM) $(JFX_FLAGS) -cp $(BIN_DIR) $(MAIN_CLASS)
+	@echo "Lancement sur $(ADDR)..."
+	$(JVM) $(JFX_FLAGS) -Dserver.addr=$(ADDR) -cp $(BIN_DIR) $(MAIN_CLASS)
 
 run-bot: compile
-	@echo "Lancement de ROBLOBOT..."
-	$(JVM) $(JFX_FLAGS) -cp $(BIN_DIR) $(MAIN_CLASS) bot
+	@echo "Lancement du bot sur $(ADDR)..."
+	$(JVM) $(JFX_FLAGS) -Dserver.addr=$(ADDR) -cp $(BIN_DIR) $(MAIN_CLASS) bot
 
 clean:
 	rm -rf $(BIN_DIR)

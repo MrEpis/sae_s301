@@ -37,7 +37,7 @@ public class MenuView {
         pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         pseudoLabel.setTextFill(Color.web("#A97DDE"));
 
-        Label titleLabel = new Label("ROBS CARD GAME");
+        Label titleLabel = new Label("R.O.B.S");
         titleLabel.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 60));
         titleLabel.setTextFill(Color.web("#f0f0f0"));
 
@@ -49,12 +49,12 @@ public class MenuView {
         buttonContainer.setAlignment(Pos.CENTER);
         buttonContainer.setMaxWidth(600);
 
-        Button combatButton = createButton("Launch Combat");
-        Button inventoryButton = createButton("View Inventory");
-        Button createCardButton = createButton("Create New Card");
-        Button tradeButton = createButton("Request Card Trade");
-        Button notificationButton = createButton("View Notifications");
-        Button quitButton = createButton("Quit");
+        Button combatButton = createButton("Lancer un Combat");
+        Button inventoryButton = createButton("Voir son Inventaire");
+        Button createCardButton = createButton("Créer une Carte");
+        Button tradeButton = createButton("Échanger des Cartes");
+        Button notificationButton = createButton("Notifications");
+        Button quitButton = createButton("Quitter");
 
         for (Button b : new Button[]{combatButton, inventoryButton, createCardButton, tradeButton, notificationButton, quitButton}) {
             b.setMaxWidth(450);

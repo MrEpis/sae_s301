@@ -33,7 +33,7 @@ public class CombatView {
     public CombatView(Stage primaryStage, CombatController controller) {
         this.primaryStage = primaryStage;
         this.controller = controller;
-        this.controller.setView(this); // Liaison inverse importante
+        this.controller.setView(this);
     }
 
     public void displayStatus(String message) {
@@ -57,7 +57,7 @@ public class CombatView {
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
-        root.setStyle("-fx-background-color: #222222;");
+        root.setStyle("-fx-background-color: #383838;");
 
         // HEADER
         Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, "#FF5252", FontWeight.BOLD);
@@ -83,20 +83,20 @@ public class CombatView {
         topBox.setAlignment(Pos.CENTER);
         topBox.setPadding(new Insets(10, 0, 20, 0));
 
-        Label titleLabel = createLabel("ARENA - PREPARATION", 32, "#FF5252", FontWeight.EXTRA_BOLD);
+        Label titleLabel = createLabel("PRÉPARATION AU COMBAT", 32, "#FF5252", FontWeight.EXTRA_BOLD);
         statusLabel = createLabel("Choisissez votre adversaire.", 14, "#FFC107", FontWeight.NORMAL);
 
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(Pos.CENTER);
 
         opponentSelector = new ComboBox<>();
-        opponentSelector.setPromptText("Select Enemy...");
+        opponentSelector.setPromptText("Séléctionner un adversaire...");
         opponentSelector.setPrefWidth(200);
 
-        Button refreshButton = createActionButton("Scan", "#C5CC8F", 100, 40);
+        Button refreshButton = createActionButton("Rafraichir la liste", "#fca503", 180, 40);
         refreshButton.setOnAction(e -> controller.refreshPlayerList());
 
-        Button selectButton = createActionButton("Target Enemy", "#D32F2F", 180, 40);
+        Button selectButton = createActionButton("Choisir Adversaire", "#D32F2F", 180, 40);
         selectButton.setOnAction(e -> {
             String selected = opponentSelector.getValue();
             if (selected != null) controller.loadOpponentInventory(selected);
@@ -112,8 +112,8 @@ public class CombatView {
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(10));
 
-        VBox playerPanel = createCardListPanel("Your Fighter", true);
-        VBox opponentPanel = createCardListPanel("Target Card", false);
+        VBox playerPanel = createCardListPanel("Ta Carte", true);
+        VBox opponentPanel = createCardListPanel("Carte de l'Adversaire", false);
         VBox centerPanel = createSummaryPanel();
 
         HBox.setHgrow(playerPanel, Priority.ALWAYS);
@@ -132,6 +132,7 @@ public class CombatView {
         panel.setStyle("-fx-background-color: #333; -fx-padding: 10; -fx-border-radius: 5; -fx-border-color: #D32F2F; -fx-border-width: 2;");
 
         ListView<Card> cardListView = new ListView<>();
+        cardListView.setStyle("-fx-background-color: #222222;");
         VBox.setVgrow(cardListView, Priority.ALWAYS);
 
         cardListView.setCellFactory(param -> new ListCell<>() {
@@ -139,21 +140,21 @@ public class CombatView {
             protected void updateItem(Card item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
-                    setText(null); setGraphic(null); setStyle("-fx-background-color: transparent;");
+                    setText(null); setGraphic(null); setStyle("-fx-background-color: #222222;");
                 } else {
                     setGraphic(createCardListWidget(item));
                     setText(null);
                     if (isSelected()) {
                         setStyle("-fx-background-color: #550000; -fx-border-color: #FF5252; -fx-border-width: 2;");
                     } else {
-                        setStyle("-fx-background-color: transparent;");
+                        setStyle("-fx-background-color: #222222;");
                     }
                 }
             }
         });
 
-        Label selectedLabel = createLabel("Selected:", 14, "#AAAAAA", FontWeight.BOLD);
-        Label displayLabel = createLabel("- None -", 16, "#ffffff", FontWeight.NORMAL);
+        Label selectedLabel = createLabel("Séléction:", 14, "#AAAAAA", FontWeight.BOLD);
+        Label displayLabel = createLabel("- pas de sélection -", 16, "#ffffff", FontWeight.NORMAL);
 
         if (isLocalPlayer) {
             this.playerCardList = cardListView;
@@ -197,7 +198,7 @@ public class CombatView {
         statsBox.setAlignment(Pos.CENTER_RIGHT);
         statsBox.setMinWidth(90);
         statsBox.getChildren().addAll(
-                createLabel("HP: " + card.getHp(), 13, "#4CAF50", FontWeight.BOLD),
+                createLabel("PV: " + card.getHp(), 13, "#4CAF50", FontWeight.BOLD),
                 createLabel("ATK: " + card.getAtk(), 13, "#FF5252", FontWeight.BOLD),
                 createLabel("DEF: " + card.getDef(), 13, "#2196F3", FontWeight.BOLD)
         );
@@ -213,11 +214,11 @@ public class CombatView {
 
         Label vs = createLabel("VS", 64, "#D32F2F", FontWeight.BLACK);
 
-        VBox p1Box = new VBox(5, createLabel("Attacker:", 14, "#AAA", FontWeight.NORMAL));
+        VBox p1Box = new VBox(5, createLabel("Attaquant:", 14, "#AAA", FontWeight.NORMAL));
         p1Box.getChildren().add(myFighterLabel); // Déjà initialisé
         p1Box.setAlignment(Pos.CENTER);
 
-        VBox p2Box = new VBox(5, createLabel("Target:", 14, "#AAA", FontWeight.NORMAL));
+        VBox p2Box = new VBox(5, createLabel("Cible:", 14, "#AAA", FontWeight.NORMAL));
         p2Box.getChildren().add(targetLabel); // Déjà initialisé
         p2Box.setAlignment(Pos.CENTER);
 
@@ -233,10 +234,9 @@ public class CombatView {
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(20, 0, 10, 0));
 
-        Button btnFight = createActionButton("FIGHT !", "#D32F2F", 250, 50);
-        btnFight.setFont(Font.font("Arial", FontWeight.BLACK, 20)); // Plus gros !
+        Button btnFight = createActionButton("COMBATRE", "#D32F2F", 250, 50);
 
-        Button btnBack = createActionButton("Retreat", "#757575", 150, 50);
+        Button btnBack = createActionButton("Retraite", "#757575", 150, 50);
 
         btnBack.setOnAction(e -> controller.backToMenu());
 
@@ -258,7 +258,7 @@ public class CombatView {
 
     public void show() {
         primaryStage.setScene(createScene());
-        primaryStage.setTitle("Combat Arena");
+        primaryStage.setTitle("Préparation au combat");
         primaryStage.show();
     }
 

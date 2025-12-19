@@ -70,7 +70,7 @@ public class CardCreationView {
         root.setPadding(new Insets(20));
 
         Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, "#A97DDE", FontWeight.BOLD);
-        Label titleLabel = createTitleLabel("Create Your Card");
+        Label titleLabel = createTitleLabel("Créer une Carte");
 
         StackPane header = new StackPane(titleLabel, pseudoLabel);
         StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
@@ -100,8 +100,8 @@ public class CardCreationView {
         bottomBox.setPadding(new Insets(30));
         bottomBox.setAlignment(Pos.CENTER);
 
-        Button saveButton = createActionButton("Save Card", "#7834CB", 180, 40);
-        Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
+        Button saveButton = createActionButton("Sauvegarder la carte", "#7834CB", 180, 40);
+        Button backButton = createActionButton("Retour au Menu", "#D9C6F0", 180, 40);
 
         saveButton.setOnAction(e -> controller.saveCard(cardNameField.getText(), hpSpinner.getValue(), attackSpinner.getValue(), defenseSpinner.getValue()));
         backButton.setOnAction(e -> controller.backToMenu());
@@ -138,10 +138,10 @@ public class CardCreationView {
         cardNameField = new TextField();
         cardNameField.setPromptText("Nom de la carte");
 
-        statGrid.addRow(0, createLabel("Name:", 14, "#cccccc"), cardNameField);
-        statGrid.addRow(1, createLabel("Health (HP):", 14, "#cccccc"), hpSpinner);
-        statGrid.addRow(2, createLabel("Attack (ATK):", 14, "#cccccc"), attackSpinner);
-        statGrid.addRow(3, createLabel("Defense (DEF):", 14, "#cccccc"), defenseSpinner);
+        statGrid.addRow(0, createLabel("Nom", 14, "#cccccc"), cardNameField);
+        statGrid.addRow(1, createLabel("Points de vie (PV):", 14, "#cccccc"), hpSpinner);
+        statGrid.addRow(2, createLabel("Attaque (ATK):", 14, "#cccccc"), attackSpinner);
+        statGrid.addRow(3, createLabel("Défense (DEF):", 14, "#cccccc"), defenseSpinner);
 
         updateSpinnerLimits();
 
@@ -155,7 +155,7 @@ public class CardCreationView {
             }
         });
 
-        form.getChildren().addAll(createLabel("Card Properties", 16, "#ffffff"), pointsLeftLabel, statGrid);
+        form.getChildren().addAll(createLabel("Statistique des Cartes", 16, "#ffffff"), pointsLeftLabel, statGrid);
         return form;
     }
 
@@ -216,7 +216,7 @@ public class CardCreationView {
         ((SpinnerValueFactory.IntegerSpinnerValueFactory) defenseSpinner.getValueFactory()).setMax(maxForDef);
 
         int pointsLeft = MAX_POINTS - (currentHp + currentAtk + currentDef);
-        pointsLeftLabel.setText("Points Remaining: " + pointsLeft);
+        pointsLeftLabel.setText("Points Restants: " + pointsLeft);
 
         updateCardPreview();
     }
@@ -236,7 +236,7 @@ public class CardCreationView {
 
         VBox cardTemplate = createCardTemplate();
 
-        Button selectImageButton = createActionButton("Select Image File", "#C5CC8F", 180, 40);
+        Button selectImageButton = createActionButton("Séléctionner une image", "#C5CC8F", 180, 40);
         selectImageButton.setOnAction(e -> controller.chooseImageFile());
 
         preview.getChildren().addAll(cardTemplate, selectImageButton);

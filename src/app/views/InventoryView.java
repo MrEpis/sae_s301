@@ -41,9 +41,9 @@ public class InventoryView {
 
         VBox titleBox = new VBox(10);
         titleBox.setAlignment(Pos.CENTER);
-        Label title = createLabel("Player Inventory", 28, FontWeight.BOLD, "#ffffff");
+        Label title = createLabel("Votre Inventaire", 28, FontWeight.BOLD, "#ffffff");
 
-        Button backButton = createActionButton("Back to Menu", "#D9C6F0", 180, 40);
+        Button backButton = createActionButton("Retour au Menu", "#D9C6F0", 180, 40);
         backButton.setOnAction(e -> controller.backToMenu());
         titleBox.getChildren().addAll(title, backButton);
 
@@ -109,10 +109,9 @@ public class InventoryView {
         box.getChildren().addAll(
                 createLabel(card.getNom(), 14, FontWeight.BOLD, "#ffffff"),
                 imgView,
+                createLabel("PV: " + card.getHp(), 12, FontWeight.BOLD, "#4CAF50"),
                 createLabel("ATK: " + card.getAtk(), 12, FontWeight.BOLD, "#F44336"),
-                // AJOUT DE LA DEFENSE ICI
-                createLabel("DEF: " + card.getDef(), 12, FontWeight.BOLD, "#2196F3"),
-                createLabel("HP: " + card.getHp(), 12, FontWeight.BOLD, "#4CAF50")
+                createLabel("DEF: " + card.getDef(), 12, FontWeight.BOLD, "#2196F3")
         );
         return box;
     }
@@ -124,7 +123,7 @@ public class InventoryView {
         detailBox.setAlignment(Pos.TOP_CENTER);
         detailBox.setPadding(new javafx.geometry.Insets(20));
 
-        Label selectedCardName = createLabel("No Card Selected", 18, FontWeight.BOLD, "#ffffff");
+        Label selectedCardName = createLabel("Pas de carte sélectionnée", 18, FontWeight.BOLD, "#ffffff");
 
         ImageView detailImage = new ImageView();
         detailImage.setFitWidth(200);
@@ -134,7 +133,7 @@ public class InventoryView {
         VBox stats = new VBox(10);
         stats.setAlignment(Pos.CENTER_LEFT);
         stats.getChildren().addAll(
-                createLabel("HP: -", 16, FontWeight.NORMAL, "#4CAF50"),
+                createLabel("PV: -", 16, FontWeight.NORMAL, "#4CAF50"),
                 createLabel("ATK: -", 16, FontWeight.NORMAL, "#F44336"),
                 createLabel("DEF: -", 16, FontWeight.NORMAL, "#2196F3")
         );
@@ -165,7 +164,7 @@ public class InventoryView {
                 }
             } catch(Exception e) {}
 
-            ((Label)statsBox.getChildren().get(0)).setText("HP: " + card.getHp());
+            ((Label)statsBox.getChildren().get(0)).setText("PV: " + card.getHp());
             ((Label)statsBox.getChildren().get(1)).setText("ATK: " + card.getAtk());
             ((Label)statsBox.getChildren().get(2)).setText("DEF: " + card.getDef());
         }
@@ -213,7 +212,7 @@ public class InventoryView {
 
     public void show() {
         primaryStage.setScene(createScene());
-        primaryStage.setTitle("Player Inventory");
+        primaryStage.setTitle("Inventaire");
         primaryStage.show();
     }
 }

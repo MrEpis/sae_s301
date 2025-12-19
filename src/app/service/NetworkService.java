@@ -19,7 +19,7 @@ public class NetworkService {
     private Consumer<String> notificationListener;
     private boolean isRunning = false;
 
-    private static final String SERVER_HOST = "134.59.27.129";
+    private static final String SERVER_HOST = System.getProperty("server.addr", "134.59.27.129");
     private static final int SERVER_PORT = 8080;
 
     public NetworkService() {
@@ -29,7 +29,7 @@ public class NetworkService {
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             startListening();
         } catch (IOException e) {
-            System.err.println("Erreur connexion: " + e.getMessage());
+            System.err.println("Erreur connexion sur " + SERVER_HOST + " : " + e.getMessage());
         }
     }
 

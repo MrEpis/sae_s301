@@ -20,7 +20,6 @@ import java.util.List;
 
 public class TradeView {
 
-    // ... (Le début du fichier reste identique jusqu'à createInventoryPanel) ...
     private final Stage primaryStage;
     private TradeController controller;
     private ComboBox<String> opponentSelector;
@@ -69,13 +68,13 @@ public class TradeView {
         topBox.setPadding(new Insets(10, 0, 20, 0));
 
 
-        Label titleLabel = createLabel("Card Trade System", 28, "#ffffff", FontWeight.EXTRA_BOLD);
-        statusLabel = createLabel("Select an opponent to trade with.", 14, "#FFC107", FontWeight.NORMAL);
+        Label titleLabel = createLabel("Échange de Cartes", 28, "#ffffff", FontWeight.EXTRA_BOLD);
+        statusLabel = createLabel("Sélectionnez un joueur", 14, "#FFC107", FontWeight.NORMAL);
         HBox searchBox = new HBox(10); searchBox.setAlignment(Pos.CENTER);
-        opponentSelector = new ComboBox<>(); opponentSelector.setPromptText("Select Player..."); opponentSelector.setPrefWidth(200);
-        Button refreshButton = createActionButton("Refresh List", "#C5CC8F", 150, 40);
+        opponentSelector = new ComboBox<>(); opponentSelector.setPromptText("Séléctionner un joueur..."); opponentSelector.setPrefWidth(200);
+        Button refreshButton = createActionButton("Rafraichir la liste", "#C5CC8F", 150, 40);
         refreshButton.setOnAction(e -> { if (controller != null) controller.refreshPlayerList(); });
-        Button selectButton = createActionButton("Select Opponent", "#7834CB", 180, 40);
+        Button selectButton = createActionButton("Choisir ce joueur", "#7834CB", 180, 40);
         selectButton.setOnAction(e -> {
             String selected = opponentSelector.getValue();
             if (controller != null && selected != null) controller.loadOpponentInventory(selected);
@@ -90,8 +89,8 @@ public class TradeView {
         tradeBox.setAlignment(Pos.CENTER); // Centrage global
         tradeBox.setPadding(new Insets(10));
 
-        VBox playerPanel = createInventoryPanel("Your Inventory", true);
-        VBox opponentPanel = createInventoryPanel("Opponent Inventory", false);
+        VBox playerPanel = createInventoryPanel("Ton Inventaire", true);
+        VBox opponentPanel = createInventoryPanel("Inventaire du receveur de l'offre", false);
         VBox summaryPanel = createSummaryPanel();
 
         HBox.setHgrow(playerPanel, Priority.ALWAYS);
@@ -109,13 +108,14 @@ public class TradeView {
         panel.setMaxWidth(Double.MAX_VALUE);
 
         ListView<Card> cardListView = new ListView<>();
+        cardListView.setStyle("-fx-background-color: #222222;");
         VBox.setVgrow(cardListView, Priority.ALWAYS);
         cardListView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(Card item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
-                    setText(null); setGraphic(null); setStyle("-fx-background-color: transparent;");
+                    setText(null); setGraphic(null); setStyle("-fx-background-color: #222222;");
                 } else {
                     setGraphic(createCardListWidget(item));
                     setText(null);
@@ -123,14 +123,14 @@ public class TradeView {
                     if (isSelected()) {
                         setStyle("-fx-background-color: #666666; -fx-border-color: #FFC107; -fx-border-width: 2;");
                     } else {
-                        setStyle("-fx-background-color: transparent; -fx-border-width: 0;");
+                        setStyle("-fx-background-color: #222222; -fx-border-width: 0;");
                     }
                 }
             }
         });
 
         Label selectedLabel = createLabel("Selected:", 14, "#D9C6F0", FontWeight.BOLD);
-        Label cardDisplayLabel = createLabel("- None -", 16, "#ffffff", FontWeight.NORMAL);
+        Label cardDisplayLabel = createLabel("pas de sélection", 16, "#ffffff", FontWeight.NORMAL);
 
         if (isLocalPlayer) {
             this.playerCardList = cardListView; this.offeredCardLabel = cardDisplayLabel;
@@ -140,7 +140,7 @@ public class TradeView {
         }
 
         cardListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) cardDisplayLabel.setText(newVal.getNom()); else cardDisplayLabel.setText("- None -");
+            if (newVal != null) cardDisplayLabel.setText(newVal.getNom()); else cardDisplayLabel.setText("pas de sélection");
         });
 
         panel.getChildren().addAll(createLabel(title, 18, "#ffffff", FontWeight.BOLD), cardListView, selectedLabel, cardDisplayLabel);
@@ -169,7 +169,7 @@ public class TradeView {
 
         statsBox.getChildren().addAll(
                 // Légère augmentation de la taille de police (12 -> 13)
-                createLabel("HP: " + card.getHp(), 13, "#4CAF50", FontWeight.BOLD),
+                createLabel("PV: " + card.getHp(), 13, "#4CAF50", FontWeight.BOLD),
                 createLabel("ATK: " + card.getAtk(), 13, "#F44336", FontWeight.BOLD),
                 createLabel("DEF: " + card.getDef(), 13, "#2196F3", FontWeight.BOLD)
         );
@@ -181,9 +181,9 @@ public class TradeView {
     private VBox createSummaryPanel() {
         VBox panel = new VBox(20); panel.setAlignment(Pos.CENTER); panel.setPrefWidth(200);
         Label arrow = createLabel("⇄", 48, "#D9C6F0", FontWeight.BOLD);
-        VBox offeredBox = new VBox(5, createLabel("You Offer:", 16, "#ffffff", FontWeight.BOLD));
+        VBox offeredBox = new VBox(5, createLabel("Ton offre:", 16, "#ffffff", FontWeight.BOLD));
         Label centerOfferedLabel = createLabel("...", 14, "#4CAF50", FontWeight.NORMAL); offeredBox.getChildren().add(centerOfferedLabel); offeredBox.setAlignment(Pos.CENTER);
-        VBox requestedBox = new VBox(5, createLabel("You Request:", 16, "#ffffff", FontWeight.BOLD));
+        VBox requestedBox = new VBox(5, createLabel("Ta demande:", 16, "#ffffff", FontWeight.BOLD));
         Label centerRequestedLabel = createLabel("...", 14, "#F44336", FontWeight.NORMAL); requestedBox.getChildren().add(centerRequestedLabel); requestedBox.setAlignment(Pos.CENTER);
         if (playerCardList != null) playerCardList.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> centerOfferedLabel.setText(n != null ? n.getNom() : "..."));
         if (opponentCardList != null) opponentCardList.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> centerRequestedLabel.setText(n != null ? n.getNom() : "..."));
@@ -193,8 +193,8 @@ public class TradeView {
 
     private HBox createBottomButtonArea() {
         HBox buttonBox = new HBox(40); buttonBox.setAlignment(Pos.CENTER); buttonBox.setPadding(new Insets(20, 0, 10, 0));
-        Button btnSend = createActionButton("Send Trade Request", "#7834CB", 250, 45);
-        Button btnBack = createActionButton("Back to Menu", "#D9C6F0", 250, 45);
+        Button btnSend = createActionButton("Envoyer la demande d'échange", "#7834CB", 250, 45);
+        Button btnBack = createActionButton("Retour au Menu", "#D9C6F0", 250, 45);
         btnBack.setOnAction(e -> { if (controller != null) controller.backToMenu(); });
         btnSend.setOnAction(e -> {
             Card offered = playerCardList.getSelectionModel().getSelectedItem();
@@ -206,7 +206,7 @@ public class TradeView {
         buttonBox.getChildren().addAll(btnSend, btnBack);
         return buttonBox;
     }
-    public void show() { primaryStage.setScene(createScene()); primaryStage.setTitle("Card Trade"); primaryStage.show(); }
+    public void show() { primaryStage.setScene(createScene()); primaryStage.setTitle("Echange de Cartes"); primaryStage.show(); }
     private Label createLabel(String text, int size, String color, FontWeight weight) {
         Label label = new Label(text); label.setFont(Font.font("Arial", weight, size)); label.setTextFill(Color.web(color)); return label;
     }

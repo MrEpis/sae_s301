@@ -123,23 +123,23 @@ public class MainController {
             FightResultModel result = JsonUtils.parseFightResult(message);
 
             if (message.contains("ERROR") || message.contains("REFUSED")) {
-                result = new FightResultModel("L'adversaire à fui le combat", null);
+                result = new app.model.FightResultModel("L'adversaire à fui le combat", null);
             }
 
             int opponentId = -1;
-            Matcher m = Pattern.compile("\"id_opponent\"\\s*:\\s*(\\d+)").matcher(message);
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"id_opponent\"\\s*:\\s*(\\d+)").matcher(message);
             if (m.find()) opponentId = Integer.parseInt(m.group(1));
 
             Card myCardUpdated = null;
             if (this.lastMyCardIdEngaged != -1) {
-                for (Card c : localPlayer.getInventory()) {
-                    if (c.getId() == this.lastMyCardIdEngaged) { myCardUpdated = c; break; }
+                for(Card c : localPlayer.getInventory()) {
+                    if(c.getId() == this.lastMyCardIdEngaged) { myCardUpdated = c; break; }
                 }
             }
             result.setMyCard(myCardUpdated);
 
             final int finalOpponentId = opponentId;
-            final FightResultModel finalResult = result;
+            final app.model.FightResultModel finalResult = result;
 
             Platform.runLater(() -> {
                 TradeRequestModel notif = new TradeRequestModel(finalOpponentId, 0, 0);
