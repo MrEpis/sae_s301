@@ -238,7 +238,7 @@ public class CardCreationView {
 
         VBox cardTemplate = createCardTemplate();
 
-        Button selectImageButton = createActionButton("Séléctionner une image", "#C5CC8F", 180, 40);
+        Button selectImageButton = createActionButton("Séléctionner une image", "#C5CC8F", 200, 40);
         selectImageButton.setOnAction(e -> controller.chooseImageFile());
 
         preview.getChildren().addAll(cardTemplate, selectImageButton);

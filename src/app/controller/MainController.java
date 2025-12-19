@@ -113,7 +113,25 @@ public class MainController {
                     showToast("Demande d'échange de " + req.getInitiatorUsername(), () -> new TradeProposalView(primaryStage, this, req).show());
                 });
             }).start();
-        } else if (message.contains("FightResult")) {
+        } else if (message.contains("TradeResult")) {
+            if (message.contains("OK")) {
+                List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
+
+                if (!newInventory.isEmpty()) {
+                    localPlayer.getInventory().clear();
+                    localPlayer.getInventory().addAll(newInventory);
+
+                    Platform.runLater(() -> {
+                        showToast("Échange réussi ! Inventaire mis à jour.", null);
+                        if (primaryStage.getTitle().contains("Inventory")) {
+                            showInventory();
+                        }
+                    });
+                }
+            } else if (message.contains("ERROR")) {
+                Platform.runLater(() -> showToast("L'échange a été refusé.", null));
+            }
+        }else if (message.contains("FightResult")) {
             List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
             localPlayer.getInventory().clear();
             localPlayer.getInventory().addAll(newInventory);
