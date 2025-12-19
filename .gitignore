@@ -2,8 +2,8 @@
 *
 
 # Exceptions : Ne pas ignorer les dossiers source et test
-!/src/
-!/test/
+!/client/
+!/server/
 
 # Exception : Garder le fichier .gitignore lui-même
 !/.gitignore
