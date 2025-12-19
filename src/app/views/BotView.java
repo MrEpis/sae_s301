@@ -39,7 +39,7 @@ public class BotView {
         Button stopBtn = new Button("Déconnecter le Bot");
         stopBtn.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white; -fx-font-weight: bold;");
         stopBtn.setOnAction(e -> {
-            if(controller != null) controller.stop();
+            if (controller != null) controller.stop();
             stage.close();
             System.exit(0);
         });
@@ -53,6 +53,6 @@ public class BotView {
     }
 
     public void setStatus(String text) {
-        if(statusLabel != null) statusLabel.setText(text);
+        if (statusLabel != null) statusLabel.setText(text);
     }
 }

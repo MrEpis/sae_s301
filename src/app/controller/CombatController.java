@@ -82,8 +82,8 @@ public class CombatController {
     public void sendFightRequest(String opponentName, int myCardId, int targetCardId) {
         // Retrouver l'ID de l'adversaire
         int opponentId = -1;
-        for(Player p : connectedPlayers) {
-            if(p.getName().equals(opponentName)) {
+        for (Player p : connectedPlayers) {
+            if (p.getName().equals(opponentName)) {
                 opponentId = p.getId_Client();
                 break;
             }
@@ -112,8 +112,7 @@ public class CombatController {
 
         NetworkService net = mainController.getNetworkService();
         if (net != null) {
-            // On utilise sendMessage (Async) ou sendRequest (Sync) selon votre choix
-            // Ici sendRequest pour avoir l'ACK immédiat du serveur
+
             String response = net.sendRequest(request);
 
             if (response != null && response.contains("OK")) {

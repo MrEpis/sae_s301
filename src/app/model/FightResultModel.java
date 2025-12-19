@@ -10,9 +10,19 @@ public class FightResultModel {
         this.opponentCard = opponentCard;
     }
 
-    public String getLogMessage() { return logMessage; }
-    public Card getOpponentCard() { return opponentCard; }
+    public String getLogMessage() {
+        return logMessage;
+    }
 
-    public Card getMyCard() { return myCard; }
-    public void setMyCard(Card myCard) { this.myCard = myCard; }
+    public Card getOpponentCard() {
+        return opponentCard;
+    }
+
+    public Card getMyCard() {
+        return myCard;
+    }
+
+    public void setMyCard(Card myCard) {
+        this.myCard = myCard;
+    }
 }

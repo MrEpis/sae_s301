@@ -99,11 +99,11 @@ public class InventoryView {
         try {
             if (card.getImagePath() != null && !card.getImagePath().isEmpty()) {
                 File file = new File(card.getImagePath());
-                if(file.exists()){
+                if (file.exists()) {
                     imgView.setImage(new Image(file.toURI().toString()));
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
         }
 
         box.getChildren().addAll(
@@ -160,13 +160,14 @@ public class InventoryView {
             try {
                 if (card.getImagePath() != null) {
                     File file = new File(card.getImagePath());
-                    if(file.exists()) imgView.setImage(new Image(file.toURI().toString()));
+                    if (file.exists()) imgView.setImage(new Image(file.toURI().toString()));
                 }
-            } catch(Exception e) {}
+            } catch (Exception e) {
+            }
 
-            ((Label)statsBox.getChildren().get(0)).setText("PV: " + card.getHp());
-            ((Label)statsBox.getChildren().get(1)).setText("ATK: " + card.getAtk());
-            ((Label)statsBox.getChildren().get(2)).setText("DEF: " + card.getDef());
+            ((Label) statsBox.getChildren().get(0)).setText("PV: " + card.getHp());
+            ((Label) statsBox.getChildren().get(1)).setText("ATK: " + card.getAtk());
+            ((Label) statsBox.getChildren().get(2)).setText("DEF: " + card.getDef());
         }
     }
 

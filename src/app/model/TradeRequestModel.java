@@ -17,17 +17,45 @@ public class TradeRequestModel {
         this.isFight = false;
     }
 
-    public int getInitiatorId() { return initiatorId; }
-    public int getInitiatorCardId() { return initiatorCardId; }
-    public int getReceiverCardId() { return receiverCardId; }
-    public String getInitiatorUsername() { return initiatorUsername; }
-    public void setInitiatorUsername(String username) { this.initiatorUsername = username; }
-    public boolean isFight() { return isFight; }
-    public void setFight(boolean fight) { isFight = fight; }
+    public int getInitiatorId() {
+        return initiatorId;
+    }
 
-    public void setFightResult(FightResultModel result) { this.fightResult = result; }
-    public FightResultModel getFightResult() { return fightResult; }
-    public boolean isFightResult() { return fightResult != null; } // Helper utile
+    public int getInitiatorCardId() {
+        return initiatorCardId;
+    }
+
+    public int getReceiverCardId() {
+        return receiverCardId;
+    }
+
+    public String getInitiatorUsername() {
+        return initiatorUsername;
+    }
+
+    public void setInitiatorUsername(String username) {
+        this.initiatorUsername = username;
+    }
+
+    public boolean isFight() {
+        return isFight;
+    }
+
+    public void setFight(boolean fight) {
+        isFight = fight;
+    }
+
+    public void setFightResult(FightResultModel result) {
+        this.fightResult = result;
+    }
+
+    public FightResultModel getFightResult() {
+        return fightResult;
+    }
+
+    public boolean isFightResult() {
+        return fightResult != null;
+    } // Helper utile
 
     @Override
     public String toString() {

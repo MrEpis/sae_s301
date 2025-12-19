@@ -37,12 +37,20 @@ public class MenuView {
         pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         pseudoLabel.setTextFill(Color.web("#A97DDE"));
 
+        Button logoutBtn = new Button("Se déconnecter");
+        logoutBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #ff5555; " + "-fx-font-size: 12px; -fx-padding: 0; -fx-cursor: hand;");
+        logoutBtn.setOnAction(e -> controller.logout());
+
+        VBox userBox = new VBox(5, pseudoLabel, logoutBtn);
+        userBox.setAlignment(Pos.TOP_LEFT);
+
         Label titleLabel = new Label("R.O.B.S");
         titleLabel.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 60));
         titleLabel.setTextFill(Color.web("#f0f0f0"));
 
-        StackPane header = new StackPane(titleLabel, pseudoLabel);
-        StackPane.setAlignment(pseudoLabel, Pos.TOP_LEFT);
+        StackPane header = new StackPane(titleLabel, userBox);
+        StackPane.setAlignment(userBox, Pos.TOP_LEFT);
+        StackPane.setAlignment(titleLabel, Pos.CENTER);
         root.setTop(header);
 
         VBox buttonContainer = new VBox(20);

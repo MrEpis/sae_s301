@@ -15,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
 import java.io.File;
 
 public class FightProposalView {
@@ -65,8 +66,8 @@ public class FightProposalView {
         updateRemoteCardDisplay(null);
 
         Card myCard = null;
-        for(Card c : controller.getLocalPlayer().getInventory()) {
-            if(c.getId() == request.getReceiverCardId()) {
+        for (Card c : controller.getLocalPlayer().getInventory()) {
+            if (c.getId() == request.getReceiverCardId()) {
                 myCard = c;
                 break;
             }
@@ -128,7 +129,7 @@ public class FightProposalView {
             placeholder.setPrefSize(160, 240);
             placeholder.setAlignment(Pos.CENTER);
             placeholder.setStyle("-fx-border-color: #FF5252; -fx-border-width: 2; -fx-border-style: dashed;");
-            ((Label)placeholder.getChildren().get(0)).setTextFill(Color.WHITE);
+            ((Label) placeholder.getChildren().get(0)).setTextFill(Color.WHITE);
             remoteCardContainer.getChildren().add(placeholder);
         } else {
             remoteCardContainer.getChildren().add(createCardWidget(card, "Adversaire", "#FF5252"));
@@ -158,9 +159,10 @@ public class FightProposalView {
             try {
                 if (card.getImagePath() != null) {
                     File file = new File(card.getImagePath());
-                    if(file.exists()) imgView.setImage(new Image(file.toURI().toString()));
+                    if (file.exists()) imgView.setImage(new Image(file.toURI().toString()));
                 }
-            } catch(Exception e) {}
+            } catch (Exception e) {
+            }
 
             box.getChildren().addAll(titleLbl, nameLbl, imgView,
                     createStatLabel("ATK: " + card.getAtk()),

@@ -14,7 +14,7 @@ public class Player {
         this.inventory = new ArrayList<>();
     }
 
-    public void setId(int id){
+    public void setId(int id) {
         this.Id_Client = id;
     }
 
@@ -25,14 +25,16 @@ public class Player {
     public int getId_Client() {
         return Id_Client;
     }
+
     public String getName() {
         return name;
     }
+
     public List<Card> getInventory() {
         return inventory;
     }
 
-    public void addCard(Card card){
+    public void addCard(Card card) {
         inventory.add(card);
     }
 }

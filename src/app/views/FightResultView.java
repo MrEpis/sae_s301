@@ -121,13 +121,16 @@ public class FightResultView {
         name.setFont(Font.font("Arial", FontWeight.BOLD, 16));
 
         ImageView img = new ImageView();
-        img.setFitWidth(100); img.setFitHeight(100); img.setPreserveRatio(true);
+        img.setFitWidth(100);
+        img.setFitHeight(100);
+        img.setPreserveRatio(true);
         try {
             if (card.getImagePath() != null) {
                 File f = new File(card.getImagePath());
-                if(f.exists()) img.setImage(new Image(f.toURI().toString()));
+                if (f.exists()) img.setImage(new Image(f.toURI().toString()));
             }
-        } catch(Exception e){}
+        } catch (Exception e) {
+        }
 
         Label hpLabel = new Label(isDead ? "MORT" : "PV: " + card.getHp());
         hpLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));

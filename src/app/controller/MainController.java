@@ -103,8 +103,7 @@ public class MainController {
                     showToast("Défi de combat de " + req.getInitiatorUsername(), () -> new FightProposalView(primaryStage, this, req).show());
                 });
             }).start();
-        }
-        else if (message.contains("ConfirmationRequest")) {
+        } else if (message.contains("ConfirmationRequest")) {
             TradeRequestModel req = JsonUtils.parseTradeRequestNotification(message);
             new Thread(() -> {
                 String name = getUsernameById(req.getInitiatorId());
@@ -114,8 +113,7 @@ public class MainController {
                     showToast("Demande d'échange de " + req.getInitiatorUsername(), () -> new TradeProposalView(primaryStage, this, req).show());
                 });
             }).start();
-        }
-        else if (message.contains("FightResult")) {
+        } else if (message.contains("FightResult")) {
             List<Card> newInventory = JsonUtils.parseInventoryFromTradeResult(message);
             localPlayer.getInventory().clear();
             localPlayer.getInventory().addAll(newInventory);
@@ -132,8 +130,11 @@ public class MainController {
 
             Card myCardUpdated = null;
             if (this.lastMyCardIdEngaged != -1) {
-                for(Card c : localPlayer.getInventory()) {
-                    if(c.getId() == this.lastMyCardIdEngaged) { myCardUpdated = c; break; }
+                for (Card c : localPlayer.getInventory()) {
+                    if (c.getId() == this.lastMyCardIdEngaged) {
+                        myCardUpdated = c;
+                        break;
+                    }
                 }
             }
             result.setMyCard(myCardUpdated);
@@ -213,12 +214,20 @@ public class MainController {
         String resp = networkService.sendRequest(JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}"));
         if (resp != null) {
             List<Player> players = JsonUtils.parsePlayerList(resp);
-            for (Player p : players) { if (p.getId_Client() == id) return p.getName(); }
+            for (Player p : players) {
+                if (p.getId_Client() == id) return p.getName();
+            }
         }
         return "Joueur " + id;
     }
 
-    public void showLogin() { LoginView v = new LoginView(primaryStage); loginController = new LoginController(this, v); v.setController(loginController); v.show(); }
+    public void showLogin() {
+        LoginView v = new LoginView(primaryStage);
+        loginController = new LoginController(this, v);
+        v.setController(loginController);
+        v.show();
+    }
+
     public void start() {
         int storedId = SessionService.loadClientId();
         if (storedId == 0) showLogin();
@@ -232,10 +241,25 @@ public class MainController {
             } else showLogin();
         }
     }
-    public void showMenu() { menuView.show(); }
-    public void showCombat() { combatController = new CombatController(this, localPlayer); new CombatView(primaryStage, combatController).show(); }
-    public void showInventory() { inventoryController = new InventoryController(this, localPlayer); new InventoryView(primaryStage, inventoryController).show(); }
-    public void showCardCreation() { cardCreationView.show(); }
+
+    public void showMenu() {
+        menuView.show();
+    }
+
+    public void showCombat() {
+        combatController = new CombatController(this, localPlayer);
+        new CombatView(primaryStage, combatController).show();
+    }
+
+    public void showInventory() {
+        inventoryController = new InventoryController(this, localPlayer);
+        new InventoryView(primaryStage, inventoryController).show();
+    }
+
+    public void showCardCreation() {
+        cardCreationView.show();
+    }
+
     public void showTrade() {
         TradeView t = new TradeView(primaryStage);
         this.tradeController = new TradeController(this, localPlayer, t);
@@ -243,9 +267,30 @@ public class MainController {
         t.show();
         tradeController.refreshPlayerList();
     }
-    public void quit() { if (networkService != null) networkService.closeConnection(); primaryStage.close(); }
-    public NetworkService getNetworkService() { return networkService; }
-    public Player getLocalPlayer() { return localPlayer; }
-    public void setPendingTradeOpponent(String name) { this.pendingTradeOpponentName = name; }
-    public void setLastMyCardIdEngaged(int id) { this.lastMyCardIdEngaged = id; }
+
+    public void quit() {
+        if (networkService != null) networkService.closeConnection();
+        primaryStage.close();
+    }
+
+    public NetworkService getNetworkService() {
+        return networkService;
+    }
+
+    public Player getLocalPlayer() {
+        return localPlayer;
+    }
+
+    public void setPendingTradeOpponent(String name) {
+        this.pendingTradeOpponentName = name;
+    }
+
+    public void setLastMyCardIdEngaged(int id) {
+        this.lastMyCardIdEngaged = id;
+    }
+
+    public void logout() {
+        app.service.SessionService.clearSession();
+        quit();
+    }
 }

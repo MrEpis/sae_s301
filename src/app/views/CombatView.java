@@ -140,7 +140,9 @@ public class CombatView {
             protected void updateItem(Card item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
-                    setText(null); setGraphic(null); setStyle("-fx-background-color: #222222;");
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("-fx-background-color: #222222;");
                 } else {
                     setGraphic(createCardListWidget(item));
                     setText(null);
@@ -180,13 +182,16 @@ public class CombatView {
         cardBox.setPadding(new Insets(5));
 
         ImageView imgView = new ImageView();
-        imgView.setFitWidth(60); imgView.setFitHeight(60); imgView.setPreserveRatio(true);
+        imgView.setFitWidth(60);
+        imgView.setFitHeight(60);
+        imgView.setPreserveRatio(true);
         try {
             if (card.getImagePath() != null) {
                 File file = new File(card.getImagePath());
-                if(file.exists()) imgView.setImage(new Image(file.toURI().toString()));
+                if (file.exists()) imgView.setImage(new Image(file.toURI().toString()));
             }
-        } catch(Exception e) {}
+        } catch (Exception e) {
+        }
 
         VBox infoBox = new VBox(5);
         infoBox.setAlignment(Pos.CENTER_LEFT);
@@ -222,8 +227,10 @@ public class CombatView {
         p2Box.getChildren().add(targetLabel); // Déjà initialisé
         p2Box.setAlignment(Pos.CENTER);
 
-        if (playerCardList != null) playerCardList.getSelectionModel().selectedItemProperty().addListener((o, old, n) -> myFighterLabel.setText(n!=null ? n.getNom() : "..."));
-        if (opponentCardList != null) opponentCardList.getSelectionModel().selectedItemProperty().addListener((o, old, n) -> targetLabel.setText(n!=null ? n.getNom() : "..."));
+        if (playerCardList != null)
+            playerCardList.getSelectionModel().selectedItemProperty().addListener((o, old, n) -> myFighterLabel.setText(n != null ? n.getNom() : "..."));
+        if (opponentCardList != null)
+            opponentCardList.getSelectionModel().selectedItemProperty().addListener((o, old, n) -> targetLabel.setText(n != null ? n.getNom() : "..."));
 
         panel.getChildren().addAll(p1Box, vs, p2Box);
         return panel;

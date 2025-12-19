@@ -15,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
 import java.io.File;
 
 public class TradeProposalView {
@@ -50,8 +51,8 @@ public class TradeProposalView {
         updateRemoteCardDisplay(null);
 
         Card myCard = null;
-        for(Card c : controller.getLocalPlayer().getInventory()) {
-            if(c.getId() == request.getReceiverCardId()) {
+        for (Card c : controller.getLocalPlayer().getInventory()) {
+            if (c.getId() == request.getReceiverCardId()) {
                 myCard = c;
                 break;
             }
@@ -101,7 +102,7 @@ public class TradeProposalView {
             placeholder.setPrefSize(160, 240);
             placeholder.setAlignment(Pos.CENTER);
             placeholder.setStyle("-fx-border-color: #F44336; -fx-border-width: 2; -fx-border-style: dashed;");
-            ((Label)placeholder.getChildren().get(0)).setTextFill(Color.WHITE);
+            ((Label) placeholder.getChildren().get(0)).setTextFill(Color.WHITE);
             remoteCardContainer.getChildren().add(placeholder);
         } else {
             remoteCardContainer.getChildren().add(createCardWidget(card, "Carte Adverse", "#F44336"));
@@ -114,13 +115,34 @@ public class TradeProposalView {
         box.setAlignment(Pos.TOP_CENTER);
         box.setStyle("-fx-background-color: #333333; -fx-border-color: " + borderColor + "; -fx-border-width: 3; -fx-border-radius: 5; -fx-background-radius: 5;");
         if (card != null) {
-            Label titleLbl = new Label(title); titleLbl.setTextFill(Color.web(borderColor)); titleLbl.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            Label nameLbl = new Label(card.getNom()); nameLbl.setTextFill(Color.WHITE); nameLbl.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-            ImageView imgView = new ImageView(); imgView.setFitWidth(100); imgView.setFitHeight(100); imgView.setPreserveRatio(true);
-            try { if (card.getImagePath() != null) { File file = new File(card.getImagePath()); if(file.exists()) imgView.setImage(new Image(file.toURI().toString())); } } catch(Exception e) {}
-            box.getChildren().addAll(titleLbl, nameLbl, imgView, createStatLabel("ATK: "+card.getAtk(), "#F44336"), createStatLabel("DEF: "+card.getDef(), "#2196F3"), createStatLabel("HP: "+card.getHp(), "#4CAF50"));
-        } else { box.getChildren().add(new Label("Carte introuvable")); }
+            Label titleLbl = new Label(title);
+            titleLbl.setTextFill(Color.web(borderColor));
+            titleLbl.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            Label nameLbl = new Label(card.getNom());
+            nameLbl.setTextFill(Color.WHITE);
+            nameLbl.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            ImageView imgView = new ImageView();
+            imgView.setFitWidth(100);
+            imgView.setFitHeight(100);
+            imgView.setPreserveRatio(true);
+            try {
+                if (card.getImagePath() != null) {
+                    File file = new File(card.getImagePath());
+                    if (file.exists()) imgView.setImage(new Image(file.toURI().toString()));
+                }
+            } catch (Exception e) {
+            }
+            box.getChildren().addAll(titleLbl, nameLbl, imgView, createStatLabel("ATK: " + card.getAtk(), "#F44336"), createStatLabel("DEF: " + card.getDef(), "#2196F3"), createStatLabel("HP: " + card.getHp(), "#4CAF50"));
+        } else {
+            box.getChildren().add(new Label("Carte introuvable"));
+        }
         return box;
     }
-    private Label createStatLabel(String text, String color) { Label l = new Label(text); l.setTextFill(Color.web(color)); l.setFont(Font.font("Arial", FontWeight.BOLD, 14)); return l; }
+
+    private Label createStatLabel(String text, String color) {
+        Label l = new Label(text);
+        l.setTextFill(Color.web(color));
+        l.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        return l;
+    }
 }

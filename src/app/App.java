@@ -12,12 +12,10 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Récupérer les arguments de lancement
         List<String> args = getParameters().getRaw();
 
-        // Si l'argument "bot" est présent
         if (args.contains("bot")) {
-            System.out.println("--- DÉMARRAGE MODE BOT ---");
+            System.out.println("DÉMARRAGE MODE BOT");
 
             BotView botView = new BotView(primaryStage);
             BotController botController = new BotController(botView);
@@ -25,11 +23,9 @@ public class App extends Application {
 
             botView.show();
 
-            // Lancer la logique du bot dans un thread séparé pour ne pas bloquer l'UI
             new Thread(botController::start).start();
 
         } else {
-            // Démarrage normal
             MainController mainController = new MainController(primaryStage);
             mainController.start();
         }

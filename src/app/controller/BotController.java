@@ -104,17 +104,18 @@ public class BotController {
 
             String jsonResp = JsonUtils.buildFightResponseJson(true, req, botPlayer.getId_Client());
             networkService.sendMessage(JsonUtils.buildResponse("ResponseFightRequest", jsonResp));
-        }
-        else if (message.contains("ConfirmationRequest")) {
+        } else if (message.contains("ConfirmationRequest")) {
             TradeRequestModel req = JsonUtils.parseTradeRequestNotification(message);
             Platform.runLater(() -> view.setStatus("Échange accepté avec " + req.getInitiatorId()));
 
             String jsonResp = JsonUtils.buildTradeResponseJson(true, req, botPlayer.getId_Client());
             networkService.sendMessage(JsonUtils.buildResponse("ConfirmationResponse", jsonResp));
-        }
-        else if (message.contains("FightResult") || message.contains("TradeResult")) {
+        } else if (message.contains("FightResult") || message.contains("TradeResult")) {
             new Thread(() -> {
-                try { Thread.sleep(2000); } catch (InterruptedException e) {}
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                }
 
                 if (message.contains("hand")) {
                     List<Card> newInv = JsonUtils.parseInventoryFromTradeResult(message);
@@ -135,7 +136,10 @@ public class BotController {
             Platform.runLater(() -> view.setStatus("Génération de " + needed + " carte(s)..."));
             for (int i = 0; i < needed; i++) {
                 createRandomCard();
-                try { Thread.sleep(500); } catch (Exception e) {}
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                }
             }
             Platform.runLater(() -> view.setStatus("Prêt. Inventaire complet (4 cartes)."));
         } else {

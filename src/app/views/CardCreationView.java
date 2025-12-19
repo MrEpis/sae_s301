@@ -14,6 +14,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
+
 import java.io.File;
 import java.util.function.UnaryOperator;
 
@@ -169,7 +170,8 @@ public class CardCreationView {
                 try {
                     int val = Integer.parseInt(newText);
                     if (val <= MAX_POINTS) return change;
-                } catch (NumberFormatException e) { }
+                } catch (NumberFormatException e) {
+                }
             }
             return null;
         };

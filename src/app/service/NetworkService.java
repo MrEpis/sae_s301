@@ -1,6 +1,7 @@
 package app.service;
 
 import javafx.application.Platform;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -47,11 +48,9 @@ public class NetworkService {
 
                     if (message.contains("TradeResult") || message.contains("FightResult")) {
                         notifyListener(message);
-                    }
-                    else if (message.contains("\"type\": \"response\"") || message.contains("\"type\":\"response\"")) {
+                    } else if (message.contains("\"type\": \"response\"") || message.contains("\"type\":\"response\"")) {
                         responseQueue.put(message);
-                    }
-                    else {
+                    } else {
                         notifyListener(message);
                     }
                 }
@@ -91,6 +90,7 @@ public class NetworkService {
         isRunning = false;
         try {
             if (socket != null) socket.close();
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
     }
 }
