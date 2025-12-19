@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.function.Consumer;
 
+// Gallery window to select a local image for card creation
 public class ImageSelectorView {
 
     private final Stage parentStage;
@@ -25,6 +26,7 @@ public class ImageSelectorView {
         this.onImageSelected = onImageSelected;
     }
 
+    // Configures and displays the image gallery modal stage
     public void show() {
         Stage stage = new Stage();
         stage.initOwner(parentStage);
@@ -43,6 +45,7 @@ public class ImageSelectorView {
         tilePane.setAlignment(Pos.TOP_LEFT);
         tilePane.setStyle("-fx-background-color: #2e2e2e;");
 
+        // Loads all compatible image files from the local resource folder
         File folder = new File("src/ressources/img");
         if (folder.exists() && folder.isDirectory()) {
             File[] files = folder.listFiles((dir, name) ->
@@ -74,6 +77,7 @@ public class ImageSelectorView {
         stage.show();
     }
 
+    // Creates a clickable preview box for a single image file
     private VBox createImageItem(File file, Stage stage) {
         VBox box = new VBox();
         box.setAlignment(Pos.CENTER);
@@ -98,6 +102,7 @@ public class ImageSelectorView {
         box.setOnMouseEntered(e -> box.setStyle("-fx-background-color: #505050; -fx-border-color: #7834CB; -fx-border-width: 2; -fx-border-radius: 8; -fx-cursor: hand;"));
         box.setOnMouseExited(e -> box.setStyle("-fx-background-color: #383838; -fx-border-color: #555; -fx-border-width: 2; -fx-border-radius: 8;"));
 
+        // Executes the callback and closes the window when an image is selected
         box.setOnMouseClicked(e -> {
             onImageSelected.accept(file);
             stage.close();

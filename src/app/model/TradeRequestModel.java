@@ -1,5 +1,6 @@
 package app.model;
 
+// Model used to handle trade or fight proposals between players
 public class TradeRequestModel {
     private int initiatorId;
     private int initiatorCardId;
@@ -53,9 +54,10 @@ public class TradeRequestModel {
         return fightResult;
     }
 
+    // Helper to check if the request contains a battle result
     public boolean isFightResult() {
         return fightResult != null;
-    } // Helper utile
+    }
 
     @Override
     public String toString() {

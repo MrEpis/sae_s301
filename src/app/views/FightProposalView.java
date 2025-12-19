@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
+// Shows a popup for the receiver to accept or decline a fight challenge
 public class FightProposalView {
 
     private final Stage stage;
@@ -31,6 +32,7 @@ public class FightProposalView {
         this.request = request;
     }
 
+    // Creates the proposal scene with comparison between challenged cards
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -119,6 +121,7 @@ public class FightProposalView {
         return btn;
     }
 
+    // Displays the opponent's card data after it's fetched from network
     public void updateRemoteCardDisplay(Card card) {
         remoteCardContainer.getChildren().clear();
         if (card == null) {
@@ -133,6 +136,7 @@ public class FightProposalView {
         }
     }
 
+    // Creates a visual card summary box with image and stats
     private VBox createCardWidget(Card card, String title, String borderColor) {
         VBox box = new VBox(5);
         box.setPrefSize(160, 240);

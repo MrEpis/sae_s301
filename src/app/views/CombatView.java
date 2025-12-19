@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.List;
 
+// Manages the arena UI where players select opponents and cards for combat
 public class CombatView {
 
     private final Stage primaryStage;
@@ -54,12 +55,12 @@ public class CombatView {
         }
     }
 
+    // Sets up the battle preparation scene layout
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
         root.setStyle("-fx-background-color: #383838;");
 
-        // HEADER
         Label pseudoLabel = createLabel("👤 " + controller.getLocalPlayer().getName(), 18, "#FF5252", FontWeight.BOLD);
         VBox topBox = createTopControlArea();
 
@@ -78,6 +79,7 @@ public class CombatView {
         return new Scene(root, 1100, 750);
     }
 
+    // Creates the top section with opponent selection controls
     private VBox createTopControlArea() {
         VBox topBox = new VBox(15);
         topBox.setAlignment(Pos.CENTER);
@@ -107,6 +109,7 @@ public class CombatView {
         return topBox;
     }
 
+    // Organises the area showing both player's inventories and the VS summary
     private HBox createSelectionArea() {
         HBox box = new HBox(20);
         box.setAlignment(Pos.CENTER);
@@ -125,6 +128,7 @@ public class CombatView {
         return box;
     }
 
+    // Builds a panel containing a scrollable list of cards
     private VBox createCardListPanel(String title, boolean isLocalPlayer) {
         VBox panel = new VBox(10);
         panel.setMinWidth(300);
@@ -176,6 +180,7 @@ public class CombatView {
         return panel;
     }
 
+    // Creates the visual widget for a single card in the list
     private HBox createCardListWidget(Card card) {
         HBox cardBox = new HBox(15);
         cardBox.setAlignment(Pos.CENTER_LEFT);
@@ -212,6 +217,7 @@ public class CombatView {
         return cardBox;
     }
 
+    // Shows the selected fighters in a central summary column
     private VBox createSummaryPanel() {
         VBox panel = new VBox(30);
         panel.setAlignment(Pos.CENTER);
@@ -220,11 +226,11 @@ public class CombatView {
         Label vs = createLabel("VS", 64, "#D32F2F", FontWeight.BLACK);
 
         VBox p1Box = new VBox(5, createLabel("Attaquant:", 14, "#AAA", FontWeight.NORMAL));
-        p1Box.getChildren().add(myFighterLabel); // Déjà initialisé
+        p1Box.getChildren().add(myFighterLabel);
         p1Box.setAlignment(Pos.CENTER);
 
         VBox p2Box = new VBox(5, createLabel("Cible:", 14, "#AAA", FontWeight.NORMAL));
-        p2Box.getChildren().add(targetLabel); // Déjà initialisé
+        p2Box.getChildren().add(targetLabel);
         p2Box.setAlignment(Pos.CENTER);
 
         if (playerCardList != null)
@@ -236,6 +242,7 @@ public class CombatView {
         return panel;
     }
 
+    // Sets up the final buttons to trigger fight or go back
     private HBox createBottomButtonArea() {
         HBox buttonBox = new HBox(40);
         buttonBox.setAlignment(Pos.CENTER);

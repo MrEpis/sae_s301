@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// Main coordinator for navigation and global network event handling
 public class MainController {
 
     private final Stage primaryStage;
@@ -59,6 +60,7 @@ public class MainController {
         });
     }
 
+    // Displays a temporary pop-up notification with an optional action
     private void showToast(String message, Runnable onClickAction) {
         Platform.runLater(() -> {
             Popup popup = new Popup();
@@ -92,6 +94,7 @@ public class MainController {
         });
     }
 
+    // Dispatches server notifications to the appropriate view or local logic
     private void handleNotification(String message) {
         if (message.contains("FightConfirmationRequest")) {
             TradeRequestModel req = JsonUtils.parseFightRequestNotification(message);
@@ -162,7 +165,7 @@ public class MainController {
 
                 Platform.runLater(() -> {
                     TradeRequestModel notif = new TradeRequestModel(finalOpponentId, 0, 0);
-                    notif.setInitiatorUsername(opponentName); // On enregistre le pseudo trouvé
+                    notif.setInitiatorUsername(opponentName);
                     notif.setFightResult(finalResult);
                     notifications.add(notif);
 
@@ -176,6 +179,7 @@ public class MainController {
         }
     }
 
+    // Sends a response to the server to accept or decline a fight
     public void respondToFight(TradeRequestModel request, boolean accepted, int myId) {
         if (accepted) {
             this.setLastMyCardIdEngaged(request.getReceiverCardId());
@@ -188,6 +192,7 @@ public class MainController {
         Platform.runLater(this::showNotifications);
     }
 
+    // Sends a response to the server to accept or decline a trade
     public void respondToTrade(TradeRequestModel request, boolean accepted, int myId) {
         String jsonData = JsonUtils.buildTradeResponseJson(accepted, request, myId);
         String responseStr = JsonUtils.buildResponse("ConfirmationResponse", jsonData);
@@ -204,6 +209,7 @@ public class MainController {
         fetchRemoteCardGeneric(request, view::updateRemoteCardDisplay);
     }
 
+    // Retrieves remote card details from the opponent for confirmation views
     private void fetchRemoteCardGeneric(TradeRequestModel request, java.util.function.Consumer<Card> callback) {
         new Thread(() -> {
             String opponentUsername = getUsernameById(request.getInitiatorId());
@@ -230,6 +236,7 @@ public class MainController {
         new NotificationView(primaryStage, this, notifications).show();
     }
 
+    // Utility method to get a username from a client ID via the server
     private String getUsernameById(int id) {
         String resp = networkService.sendRequest(JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}"));
         if (resp != null) {
@@ -248,6 +255,7 @@ public class MainController {
         v.show();
     }
 
+    // Entry point that checks for existing sessions before loading the menu
     public void start() {
         int storedId = SessionService.loadClientId();
         if (storedId == 0) {

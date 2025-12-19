@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// Handles user authentication and initial inventory loading
 public class LoginController {
 
     private final MainController mainController;
@@ -20,6 +21,7 @@ public class LoginController {
         this.view = view;
     }
 
+    // Sends login data and switches to menu on success
     public void handleFirstConnection(String username) {
         if (username == null || username.trim().isEmpty()) return;
 
@@ -52,7 +54,6 @@ public class LoginController {
 
                 mainController.showMenu();
             } else {
-                // Vérification si l'erreur vient d'un serveur plein
                 if (response != null && response.contains("Server at max capacity")) {
                     view.displayError("Impossible de se connecter, serveur plein.");
                 } else {

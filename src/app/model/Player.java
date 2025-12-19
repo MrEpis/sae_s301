@@ -3,6 +3,7 @@ package app.model;
 import java.util.List;
 import java.util.ArrayList;
 
+// Represents a user and their collection of cards
 public class Player {
     private int Id_Client;
     private String name;

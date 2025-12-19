@@ -13,12 +13,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+// Entry point interface for user identification
 public class LoginView {
 
     private final Stage primaryStage;
     private LoginController controller;
     private TextField usernameField;
-    // Ajout d'un label pour afficher les erreurs à l'utilisateur
     private Label errorLabel;
 
     public LoginView(Stage primaryStage) {
@@ -29,13 +29,13 @@ public class LoginView {
         this.controller = controller;
     }
 
-    // Méthode pour afficher un message d'erreur sur la page
     public void displayError(String message) {
         if (errorLabel != null) {
             errorLabel.setText(message);
         }
     }
 
+    // Renders the login form with username input and validation button
     public void show() {
         VBox root = new VBox(20);
         root.setAlignment(Pos.CENTER);
@@ -52,6 +52,7 @@ public class LoginView {
         usernameField.setMaxWidth(300);
         usernameField.setPromptText("Pseudo...");
 
+        // Enforces character and length constraints on the username field
         usernameField.setTextFormatter(new TextFormatter<>(change -> {
             String newText = change.getControlNewText();
             if(newText.length() > 20 || !newText.matches("[0-9a-zA-ZàâäéèêëîïôöùûüÿçÀÂÄÉÈÊËÎÏÔÖÙÛÜŸÇ_-]*")) {
@@ -60,7 +61,6 @@ public class LoginView {
             return change;
         }));
 
-        // Initialisation du label d'erreur (vide par défaut)
         errorLabel = new Label("");
         errorLabel.setTextFill(Color.web("#FF5252"));
         errorLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
@@ -79,7 +79,6 @@ public class LoginView {
             }
         });
 
-        // On ajoute le label d'erreur à la fin de la liste
         root.getChildren().addAll(title, subtitle, usernameField, validateButton, errorLabel);
         Scene scene = new Scene(root, 600, 400);
         primaryStage.setScene(scene);

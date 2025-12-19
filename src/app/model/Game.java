@@ -1,5 +1,6 @@
 package app.model;
 
+// Represents a match session between two players
 public class Game {
     private Player player1;
     private Player player2;

@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
+// Shows the outcome and logs of a resolved battle
 public class FightResultView {
 
     private final Stage stage;
@@ -37,6 +38,7 @@ public class FightResultView {
         this.myCard = myCard;
     }
 
+    // Initialises the summary screen after a combat ends
     public void show() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -108,6 +110,7 @@ public class FightResultView {
         stage.show();
     }
 
+    // Creates a card widget with a greyscale effect if the card is destroyed
     private VBox createFighterCard(Card card, String ownerTitle, boolean isDead, Color themeColor) {
         VBox container = new VBox(10);
         container.setAlignment(Pos.CENTER);
@@ -155,6 +158,7 @@ public class FightResultView {
         return container;
     }
 
+    // Shows a placeholder when a card has been removed from game
     private VBox createDestroyedPlaceholder(String message) {
         VBox box = new VBox(10);
         box.setAlignment(Pos.CENTER);

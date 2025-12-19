@@ -1,6 +1,6 @@
 package app.controller;
 
-import app.model.Card; // NOUVEAU : Nécessaire pour créer l'objet Card
+import app.model.Card;
 import app.model.Player;
 import app.service.JsonUtils;
 import app.service.NetworkService;
@@ -10,9 +10,10 @@ import app.views.ImageSelectorView;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.util.regex.Matcher; // NOUVEAU
-import java.util.regex.Pattern; // NOUVEAU
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+// Controller for the card creation screen
 public class CardCreationController {
 
     private final MainController mainController;
@@ -31,6 +32,7 @@ public class CardCreationController {
         mainController.showMenu();
     }
 
+    // Opens a file picker to select a local image for the new card
     public void chooseImageFile() {
         Stage stage = (Stage) creationView.getScene().getWindow();
 
@@ -58,6 +60,7 @@ public class CardCreationController {
         selector.show();
     }
 
+    // Validates card stats and sends the creation request to the server
     public void saveCard(String name, int hp, int atk, int def) {
         if (rawSelectedFile == null) {
             System.err.println("Erreur: Image manquante.");

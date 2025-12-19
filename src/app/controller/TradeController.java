@@ -9,6 +9,7 @@ import app.views.TradeView;
 import java.util.ArrayList;
 import java.util.List;
 
+// Manages the card trading interface and requests
 public class TradeController {
 
     private final MainController mainController;
@@ -31,6 +32,7 @@ public class TradeController {
         return currentPlayer.getInventory();
     }
 
+    // Fetches the list of players currently available for trading
     public void refreshPlayerList() {
         System.out.println("Demande de la liste des joueurs...");
         String request = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
@@ -60,6 +62,7 @@ public class TradeController {
         }
     }
 
+    // Loads the card collection of a target opponent for selection
     public void loadOpponentInventory(String opponentName) {
         System.out.println("Demande inventaire pour : " + opponentName);
         tradeView.displayStatus("Chargement de l'inventaire de " + opponentName + "...");
@@ -81,6 +84,7 @@ public class TradeController {
         }
     }
 
+    // Initiates an exchange request between two specific cards
     public void sendTradeRequest(String opponentName, int offeredCardId, int requestedCardId) {
         System.out.println("Envoi de TradeRequest au serveur pour " + opponentName);
 

@@ -1,5 +1,6 @@
 package app.model;
 
+// Represents a collectible card with its characteristics
 public class Card {
     private int id;
     private String nom;

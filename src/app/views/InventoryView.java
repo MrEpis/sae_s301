@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
+// Main interface to display and inspect the player's card collection
 public class InventoryView {
 
     private final Stage primaryStage;
@@ -32,6 +33,7 @@ public class InventoryView {
         this.controller = controller;
     }
 
+    // Constructs the inventory scene with a grid and a detail panel
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -61,6 +63,7 @@ public class InventoryView {
         return new Scene(root, 1100, 750);
     }
 
+    // Creates a scrollable grid containing all player cards
     private ScrollPane createCardGridArea() {
         GridPane cardGrid = new GridPane();
         cardGrid.setHgap(20);
@@ -85,6 +88,7 @@ public class InventoryView {
         return scrollPane;
     }
 
+    // Generates a visual component for a single card in the grid
     private VBox createCardWidget(Card card) {
         VBox box = new VBox(5);
         box.setPrefSize(140, 220);
@@ -116,6 +120,7 @@ public class InventoryView {
         return box;
     }
 
+    // Builds the side panel used to show selected card stats
     private VBox createCardDetailPanel() {
         VBox detailBox = new VBox(15);
         detailBox.setPrefWidth(300);
@@ -145,6 +150,7 @@ public class InventoryView {
         return detailBox;
     }
 
+    // Updates the detail panel labels and image when a card is clicked
     private void updateDetails(Scene scene, Card card) {
         VBox detailBox = (VBox) scene.lookup("#DetailPanel");
 

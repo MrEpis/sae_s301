@@ -9,6 +9,7 @@ import app.views.CombatView;
 import java.util.ArrayList;
 import java.util.List;
 
+// Manages matchmaking and combat requests between players
 public class CombatController {
 
     private final MainController mainController;
@@ -34,7 +35,7 @@ public class CombatController {
         return currentPlayer.getInventory();
     }
 
-
+    // Requests the list of currently connected players from the server
     public void refreshPlayerList() {
         System.out.println("Combat: Récupération liste joueurs...");
         String request = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
@@ -60,6 +61,7 @@ public class CombatController {
         }
     }
 
+    // Fetches the inventory of a specific opponent to choose a target card
     public void loadOpponentInventory(String opponentName) {
         combatView.displayStatus("Espionnage de l'inventaire de " + opponentName + "...");
         String dataJson = JsonUtils.buildGetOpponentInventoryRequest(opponentName);
@@ -76,6 +78,7 @@ public class CombatController {
         }
     }
 
+    // Sends a fight challenge with local and target card IDs
     public void sendFightRequest(String opponentName, int myCardId, int targetCardId) {
         int opponentId = -1;
         for (Player p : connectedPlayers) {

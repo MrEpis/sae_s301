@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.List;
 
+// Interface for selecting players and proposing card exchanges
 public class TradeView {
 
     private final Stage primaryStage;
@@ -41,6 +42,7 @@ public class TradeView {
         if (statusLabel != null) statusLabel.setText(message);
     }
 
+    // Refreshes the dropdown list with online player names
     public void updatePlayerList(List<String> players) {
         if (opponentSelector != null) {
             opponentSelector.getItems().clear();
@@ -50,10 +52,12 @@ public class TradeView {
         }
     }
 
+    // Populates the list with cards available from the selected target player
     public void updateOpponentInventory(List<Card> cards) {
         if (opponentCardList != null) opponentCardList.getItems().setAll(cards);
     }
 
+    // Sets up the main trade screen layout with two inventories and a summary
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -75,6 +79,7 @@ public class TradeView {
         return new Scene(root, 1100, 750);
     }
 
+    // Builds the control section to select and load an opponent's inventory
     private VBox createTopControlArea() {
         VBox topBox = new VBox(15);
         topBox.setAlignment(Pos.CENTER);
@@ -102,9 +107,10 @@ public class TradeView {
         return topBox;
     }
 
+    // Configures the side-by-side card list panels for both players
     private HBox createTradeSelectionArea() {
         HBox tradeBox = new HBox(20);
-        tradeBox.setAlignment(Pos.CENTER); // Centrage global
+        tradeBox.setAlignment(Pos.CENTER);
         tradeBox.setPadding(new Insets(10));
 
         VBox playerPanel = createInventoryPanel("Ton Inventaire", true);
@@ -120,6 +126,7 @@ public class TradeView {
         return tradeBox;
     }
 
+    // Creates an inventory panel with a customized ListCell factory for card rendering
     private VBox createInventoryPanel(String title, boolean isLocalPlayer) {
         VBox panel = new VBox(10);
         panel.setMinWidth(300);
@@ -139,7 +146,6 @@ public class TradeView {
                 } else {
                     setGraphic(createCardListWidget(item));
                     setText(null);
-                    // Style de sélection plus marqué
                     if (isSelected()) {
                         setStyle("-fx-background-color: #666666; -fx-border-color: #FFC107; -fx-border-width: 2;");
                     } else {
@@ -170,6 +176,7 @@ public class TradeView {
         return panel;
     }
 
+    // Generates a compact HBox row representing a card and its primary stats
     private HBox createCardListWidget(Card card) {
         HBox cardBox = new HBox(15);
         cardBox.setAlignment(Pos.CENTER_LEFT);
@@ -199,7 +206,6 @@ public class TradeView {
         statsBox.setMinWidth(90);
 
         statsBox.getChildren().addAll(
-                // Légère augmentation de la taille de police (12 -> 13)
                 createLabel("PV: " + card.getHp(), 13, "#4CAF50", FontWeight.BOLD),
                 createLabel("ATK: " + card.getAtk(), 13, "#F44336", FontWeight.BOLD),
                 createLabel("DEF: " + card.getDef(), 13, "#2196F3", FontWeight.BOLD)
@@ -209,6 +215,7 @@ public class TradeView {
         return cardBox;
     }
 
+    // Displays the current trade offer summary in a central column
     private VBox createSummaryPanel() {
         VBox panel = new VBox(20);
         panel.setAlignment(Pos.CENTER);
@@ -230,6 +237,7 @@ public class TradeView {
         return panel;
     }
 
+    // Handles user actions to send the trade request or return to the menu
     private HBox createBottomButtonArea() {
         HBox buttonBox = new HBox(40);
         buttonBox.setAlignment(Pos.CENTER);

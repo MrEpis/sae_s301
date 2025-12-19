@@ -16,6 +16,7 @@ import javafx.stage.Stage;
 
 import java.util.List;
 
+// Interface used to list incoming trade or combat requests and results
 public class NotificationView {
 
     private final Stage primaryStage;
@@ -28,6 +29,7 @@ public class NotificationView {
         this.notifications = notifications;
     }
 
+    // Renders the main notification scene with a scrollable list
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -50,6 +52,7 @@ public class NotificationView {
         notificationList.setAlignment(Pos.TOP_CENTER);
         notificationList.setPadding(new Insets(30, 0, 0, 0));
 
+        // Displays a placeholder if there are no pending notifications
         if (notifications.isEmpty()) {
             Label emptyLabel = new Label("Aucune notification pour le moment.");
             emptyLabel.setTextFill(Color.GRAY);
@@ -78,6 +81,7 @@ public class NotificationView {
         return new Scene(root, 850, 650);
     }
 
+    // Generates a visual row for a single notification item with a viewing action
     private HBox createNotificationItem(TradeRequestModel req) {
         HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);

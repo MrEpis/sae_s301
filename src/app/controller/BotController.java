@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// Manages the automated behavior and network interactions of the bot player
 public class BotController {
 
     private final BotView view;
@@ -34,6 +35,7 @@ public class BotController {
         this.networkService.setNotificationListener(this::handleNotification);
     }
 
+    // Scans the local directory to list available card images
     private void loadImagesFromFolder() {
         try {
             File folder = new File("src/ressources/img");
@@ -60,6 +62,7 @@ public class BotController {
         }
     }
 
+    // Handles the login process and initializes the bot inventory
     public void start() {
         Platform.runLater(() -> view.setStatus("Connexion au serveur..."));
 
@@ -91,10 +94,12 @@ public class BotController {
         }
     }
 
+    // Closes the network connection when stopping the bot
     public void stop() {
         networkService.closeConnection();
     }
 
+    // Reacts to incoming server notifications such as trade or fight requests
     private void handleNotification(String message) {
         System.out.println("[BOT] Reçu : " + message);
 
@@ -128,6 +133,7 @@ public class BotController {
         }
     }
 
+    // Checks the inventory size and triggers card creation if needed
     private void checkAndRefillInventory() {
         int currentCount = botPlayer.getInventory().size();
         int needed = 4 - currentCount;
@@ -147,6 +153,7 @@ public class BotController {
         }
     }
 
+    // Generates a new card with randomized stats and sends it to the server
     private void createRandomCard() {
         String name = "BotCard-" + random.nextInt(1000);
 
@@ -172,6 +179,7 @@ public class BotController {
         System.out.println("[BOT] Création carte : " + resp);
     }
 
+    // Parses the client ID from a JSON string using a regular expression
     private int extractIdFromResponse(String json) {
         try {
             Pattern p = Pattern.compile("\"id_client\"\\s*:\\s*(\\d+)");

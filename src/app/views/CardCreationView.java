@@ -18,6 +18,7 @@ import javafx.util.converter.IntegerStringConverter;
 import java.io.File;
 import java.util.function.UnaryOperator;
 
+// Handles the UI for creating a new card and distributing stats
 public class CardCreationView {
 
     public static final int MAX_POINTS = 100;
@@ -49,6 +50,7 @@ public class CardCreationView {
         return cardNameField.getText();
     }
 
+    // Updates the image and name preview on the UI
     public void displayImagePreview(String imagePath, String cardName) {
         try {
             Image image = new Image(imagePath);
@@ -71,6 +73,7 @@ public class CardCreationView {
         }
     }
 
+    // Builds the main scene for the card creation window
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #2e2e2e;");
@@ -115,9 +118,6 @@ public class CardCreationView {
         bottomBox.setPadding(new Insets(30));
         bottomBox.setAlignment(Pos.CENTER);
 
-
-
-
         Button saveButton = createActionButton("Sauvegarder la carte", "#7834CB", 180, 40);
         Button backButton = createActionButton("Retour au Menu", "#D9C6F0", 180, 40);
 
@@ -131,13 +131,13 @@ public class CardCreationView {
         return new Scene(root, 1100, 800);
     }
 
+    // Creates the form to input name and distribute stats
     private VBox createStatDistributionForm() {
         VBox form = new VBox(25);
         form.setPadding(new Insets(30));
         form.setMinWidth(400);
         form.setMaxWidth(Double.MAX_VALUE);
         form.setAlignment(Pos.CENTER_LEFT);
-        // On permet au formulaire de prendre toute la hauteur pour centrer le contenu
         VBox.setVgrow(form, Priority.ALWAYS);
         form.setStyle("-fx-background-color: #383838; -fx-border-color: #555555; -fx-border-width: 1;");
 
@@ -186,6 +186,7 @@ public class CardCreationView {
         return form;
     }
 
+    // Configures spinners to allow only numeric input within limits
     private void configureSpinnerBehavior(Spinner<Integer> spinner) {
         spinner.setEditable(true);
 
@@ -216,6 +217,7 @@ public class CardCreationView {
         });
     }
 
+    // Prevents stats from exceeding the maximum allowed points
     private void addSafeListener(Spinner<Integer> spinner) {
         spinner.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) return;
@@ -230,6 +232,7 @@ public class CardCreationView {
         });
     }
 
+    // Updates limits of each stat based on remaining points
     private void updateSpinnerLimits() {
         int currentHp = hpSpinner.getValue();
         int currentAtk = attackSpinner.getValue();
@@ -249,6 +252,7 @@ public class CardCreationView {
         updateCardPreview();
     }
 
+    // Synchronizes the card preview labels with spinner values
     private void updateCardPreview() {
         if (previewHpLabel != null && hpSpinner != null) {
             previewHpLabel.setText("HP: " + hpSpinner.getValue());
@@ -257,6 +261,7 @@ public class CardCreationView {
         }
     }
 
+    // Creates the area showing the card template and image button
     private VBox createCardPreviewArea() {
         VBox preview = new VBox(10);
         preview.setPrefSize(300, 400);
@@ -271,6 +276,7 @@ public class CardCreationView {
         return preview;
     }
 
+    // Builds the visual representation of the card
     private VBox createCardTemplate() {
         VBox cardSlot = new VBox(10);
         cardSlot.setPadding(new Insets(20));
@@ -345,6 +351,7 @@ public class CardCreationView {
         return label;
     }
 
+    // Creates a styled button with hover effects
     private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
         btn.setPrefSize(width, height);
@@ -381,6 +388,7 @@ public class CardCreationView {
         return btn;
     }
 
+    // Initialises and shows the card creation stage
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Card Creation");

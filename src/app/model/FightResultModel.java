@@ -1,5 +1,6 @@
 package app.model;
 
+// Stores the outcome and details of a battle between two cards
 public class FightResultModel {
     private String logMessage;
     private Card opponentCard;

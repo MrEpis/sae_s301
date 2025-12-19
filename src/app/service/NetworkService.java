@@ -11,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
+// Handles TCP socket communication and background message listening
 public class NetworkService {
 
     private Socket socket;
@@ -23,6 +24,7 @@ public class NetworkService {
     private static final String SERVER_HOST = System.getProperty("server.addr", "134.59.27.129");
     private static final int SERVER_PORT = 8080;
 
+    // Initializes connection to the server host and port
     public NetworkService() {
         try {
             this.socket = new Socket(SERVER_HOST, SERVER_PORT);
@@ -34,10 +36,12 @@ public class NetworkService {
         }
     }
 
+    // Assigns a callback for handling incoming asynchronous notifications
     public void setNotificationListener(Consumer<String> listener) {
         this.notificationListener = listener;
     }
 
+    // Starts a dedicated thread to continuously read server messages
     private void startListening() {
         isRunning = true;
         Thread listeningThread = new Thread(() -> {
@@ -62,12 +66,14 @@ public class NetworkService {
         listeningThread.start();
     }
 
+    // Sends received messages back to the JavaFX UI thread
     private void notifyListener(String message) {
         if (notificationListener != null) {
             Platform.runLater(() -> notificationListener.accept(message));
         }
     }
 
+    // Sends a request and waits synchronously for a response
     public String sendRequest(String jsonRequest) {
         if (socket == null || socket.isClosed()) return null;
         try {
@@ -79,6 +85,7 @@ public class NetworkService {
         }
     }
 
+    // Sends a message to the server without waiting for a reply
     public void sendMessage(String jsonMessage) {
         if (socket != null && !socket.isClosed()) {
             System.out.println("[ENVOI ASYNC] : " + jsonMessage);
@@ -86,6 +93,7 @@ public class NetworkService {
         }
     }
 
+    // Safely terminates the network thread and closes the socket
     public void closeConnection() {
         isRunning = false;
         try {

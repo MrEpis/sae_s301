@@ -15,6 +15,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+// Central navigation hub for accessing all features of the application
 public class MenuView {
 
     private final Stage primaryStage;
@@ -27,12 +28,12 @@ public class MenuView {
         this.controller = controller;
     }
 
+    // Builds the menu scene containing action buttons for combat, inventory, etc.
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #1e1e1e;");
 
-        // HEADER : Pseudo à gauche et Titre au centre
         Label pseudoLabel = new Label("👤 " + controller.getLocalPlayer().getName());
         pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         pseudoLabel.setTextFill(Color.web("#A97DDE"));
@@ -64,6 +65,7 @@ public class MenuView {
         Button notificationButton = createButton("Notifications");
         Button quitButton = createButton("Quitter");
 
+        // Sets uniform width for all primary action buttons
         for (Button b : new Button[]{combatButton, inventoryButton, createCardButton, tradeButton, notificationButton, quitButton}) {
             b.setMaxWidth(450);
         }
@@ -87,6 +89,7 @@ public class MenuView {
         primaryStage.show();
     }
 
+    // Helper method to create standard menu buttons with visual hover feedback
     private Button createButton(String text) {
         Button btn = new Button(text);
         btn.setPrefHeight(60);

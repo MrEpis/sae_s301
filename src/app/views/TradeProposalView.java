@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
+// Popup screen to review, accept or refuse a trade proposal
 public class TradeProposalView {
 
     private final Stage stage;
@@ -31,6 +32,7 @@ public class TradeProposalView {
         this.request = request;
     }
 
+    // Displays the comparison of both offered and requested cards
     public void show() {
         VBox root = new VBox(20);
         root.setStyle("-fx-background-color: #2e2e2e;");
@@ -50,6 +52,7 @@ public class TradeProposalView {
         remoteCardContainer = new VBox();
         updateRemoteCardDisplay(null);
 
+        // Finds the local card involved in this trade to display its preview
         Card myCard = null;
         for (Card c : controller.getLocalPlayer().getInventory()) {
             if (c.getId() == request.getReceiverCardId()) {
@@ -95,6 +98,7 @@ public class TradeProposalView {
         return btn;
     }
 
+    // Asynchronously refreshes the remote card container with fetched data
     public void updateRemoteCardDisplay(Card card) {
         remoteCardContainer.getChildren().clear();
         if (card == null) {
@@ -109,6 +113,7 @@ public class TradeProposalView {
         }
     }
 
+    // Builds a card widget containing name, image and its combat stats
     private VBox createCardWidget(Card card, String title, String borderColor) {
         VBox box = new VBox(5);
         box.setPrefSize(160, 240);

@@ -5,10 +5,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+// Manages local persistence of the client ID in a file
 public class SessionService {
 
     private static final String FILE_NAME = "session.dat";
 
+    // Reads the saved client ID from the local session file
     public static int loadClientId() {
         if ("true".equals(System.getProperty("nosession"))) {
             return 0;
@@ -25,6 +27,7 @@ public class SessionService {
         return 0;
     }
 
+    // Writes the client ID to a local file for future sessions
     public static void saveClientId(int id) {
         if ("true".equals(System.getProperty("nosession"))) {
             return;
@@ -37,6 +40,7 @@ public class SessionService {
         }
     }
 
+    // Deletes the local session file to clear user data
     public static void clearSession() {
         File file = new File(FILE_NAME);
         if (file.exists()) {

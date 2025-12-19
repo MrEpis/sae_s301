@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Player;
 
+// Provides data access for the inventory display
 public class InventoryController {
 
     private final MainController mainController;
