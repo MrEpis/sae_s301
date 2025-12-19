@@ -13,20 +13,25 @@
 #include <sys/socket.h>
 #include <time.h>
 
+
+/**
+ * Main Client Thread.
+ * Reads JSON requests and dispatches them to specific processing functions.
+ */
 void *handle_client(void *arg) {
-    //On récupère le socket du client passé en argument
+    // Get client socket passed as function argument
     int client_socket = *(int*)arg;
     free(arg); 
     
-    char buffer[2048]; // Taille suffisante pour un JSON
+    char buffer[2048];
     ssize_t bytes_read;
 
 
-    //Boucle de lecture simple en mode bloquant
+    // Main blocking read loop
     
     while ((bytes_read = recv(client_socket, buffer, sizeof(buffer)-1, 0))> 0) { //Si on a bien reçu le message
         buffer[bytes_read] = '\0';
-        printf("[CLIENT -> SERVEUR] (Socket client %d) : %s\n", client_socket, buffer);
+        printf("[CLIENT -> SERVER] (Socket %d) : %s\n", client_socket, buffer);
 
         char action_name[50];
         if (extract_json_value(buffer, "nom", action_name, sizeof(action_name))) {
@@ -55,17 +60,17 @@ void *handle_client(void *arg) {
                 process_fight_response(client_socket, buffer);
             }
             else {
-                send_error_response(client_socket, action_name, "Action inconnue");
+                send_error_response(client_socket, action_name, "Unknown action.");
             }
         } else {
-            send_error_response(client_socket, "UNKNOWN", "Format JSON invalide");
+            send_error_response(client_socket, "UNKNOWN", "Invalid JSON format");
         }
 
         // Buffer clean up for next round
         memset(buffer, 0, sizeof(buffer));
     }
     if (bytes_read == 0) {
-        printf("[INFO] Socket client %d déconnecté.\n", client_socket);
+        printf("[INFO] Client disconnected (Socket %d)\n", client_socket);
 
         pthread_mutex_lock(&clients_mutex);
         for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -92,6 +97,10 @@ void *handle_client(void *arg) {
     pthread_exit(NULL);
 }
 
+/**
+ * Handles the LOGIN action.
+ * Checks credentials, creates user if needed, and returns the current hand.
+ */
 void process_login(int client_socket, const char *json_payload) {
     char data_buffer[512];
     char id_str[20];
@@ -100,7 +109,7 @@ void process_login(int client_socket, const char *json_payload) {
 
     // 1. Extract "data" object (contains {id_client:..., username:...})
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
-        send_error_response(client_socket, "LOGIN", "Champ 'data' manquant");
+        send_error_response(client_socket, "LOGIN", "Missing 'data' field");
         return;
     }
 
@@ -126,7 +135,7 @@ void process_login(int client_socket, const char *json_payload) {
     // FOR A NEW USER (ID 0)
     if (id_client == 0) {
         if (strlen(username) < 1) {
-            send_error_response(client_socket, "LOGIN", "Username requis pour inscription");
+            send_error_response(client_socket, "LOGIN", "Username is required to sign up.");
             return;
         }
 
@@ -135,15 +144,15 @@ void process_login(int client_socket, const char *json_payload) {
         if (existing_id != -1) {
             // First case : this player already exists -> is signed in
             final_id = existing_id;
-            printf("[INFO] Joueur existant '%s' avec ID %d (Login via ID 0)\n", username, final_id);
+            printf("[INFO] Existing player '%s' with ID %d (Logged in using ID 0)\n", username, final_id);
         } else {
             // Other case : this player doesn't exist yet -> is created
             final_id = db_create_player(conn, username);
             if (final_id == -1) {
-                send_error_response(client_socket, "LOGIN", "Erreur création joueur");
+                send_error_response(client_socket, "LOGIN", "Error while creating player in DB");
                 return;
             }
-            printf("[INFO] Nouveau joueur '%s' créé avec ID %d\n", username, final_id);
+            printf("[INFO] New player '%s' created with ID %d\n", username, final_id);
         }
     }
     // FOR AN EXISTING USER (ID > 0)
@@ -152,12 +161,12 @@ void process_login(int client_socket, const char *json_payload) {
             final_id = id_client;
 
             if (db_get_username_by_id(conn, final_id, username) == -1) {
-                 send_error_response(client_socket, "LOGIN", "Erreur récupération nom");
+                 send_error_response(client_socket, "LOGIN", "Error while fetching username");
                  return;
             }
             printf("Joueur ID %d reconnu.\n", final_id);
         } else {
-            send_error_response(client_socket, "LOGIN", "Compte introuvable");
+            send_error_response(client_socket, "LOGIN", "Account does not exist");
             return;
         }
     }
@@ -174,7 +183,7 @@ void process_login(int client_socket, const char *json_payload) {
             // The player is already connected, refuse connection
             // (we also could disconnect the previous one)
             pthread_mutex_unlock(&clients_mutex);
-            send_error_response(client_socket, "LOGIN", "Joueur déjà connecté");
+            send_error_response(client_socket, "LOGIN", "Player already connected");
             return;
         }
     }
@@ -206,16 +215,19 @@ void process_login(int client_socket, const char *json_payload) {
     "{\"type\": \"response\", \"nom\": \"LOGIN\", \"status\": \"OK\", \"data\": {\"id_client\": %d, \"username\": \"%s\", \"main\": %s}}\n", 
     final_id, username, cards_json);
 
-    printf("[SERVEUR -> CLIENT] (Socket client %d) : %s\n", client_socket, response);
+    printf("[SERVER -> CLIENT] (Socket %d) : %s\n", client_socket, response);
 
     send(client_socket, response, strlen(response), 0);
 }
 
+/**
+ * Handles Card Creation request.
+ * Generates card, saves to DB, mines a block.
+ */
 void process_card_creation(int client_socket, const char *json_payload) {
     char data_buffer[1024];
     char temp_str[100];
     
-    // Variables pour stocker les données extraites
     int id_client = -1;
     char nomCarte[50] = {0};
     int defense = 0;
@@ -223,21 +235,18 @@ void process_card_creation(int client_socket, const char *json_payload) {
     int pv = 0;
     char image[50] = {0};
 
-    // 1. Extraction des données du JSON
+    // 1. Extract data from JSON
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
         send_error_response(client_socket, "RequestCardCreation", "Donnees manquantes");
         return;
     }
 
-    // ID Client (qui demande la création)
     if (extract_json_value(data_buffer, "id_client", temp_str, sizeof(temp_str))) {
         id_client = atoi(temp_str);
     }
     
-    // Nom de la carte
     extract_json_value(data_buffer, "nomCarte", nomCarte, sizeof(nomCarte));
     
-    // Stats (Attaque, PV, Défense)
     if (extract_json_value(data_buffer, "attaque", temp_str, sizeof(temp_str))) attaque = atoi(temp_str);
     if (extract_json_value(data_buffer, "pv", temp_str, sizeof(temp_str))) pv = atoi(temp_str);
     if (extract_json_value(data_buffer, "defense", temp_str, sizeof(temp_str))) defense = atoi(temp_str);
@@ -246,7 +255,6 @@ void process_card_creation(int client_socket, const char *json_payload) {
         strcpy(image, "default.png"); // Image par défaut si non fournie
     }
 
-    // Validation basique
     if (id_client < 1 || strlen(nomCarte) == 0) {
         send_error_response(client_socket, "RequestCardCreation", "Parametres invalides");
         return;
@@ -254,14 +262,13 @@ void process_card_creation(int client_socket, const char *json_payload) {
 
     PGconn *conn = get_db_connection();
 
-    // TODO: Vérifier MaxCardPerClient ici (Compter les cartes du joueur en BDD)
     int nb_cartes = db_count_player_cards(conn, id_client);
     if (nb_cartes >= MAX_CARDS) { 
         send_error_response(client_socket, "RequestCardCreation", "Nombre de cartes max atteint");
         return;
      }
 
-    // 2. Insertion dans la table CARTES (Cache BDD)
+    // 2. Insert card in DB
     int new_card_id = db_create_card(conn, id_client, nomCarte, attaque, defense, pv, image);
     
     if (new_card_id == -1) {
@@ -271,7 +278,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
 
     printf("[INFO] Carte crée en BDD (ID: %d) pour le joueur %d\n", new_card_id, id_client);
 
-    // 3. Création et Minage du BLOC (Blockchain)
+    // 3. Create and mine Block
 
     Blockchain *bc = get_global_blockchain();
     if (bc == NULL) {
@@ -279,7 +286,6 @@ void process_card_creation(int client_socket, const char *json_payload) {
     return;
     }
 
-    // Allocation du bloc
     Block *new_block = calloc(1, sizeof(Block));
     if (new_block == NULL) {
         perror("calloc failed");
@@ -294,7 +300,6 @@ void process_card_creation(int client_socket, const char *json_payload) {
     new_block->timestamp = time(NULL);
     new_block->nonce = 0;
 
-    // Création du JSON pour le bloc (Preuve d'action)
     char action_json[512];
     snprintf(action_json, sizeof(action_json), 
          "{\"action\": \"CreateCard\", \"client_id\": %d, \"card_id\": %d, \"card_name\": \"%s\", \"attack\": %d, \"defense\": %d, \"max_hp\": %d, \"image_file\": \"%s\"}", 
@@ -302,20 +307,19 @@ void process_card_creation(int client_socket, const char *json_payload) {
     
     new_block->data_action = strdup(action_json);
 
-    // Minage (Proof of Work)
     mine_block(new_block);
 
     bc->tail->next = new_block;
     bc->tail = new_block;
     bc->size++;
 
-    // 4. Sauvegarde du bloc miné en BDD
+    // 4. Save block in DB
     if (db_save_block(conn, new_block) != 0) {
         fprintf(stderr, "[ERREUR] Impossible de sauvegarder le bloc\n");
         // En prod, il faudrait rollback la création de carte ici
     }
 
-    // 5. Réponse au client
+    // 5. Send response to client
     char response[512];
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"CardCreated\", \"status\": \"OK\", \"data\": {\"id\": %d}}\n", 
@@ -326,17 +330,20 @@ void process_card_creation(int client_socket, const char *json_payload) {
     send(client_socket, response, strlen(response), 0);
 }
 
+/**
+ * Returns the list of connected users (excluding self).
+ */
 void process_get_connected_users(int client_socket) {
-    char json_array[4096] = "["; // Buffer large pour la liste
+    char json_array[4096] = "[";
     int first = 1;
 
-    pthread_mutex_lock(&clients_mutex); // Verrouillage pour lecture
+    pthread_mutex_lock(&clients_mutex);
 
+    // Find requester ID
     for (int i = 0; i < MAX_CLIENTS; i++) {
         // On ne liste que les sockets valides et les joueurs authentifiés (logged_in)
         if (clients_list[i].socket != -1 && clients_list[i].logged_in == 1) {
             
-            // Gestion de la virgule entre les éléments JSON
             if (!first) {
                 strcat(json_array, ",");
             }
