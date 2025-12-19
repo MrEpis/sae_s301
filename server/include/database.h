@@ -42,4 +42,6 @@ int db_update_card_hp(PGconn *conn, int card_id, int new_hp);
 
 void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_len);
 
+int db_card_exists(PGconn *conn, int card_id);
+
 #endif

@@ -552,3 +552,27 @@ void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_le
 
     PQclear(res);
 }
+
+int db_card_exists(PGconn *conn, int card_id) {
+    char id_str[12];
+    snprintf(id_str, sizeof(id_str), "%d", card_id);
+    const char *params[1] = { id_str };
+
+    // On sélectionne juste "1" pour optimiser, pas besoin de lire toutes les colonnes
+    const char *query = "SELECT 1 FROM cartes WHERE id = $1";
+    
+    PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        fprintf(stderr, "[ERREUR BDD] Echec verification existence carte %d : %s\n", 
+                card_id, PQerrorMessage(conn));
+        PQclear(res);
+        return -1; // Erreur technique
+    }
+
+    // PQntuples renvoie le nombre de lignes trouvées
+    int exists = (PQntuples(res) > 0) ? 1 : 0;
+
+    PQclear(res);
+    return exists;
+}

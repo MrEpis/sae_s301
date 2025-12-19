@@ -434,8 +434,19 @@ void process_trade_request(int client_socket, const char *json_payload) {
     if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
 
     // Vérification basique
-    if (id_initiator == -1 || id_receiver == -1) {
+    if (id_initiator == -1 || id_receiver == -1 || id_card_initiator == -1 || id_card_receiver == -1) {
         send_error_response(client_socket, ACTION_TRADE, "IDs invalides");
+        return;
+    }
+
+    PGconn *conn = get_db_connection();
+
+    if (db_card_exists(conn, id_card_initiator) == 0) {
+        send_error_response(client_socket, ACTION_TRADE, "Votre carte n'existe plus.");
+        return;
+    }
+    if (db_card_exists(conn, id_card_receiver) == 0) {
+        send_error_response(client_socket, ACTION_TRADE, "La carte que vous cherchez n'existe plus.");
         return;
     }
 
@@ -531,6 +542,16 @@ void process_trade_response(int client_socket, const char *json_payload) {
 
     // CAS ACCEPTÉ
     PGconn *conn = get_db_connection();
+
+    // Vérification
+    if (db_card_exists(conn, id_card_initiator) == 0) {
+        send_error_response(client_socket, ACTION_TRADE_RESPONSE, "La carte de l'initiateur n'existe plus.");
+        return;
+    }
+    if (db_card_exists(conn, id_card_receiver) == 0) {
+        send_error_response(client_socket, ACTION_TRADE_RESPONSE, "Votre carte n'existe plus.");
+        return;
+    }
     
     // A. Mise à jour BDD (Transaction)
     if (db_execute_trade(conn, id_initiator, id_card_initiator, id_receiver, id_card_receiver) != 0) {
@@ -623,6 +644,17 @@ void process_fight_request(int client_socket, const char *json_payload) {
         return;
     }
 
+    PGconn *conn = get_db_connection();
+
+    if (db_card_exists(conn, id_card_initiator) == 0) {
+        send_error_response(client_socket, ACTION_FIGHT, "Votre carte n'existe plus.");
+        return;
+    }
+    if (db_card_exists(conn, id_card_receiver) == 0) {
+        send_error_response(client_socket, ACTION_FIGHT, "La carte que vous cherchez n'existe plus.");
+        return;
+    }
+
     // 2. Recherche du socket de l'adversaire
     int socket_receiver = -1;
     char receiver_username[50] = "Inconnu";
@@ -706,6 +738,17 @@ void process_fight_response(int client_socket, const char *json_payload) {
 
     // 3. EXECUTION DU COMBAT
     PGconn *conn = get_db_connection();
+
+    // Vérification
+    if (db_card_exists(conn, id_card_initiator) == 0) {
+        send_error_response(client_socket, ACTION_FIGHT_RESPONSE, "La carte de l'initiateur n'existe plus.");
+        return;
+    }
+    if (db_card_exists(conn, id_card_receiver) == 0) {
+        send_error_response(client_socket, ACTION_FIGHT_RESPONSE, "Votre carte n'existe plus.");
+        return;
+    }
+    
 
     char json_card_initiator[1024];
     char json_card_receiver[1024];
