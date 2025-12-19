@@ -42,6 +42,7 @@ public class FightResultView {
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #1a1a1a; -fx-border-color: #D32F2F; -fx-border-width: 5;");
 
+        // Header : Pseudo à gauche, Titre au centre
         Label pseudoLabel = new Label("👤 " + controller.getLocalPlayer().getName());
         pseudoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         pseudoLabel.setTextFill(Color.web("#A97DDE"));
@@ -55,18 +56,23 @@ public class FightResultView {
         StackPane.setAlignment(title, Pos.CENTER);
         root.setTop(header);
 
-        VBox centerBox = new VBox(40);
+        // Conteneur principal au centre
+        VBox centerBox = new VBox(50);
         centerBox.setAlignment(Pos.CENTER);
 
+        // Message de log (ex: L'adversaire a fui le combat)
         Label logLabel = new Label(result.getLogMessage());
         logLabel.setTextFill(Color.web("#FFC107"));
-        logLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        logLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24)); // Légèrement plus gros pour l'impact
         logLabel.setWrapText(true);
         logLabel.setTextAlignment(TextAlignment.CENTER);
-        logLabel.setMaxWidth(600);
+        logLabel.setAlignment(Pos.CENTER); // Correction : Aligne le texte au centre du Label
+        logLabel.setMaxWidth(750);
+        logLabel.setPrefWidth(750); // Assure que le label prend de la place pour le centrage horizontal
 
         centerBox.getChildren().add(logLabel);
 
+        // N'affiche l'arène que s'il y a un adversaire (pas de fuite)
         if (result.getOpponentCard() != null) {
             HBox arena = new HBox(60);
             arena.setAlignment(Pos.CENTER);
@@ -85,9 +91,10 @@ public class FightResultView {
             centerBox.getChildren().add(arena);
         }
 
+        // Bouton de fermeture
         Button closeBtn = new Button("Fermer le rapport");
-        closeBtn.setStyle("-fx-background-color: #444; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
-        closeBtn.setPrefSize(200, 40);
+        closeBtn.setStyle("-fx-background-color: #444; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 5;");
+        closeBtn.setPrefSize(250, 50);
         closeBtn.setOnAction(e -> controller.showNotifications());
 
         centerBox.getChildren().add(closeBtn);
@@ -95,7 +102,7 @@ public class FightResultView {
 
         Scene scene = new Scene(root, 900, 650);
         stage.setScene(scene);
-        stage.sizeToScene();
+        stage.sizeToScene(); // Important pour Linux
         stage.show();
     }
 
@@ -107,12 +114,9 @@ public class FightResultView {
         lblOwner.setTextFill(themeColor);
         lblOwner.setFont(Font.font("Arial", FontWeight.BOLD, 20));
 
-        if (card == null) return container;
-
         VBox cardBox = new VBox(5);
         cardBox.setPrefSize(180, 260);
         cardBox.setAlignment(Pos.TOP_CENTER);
-
         String borderColor = isDead ? "#555555" : themeColor.toString().replace("0x", "#");
         cardBox.setStyle("-fx-background-color: #2b2b2b; -fx-border-color: " + borderColor + "; -fx-border-width: 3; -fx-border-radius: 8;");
 
@@ -129,8 +133,7 @@ public class FightResultView {
                 File f = new File(card.getImagePath());
                 if (f.exists()) img.setImage(new Image(f.toURI().toString()));
             }
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
 
         Label hpLabel = new Label(isDead ? "MORT" : "PV: " + card.getHp());
         hpLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));

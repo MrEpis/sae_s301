@@ -139,7 +139,7 @@ public class MainController {
             FightResultModel result = JsonUtils.parseFightResult(message);
 
             if (message.contains("ERROR") || message.contains("REFUSED")) {
-                result = new app.model.FightResultModel("L'adversaire à fui le combat", null);
+                result = new app.model.FightResultModel("L'adversaire a fuit le combat", null);
             }
 
             int opponentId = -1;
