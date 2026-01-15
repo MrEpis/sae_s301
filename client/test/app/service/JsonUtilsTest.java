@@ -2,36 +2,64 @@ package app.service;
 
 import app.model.Card;
 import app.model.FightResultModel;
-import app.model.TradeRequestModel;
+import app.model.Player;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JsonUtilsTest {
 
     @Test
-    void testBuildCardCreationData() {
-        String json = JsonUtils.buildCardCreationData(1, "Warrior", 50, 25, 25, "img.png");
-        String expected = "{\"id_client\":\"1\", \"nomCarte\":\"Warrior\", \"pv\":50, \"attaque\":25, \"defense\":25, \"image\":\"img.png\"}";
-        assertEquals(expected, json);
+    void testBuildLoginData() {
+        int id = 123;
+        String username = "Titi_99";
+        String result = JsonUtils.buildLoginData(id, username);
+
+        assertTrue(result.contains("\"id_client\": 123"));
+        assertTrue(result.contains("\"username\": \"Titi_99\""));
+    }
+
+    @Test
+    void testParsePlayerList() {
+        String json = "{\"data\": [{\"id_client\": 1, \"username\": \"Alice\"}, {\"id_client\": 2, \"username\": \"Bob\"}]}";
+
+        List<Player> players = JsonUtils.parsePlayerList(json);
+
+        assertNotNull(players);
+        assertEquals(2, players.size());
+        assertEquals("Alice", players.get(0).getName());
+        assertEquals(1, players.get(0).getId_Client());
+    }
+
+    @Test
+    void testParseInventoryFromLogin() {
+        String json = "{\"main\": [{\"id\":10, \"nom\":\"Dracofeu\", \"pv\":100, \"attaque\":80, \"defense\":50, \"image\":\"img.png\"}]}";
+
+        List<Card> inventory = JsonUtils.parseInventoryFromLogin(json);
+
+        assertNotNull(inventory);
+        assertEquals(1, inventory.size());
+        Card card = inventory.get(0);
+        assertEquals("Dracofeu", card.getNom());
+        assertEquals(80, card.getAtk()); // Vérifie que "attaque" est bien mappé vers atk
     }
 
     @Test
     void testParseFightResult() {
-        String json = "{\"log\": \"Fight Over\", \"opponent_card\": {\"id\": 99, \"nom\": \"Boss\", \"pv\": 10, \"attaque\": 25, \"defense\": 25, \"image\": \"boss.png\"}}";
+        String json = "{\"log\": \"Combat gagné !\", \"opponent_card\": {\"id\":5, \"nom\":\"Golem\", \"pv\":0, \"attaque\":20, \"defense\":80, \"image\":\"g.png\"}}";
 
         FightResultModel result = JsonUtils.parseFightResult(json);
 
-        assertEquals("Fight Over", result.getLogMessage());
+        assertNotNull(result);
+        assertEquals("Combat gagné !", result.getLogMessage());
         assertNotNull(result.getOpponentCard());
-        assertEquals(10, result.getOpponentCard().getHp());
+        assertEquals("Golem", result.getOpponentCard().getNom());
     }
 
     @Test
-    void testBuildTradeResponseJson() {
-        TradeRequestModel req = new TradeRequestModel(5, 10, 20);
-        String json = JsonUtils.buildTradeResponseJson(true, req, 99);
-
-        assertTrue(json.contains("\"accepted\": true"));
-        assertTrue(json.contains("\"id_initiator\": 5"));
+    void testExtractStringInconnu() {
+        String json = "{\"autre\": \"donnée\"}";
+        String result = JsonUtils.parseUsernameFromLogin(json);
+        assertEquals("Inconnu", result);
     }
 }

@@ -3,28 +3,28 @@ package app.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-    class CardTest {
+class CardTest {
 
     @Test
-    void testCardInitialization(){
-        String realImagePath = "src/ressources/img/sword.png";
+    void testCardConstructorAndGetters() {
+        // On crée une carte de test
+        Card card = new Card(1, "Chevalier", 10, 50, 40, "src/ressources/img/knight.png");
 
-        Card c = new Card(1,"Sword", 40,20,40, realImagePath);
-
-        assertEquals(1,c.getId());
-        assertEquals("Sword", c.getNom());
-        assertEquals(40, c.getHp());
-
-        assertEquals(30, c.getDef(), "La défense (20) n'est pas au bon endroit");
-        assertEquals(30, c.getAtk(), "L'attaque (40) n'est pas au bon endroit");
-        assertEquals(realImagePath, c.getImagePath());
+        // On vérifie que les données initiales sont correctes
+        assertEquals(1, card.getId());
+        assertEquals("Chevalier", card.getNom());
+        assertEquals(10, card.getHp());
+        assertEquals(40, card.getAtk());
+        assertEquals(50, card.getDef());
+        assertEquals("src/ressources/img/knight.png", card.getImagePath());
     }
 
     @Test
-    void testSetHp(){
-        Card c = new Card(2, "Test", 50, 10, 10, null);
+    void testStatModifications() {
+        Card card = new Card(1, "Baloon", 15, 80, 5, "src/ressources/img/baloon.png");
 
-        c.setHp(40);
-        assertEquals(40, c.getHp(), "HP setter should update value correctly");
+        // On simule une prise de dégâts
+        card.setHp(10);
+        assertEquals(10, card.getHp(), "Les HP devraient être mis à jour après un setHp");
     }
 }

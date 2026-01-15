@@ -3,40 +3,69 @@ package app.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TradeRequestModelTest {
+/**
+ * Tests unitaires pour le modèle TradeRequestModel.
+ * Vérifie la gestion des échanges, des défis de combat et des résultats.
+ */
+class TradeRequestModelTest {
 
     @Test
-    void testInitialization(){
-        TradeRequestModel req = new TradeRequestModel(5, 100, 200);
+    void testTradeRequestCreation() {
+        TradeRequestModel trade = new TradeRequestModel(1, 10, 20);
 
-        assertEquals(5, req.getInitiatorId());
-        assertEquals(100, req.getInitiatorCardId());
-        assertEquals(200, req.getReceiverCardId());
-        assertEquals("Player 5", req.getInitiatorUsername());
+        assertFalse(trade.isFight(), "Par défaut, une requête devrait être un échange.");
+        assertEquals(1, trade.getInitiatorId());
+        assertEquals(10, trade.getInitiatorCardId());
+        assertEquals(20, trade.getReceiverCardId());
 
-        assertFalse(req.isFight());
-        assertFalse(req.isFightResult());
+        // Vérification du nom d'utilisateur par défaut ("Joueur " + id)
+        assertEquals("Joueur 1", trade.getInitiatorUsername());
     }
 
     @Test
-    void testCombatScenario(){
-        TradeRequestModel req = new TradeRequestModel(1, 10 ,20);
-        req.setInitiatorUsername("Challenger");
+    void testSetters() {
+        TradeRequestModel request = new TradeRequestModel(5, 100, 200);
 
-        req.setFight(true);
-        assertTrue(req.isFight());
-        assertTrue(req.toString().contains("Combat challenge"));
+        request.setInitiatorUsername("Alice");
+        assertEquals("Alice", request.getInitiatorUsername());
+
+        // Test du passage en mode combat
+        request.setFight(true);
+        assertTrue(request.isFight());
     }
 
     @Test
-    void testFightResultTransmission(){
-        TradeRequestModel req = new TradeRequestModel(1, 10, 20);
-        FightResultModel result = new FightResultModel("Combat finished", null);
+    void testFightResultIntegration() {
+        TradeRequestModel request = new TradeRequestModel(2, 5, 10);
 
-        req.setFightResult(result);
+        // On vérifie qu'il n'y a pas de résultat au début
+        assertFalse(request.isFightResult());
+        assertNull(request.getFightResult());
 
-        assertTrue(req.isFightResult());
-        assertEquals(result, req.getFightResult());
-        assertEquals("Résultat du combat", req.toString());
+        // On simule l'ajout d'un résultat de combat
+        FightResultModel result = new FightResultModel("Victoire éclatante !", null);
+        request.setFightResult(result);
+
+        // Vérifications
+        assertTrue(request.isFightResult());
+        assertNotNull(request.getFightResult());
+        assertEquals("Victoire éclatante !", request.getFightResult().getLogMessage());
+    }
+
+    @Test
+    void testToString() {
+        TradeRequestModel request = new TradeRequestModel(1, 10, 20);
+        request.setInitiatorUsername("Bob");
+
+        // Test format échange
+        assertEquals("Echange proposé par Bob", request.toString());
+
+        // Test format combat
+        request.setFight(true);
+        assertEquals("Défi de combat par Bob", request.toString());
+
+        // Test format résultat
+        request.setFightResult(new FightResultModel("Log", null));
+        assertEquals("Résultat du combat", request.toString());
     }
 }
