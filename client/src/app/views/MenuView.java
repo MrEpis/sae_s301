@@ -15,7 +15,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-// Central navigation hub for accessing all features of the application
+/**
+ * Central navigation hub for accessing all features of the application.
+ * This view serves as the main dashboard where players can navigate to combat,
+ * inventory, card creation, trading, and notifications.
+ */
 public class MenuView {
 
     private final Stage primaryStage;
@@ -23,12 +27,22 @@ public class MenuView {
     final String STYLE_NORMAL = "-fx-background-color: #A97DDE; -fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 20px; -fx-background-radius: 10;";
     final String STYLE_HOVER = "-fx-background-color: #9059D4; -fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 20px; -fx-background-radius: 10;";
 
+    /**
+     * Initializes the MenuView with the primary stage and the main controller.
+     * @param primaryStage The primary application window.
+     * @param controller The central controller managing state transitions.
+     */
     public MenuView(Stage primaryStage, MainController controller) {
         this.primaryStage = primaryStage;
         this.controller = controller;
     }
 
-    // Builds the menu scene containing action buttons for combat, inventory, etc.
+    /**
+     * Builds the main menu scene containing action buttons and user information.
+     * This method organizes the layout into a header (title and user profile)
+     * and a central container with buttons for all major application features.
+     * @return The fully constructed Scene for the main menu.
+     */
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -83,13 +97,21 @@ public class MenuView {
         return new Scene(root, 800, 700);
     }
 
+    /**
+     * Sets the scene to the primary stage and displays the main menu window.
+     */
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Main Menu");
         primaryStage.show();
     }
 
-    // Helper method to create standard menu buttons with visual hover feedback
+    /**
+     * Helper method to create standard menu buttons with visual hover feedback.
+     * Applies default styles and manages cursor changes on interaction.
+     * @param text The label text for the button.
+     * @return A styled Button instance with hover effects configured.
+     */
     private Button createButton(String text) {
         Button btn = new Button(text);
         btn.setPrefHeight(60);

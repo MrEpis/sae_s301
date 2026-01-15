@@ -15,7 +15,10 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// Manages the automated behavior and network interactions of the bot player
+/**
+ * Controller responsible for the automated behavior of the bot "roblobot".
+ * It handles automatic connection, challenge acceptance, and inventory maintenance.
+ */
 public class BotController {
 
     private final BotView view;
@@ -25,6 +28,10 @@ public class BotController {
 
     private final List<String> availableImages = new ArrayList<>();
 
+    /**
+     * Initializes the BotController, sets up the bot profile, and loads available images.
+     * @param view The view used to display the bot's current status.
+     */
     public BotController(BotView view) {
         this.view = view;
         this.networkService = new NetworkService();
@@ -35,7 +42,9 @@ public class BotController {
         this.networkService.setNotificationListener(this::handleNotification);
     }
 
-    // Scans the local directory to list available card images
+    /**
+     * Scans the resources folder to list all available PNG images for card generation.
+     */
     private void loadImagesFromFolder() {
         try {
             File folder = new File("src/ressources/img");
@@ -62,7 +71,9 @@ public class BotController {
         }
     }
 
-    // Handles the login process and initializes the bot inventory
+    /**
+     * Connects the bot to the server and retrieves its assigned client ID and inventory.
+     */
     public void start() {
         Platform.runLater(() -> view.setStatus("Connexion au serveur..."));
 
@@ -94,12 +105,18 @@ public class BotController {
         }
     }
 
-    // Closes the network connection when stopping the bot
+    /**
+     * Closes the network connection.
+     */
     public void stop() {
         networkService.closeConnection();
     }
 
-    // Reacts to incoming server notifications such as trade or fight requests
+    /**
+     * Handles incoming notifications from the server.
+     * Automatically accepts fight and trade challenges and updates inventory after results.
+     * @param message The raw JSON message received from the server.
+     */
     private void handleNotification(String message) {
         System.out.println("[BOT] Reçu : " + message);
 
@@ -133,7 +150,9 @@ public class BotController {
         }
     }
 
-    // Checks the inventory size and triggers card creation if needed
+    /**
+     * Checks the bot's inventory and creates new random cards if it has fewer than 4.
+     */
     private void checkAndRefillInventory() {
         int currentCount = botPlayer.getInventory().size();
         int needed = 4 - currentCount;
@@ -153,7 +172,9 @@ public class BotController {
         }
     }
 
-    // Generates a new card with randomized stats and sends it to the server
+    /**
+     * Generates a new card with random stats (totaling 100 points) and sends it to the server.
+     */
     private void createRandomCard() {
         String name = "BotCard-" + random.nextInt(1000);
 
@@ -179,7 +200,11 @@ public class BotController {
         System.out.println("[BOT] Création carte : " + resp);
     }
 
-    // Parses the client ID from a JSON string using a regular expression
+    /**
+     * Extracts the client ID from a server response using a regular expression.
+     * @param json The JSON string to parse.
+     * @return The extracted ID, or -1 if not found.
+     */
     private int extractIdFromResponse(String json) {
         try {
             Pattern p = Pattern.compile("\"id_client\"\\s*:\\s*(\\d+)");

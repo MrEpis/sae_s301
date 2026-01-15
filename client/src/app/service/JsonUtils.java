@@ -10,10 +10,19 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// Utility class to build and parse JSON messages for server communication
+/**
+ * Utility class for building and parsing JSON strings used in network communication.
+ * This class provides static methods to format requests/responses and extract model
+ * objects from server messages using regular expressions.
+ */
 public class JsonUtils {
 
-    // Wraps an action and its data into a standard JSON request string
+    /**
+     * Wraps action data into a standard request JSON structure.
+     * @param actionName The name of the request action.
+     * @param dataJson The JSON data associated with the action.
+     * @return A formatted request JSON string.
+     */
     public static String buildRequest(String actionName, String dataJson) {
         return String.format(
                 "{\"type\":\"request\", \"nom\":\"%s\", \"data\":%s}",
@@ -22,7 +31,16 @@ public class JsonUtils {
         );
     }
 
-    // Formats card details into a JSON string for creation requests
+    /**
+     * Builds the JSON data payload for a card creation request.
+     * @param id_client The unique ID of the client creating the card.
+     * @param nom The name of the card.
+     * @param pv Health points.
+     * @param atk Attack points.
+     * @param def Defense points.
+     * @param imagePath The path to the card image.
+     * @return A formatted JSON string for card creation.
+     */
     public static String buildCardCreationData(int id_client, String nom, int pv, int atk, int def, String imagePath) {
         return String.format(
                 "{\"id_client\":\"%d\", \"nomCarte\":\"%s\", \"pv\":%d, \"attaque\":%d, \"defense\":%d, \"image\":\"%s\"}",
@@ -30,7 +48,12 @@ public class JsonUtils {
         );
     }
 
-    // Creates the JSON payload for the login process
+    /**
+     * Builds login data for authentication.
+     * @param idClient Existing client ID (if any).
+     * @param username Chosen username.
+     * @return A JSON string representing login credentials.
+     */
     public static String buildLoginData(int idClient, String username) {
         if (username == null) {
             return String.format("" + idClient);
@@ -43,7 +66,11 @@ public class JsonUtils {
         }
     }
 
-    // Prepares a JSON string to request another player's inventory
+    /**
+     * Formats a request to retrieve a specific player's inventory.
+     * @param opponentUsername The username of the target player.
+     * @return A JSON payload for inventory lookup.
+     */
     public static String buildGetOpponentInventoryRequest(String opponentUsername) {
         return String.format(
                 "{\"username\": \"%s\"}",
@@ -51,7 +78,14 @@ public class JsonUtils {
         );
     }
 
-    // Formats IDs into a JSON string for a card trade proposal
+    /**
+     * Builds the data payload for initiating a trade request.
+     * @param initiatorId The ID of the requesting player.
+     * @param offeredCardId The ID of the card being offered.
+     * @param receiverId The ID of the target player.
+     * @param requestedCardId The ID of the card being requested.
+     * @return A JSON payload for trade initialization.
+     */
     public static String buildTradeRequestData(int initiatorId, int offeredCardId, int receiverId, int requestedCardId) {
         return String.format(
                 "{\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_receiver\": %d, \"id_card_receiver\": %d}",
@@ -62,7 +96,11 @@ public class JsonUtils {
         );
     }
 
-    // Extracts a list of Player objects from a JSON server response
+    /**
+     * Parses a list of connected players from a server response.
+     * @param jsonResponse The raw JSON response from the server.
+     * @return A list of Player objects currently connected.
+     */
     public static List<Player> parsePlayerList(String jsonResponse) {
         List<Player> players = new ArrayList<>();
 
@@ -90,7 +128,11 @@ public class JsonUtils {
         return players;
     }
 
-    // Parses a JSON response to create a list of Card objects
+    /**
+     * Parses an opponent's inventory from a JSON response.
+     * @param jsonResponse JSON response containing card data.
+     * @return A list of Card objects found in the inventory.
+     */
     public static List<Card> parseOpponentInventory(String jsonResponse) {
         List<Card> cards = new ArrayList<>();
         int dataIndex = jsonResponse.indexOf("\"data\":");
@@ -113,7 +155,11 @@ public class JsonUtils {
         return cards;
     }
 
-    // Retrieves the user's inventory from the login confirmation JSON
+    /**
+     * Parses the main inventory received during the login process.
+     * @param jsonResponse Raw login response.
+     * @return A list of cards owned by the logged-in player.
+     */
     public static List<Card> parseInventoryFromLogin(String jsonResponse) {
         List<Card> cards = new ArrayList<>();
         int mainIndex = jsonResponse.indexOf("\"main\":");
@@ -136,7 +182,11 @@ public class JsonUtils {
         return cards;
     }
 
-    // Converts a trade notification JSON into a model object
+    /**
+     * Parses a trade request notification from the server.
+     * @param json Raw notification JSON.
+     * @return A TradeRequestModel containing the request details.
+     */
     public static TradeRequestModel parseTradeRequestNotification(String json) {
         int initId = extractInt(json, "\"id_initiator\":");
         int initCard = extractInt(json, "\"id_card_initiator\":");
@@ -145,7 +195,13 @@ public class JsonUtils {
         return new TradeRequestModel(initId, initCard, recvCard);
     }
 
-    // Generates the JSON response for accepting or refusing a trade
+    /**
+     * Builds the JSON response for a trade confirmation.
+     * @param accepted Decision of the receiver.
+     * @param request The original trade request.
+     * @param receiverId The ID of the player responding.
+     * @return A JSON payload to answer a trade request.
+     */
     public static String buildTradeResponseJson(boolean accepted, TradeRequestModel request, int receiverId) {
         return String.format(
                 "{\"accepted\": %b, \"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d, \"id_receiver\": %d}",
@@ -157,7 +213,12 @@ public class JsonUtils {
         );
     }
 
-    // Wraps an action and data into a standard JSON response format
+    /**
+     * Wraps action data into a standard response JSON structure.
+     * @param actionName The name of the response action.
+     * @param dataJson The data payload.
+     * @return A formatted response JSON string.
+     */
     public static String buildResponse(String actionName, String dataJson) {
         return String.format(
                 "{\"type\":\"response\", \"nom\":\"%s\", \"data\":%s}",
@@ -166,11 +227,14 @@ public class JsonUtils {
         );
     }
 
-    // Extracts the updated card list from a trade result message
+    /**
+     * Extracts updated hand information from a trade result response.
+     * @param jsonResponse Server response after a completed trade.
+     * @return The new list of cards in hand.
+     */
     public static List<Card> parseInventoryFromTradeResult(String jsonResponse) {
         List<Card> cards = new ArrayList<>();
 
-        // On cherche le tableau "hand": [...]
         int handIndex = jsonResponse.indexOf("\"hand\":");
         if (handIndex == -1) return cards;
 
@@ -191,12 +255,20 @@ public class JsonUtils {
         return cards;
     }
 
-    // Finds and returns the username from the login response
+    /**
+     * Extracts the username from a login response.
+     * @param jsonResponse Raw login response.
+     * @return The extracted username string.
+     */
     public static String parseUsernameFromLogin(String jsonResponse) {
         return extractString(jsonResponse, "\"username\":");
     }
 
-    // Helper method to create a Card object from its JSON representation
+    /**
+     * Internal method to create a Card object from a JSON card representation.
+     * @param cardJson Partial JSON string for a card.
+     * @return A Card instance populated with the extracted data.
+     */
     private static Card extractCardFromJson(String cardJson) {
         int id = extractInt(cardJson, "\"id\":");
         String nom = extractString(cardJson, "\"nom\":");
@@ -210,21 +282,38 @@ public class JsonUtils {
         return new Card(id, nom, pv, def, atk, image);
     }
 
-    // Uses regex to find and parse an integer value from JSON
+    /**
+     * Helper to extract an integer value for a given key.
+     * @param source The JSON source string.
+     * @param key The key to look for.
+     * @return The parsed integer, or 0 if not found.
+     */
     private static int extractInt(String source, String key) {
         Pattern p = Pattern.compile(key + "\\s*(\\d+)");
         Matcher m = p.matcher(source);
         return m.find() ? Integer.parseInt(m.group(1)) : 0;
     }
 
-    // Uses regex to extract a string value from a JSON field
+    /**
+     * Helper to extract a string value for a given key.
+     * @param source The JSON source string.
+     * @param key The key to look for.
+     * @return The parsed string value.
+     */
     private static String extractString(String source, String key) {
         Pattern p = Pattern.compile(key + "\\s*\"([^\"]+)\"");
         Matcher m = p.matcher(source);
         return m.find() ? m.group(1) : "Inconnu";
     }
 
-    // Prepares JSON data to challenge another player to a combat
+    /**
+     * Builds data payload for initiating a fight challenge.
+     * @param initiatorId Challenging player ID.
+     * @param cardInitiatorId Challenging card ID.
+     * @param receiverId Opponent player ID.
+     * @param cardReceiverId Targeted card ID.
+     * @return A fight request JSON payload.
+     */
     public static String buildFightRequestData(int initiatorId, int cardInitiatorId, int receiverId, int cardReceiverId) {
         return String.format(
                 "{\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_receiver\": %d, \"id_card_receiver\": %d}",
@@ -235,7 +324,11 @@ public class JsonUtils {
         );
     }
 
-    // Parses a fight proposal notification from a JSON string
+    /**
+     * Parses a fight request notification.
+     * @param json Raw notification JSON.
+     * @return A TradeRequestModel configured as a fight challenge.
+     */
     public static TradeRequestModel parseFightRequestNotification(String json) {
 
         TradeRequestModel req = parseTradeRequestNotification(json);
@@ -243,7 +336,13 @@ public class JsonUtils {
         return req;
     }
 
-    // Formats the response JSON for a fight invitation
+    /**
+     * Builds the JSON response for a fight confirmation.
+     * @param accepted Decision to fight or flee.
+     * @param request Original fight request.
+     * @param receiverId Responding player ID.
+     * @return A JSON response payload for a combat challenge.
+     */
     public static String buildFightResponseJson(boolean accepted, TradeRequestModel request, int receiverId) {
         return String.format(
                 "{\"accepted\": %b, \"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d, \"id_receiver\": %d}",
@@ -255,7 +354,11 @@ public class JsonUtils {
         );
     }
 
-    // Parses logs and opponent card details from a fight outcome
+    /**
+     * Parses the result of a battle from a JSON message.
+     * @param json Raw result JSON.
+     * @return A FightResultModel containing logs and opponent card state.
+     */
     public static FightResultModel parseFightResult(String json) {
         String log = extractString(json, "\"log\":");
 

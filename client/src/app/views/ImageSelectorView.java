@@ -15,18 +15,32 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.function.Consumer;
 
-// Gallery window to select a local image for card creation
+/**
+ * Gallery window allowing the user to select a local image for card creation.
+ * It scans a specific resource directory and displays compatible image files
+ * in a modal selection interface.
+ */
 public class ImageSelectorView {
 
     private final Stage parentStage;
     private final Consumer<File> onImageSelected;
 
+    /**
+     * Constructs the ImageSelectorView with a reference to the parent stage
+     * and a callback for the selection event.
+     * @param parentStage The owner stage of this modal window.
+     * @param onImageSelected A consumer that processes the selected File object.
+     */
     public ImageSelectorView(Stage parentStage, Consumer<File> onImageSelected) {
         this.parentStage = parentStage;
         this.onImageSelected = onImageSelected;
     }
 
-    // Configures and displays the image gallery modal stage
+    /**
+     * Configures and displays the image gallery as a modal stage.
+     * It initializes a TilePane layout, scans the "src/ressources/img" directory
+     * for PNG and JPG files, and wraps the content in a ScrollPane for navigation.
+     */
     public void show() {
         Stage stage = new Stage();
         stage.initOwner(parentStage);
@@ -77,7 +91,14 @@ public class ImageSelectorView {
         stage.show();
     }
 
-    // Creates a clickable preview box for a single image file
+    /**
+     * Creates a clickable preview box for a single image file.
+     * This method handles the creation of the thumbnail, hover styling effects,
+     * and the selection logic that triggers the callback and closes the window.
+     * @param file The image file to be displayed.
+     * @param stage The current modal stage to be closed upon selection.
+     * @return A styled VBox containing the image preview.
+     */
     private VBox createImageItem(File file, Stage stage) {
         VBox box = new VBox();
         box.setAlignment(Pos.CENTER);

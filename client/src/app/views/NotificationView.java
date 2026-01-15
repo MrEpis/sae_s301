@@ -16,20 +16,35 @@ import javafx.stage.Stage;
 
 import java.util.List;
 
-// Interface used to list incoming trade or combat requests and results
+/**
+ * Interface used to list incoming trade or combat requests and combat results.
+ * This view serves as an inbox where players can review pending interactions
+ * or check the outcome of past duels.
+ */
 public class NotificationView {
 
     private final Stage primaryStage;
     private final MainController controller;
     private final List<TradeRequestModel> notifications;
 
+    /**
+     * Initializes the NotificationView with the list of active notifications.
+     * @param primaryStage The main stage window.
+     * @param controller The main controller for navigation and data handling.
+     * @param notifications The collection of TradeRequestModel objects to display.
+     */
     public NotificationView(Stage primaryStage, MainController controller, List<TradeRequestModel> notifications) {
         this.primaryStage = primaryStage;
         this.controller = controller;
         this.notifications = notifications;
     }
 
-    // Renders the main notification scene with a scrollable list
+    /**
+     * Renders the main notification scene with a scrollable list.
+     * Includes a header with the player's username, a dynamically populated
+     * list of notification items, and a return button to the menu.
+     * @return The fully constructed Scene for the notification view.
+     */
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -81,7 +96,14 @@ public class NotificationView {
         return new Scene(root, 850, 650);
     }
 
-    // Generates a visual row for a single notification item with a viewing action
+    /**
+     * Generates a visual row for a single notification item.
+     * It dynamically determines the text based on whether the item is a combat result,
+     * a fight challenge, or a trade proposal. The "Voir" button directs the user
+     * to the appropriate specialized view.
+     * @param req The specific notification/request model to display.
+     * @return A styled HBox containing the description and an action button.
+     */
     private HBox createNotificationItem(TradeRequestModel req) {
         HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);
@@ -118,6 +140,9 @@ public class NotificationView {
         return item;
     }
 
+    /**
+     * Displays the notification scene on the primary stage.
+     */
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Notifications");

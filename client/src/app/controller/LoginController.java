@@ -10,18 +10,33 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// Handles user authentication and initial inventory loading
+/**
+ * Controller responsible for managing the initial user login process.
+ * It handles communication with the server to validate usernames, retrieve client IDs,
+ * and initialize the player's session and inventory.
+ */
 public class LoginController {
 
     private final MainController mainController;
     private final LoginView view;
 
+    /**
+     * Initializes the LoginController with the application's main controller and the login view.
+     * @param mainController The central controller of the application.
+     * @param view The graphical view for the login screen.
+     */
     public LoginController(MainController mainController, LoginView view) {
         this.mainController = mainController;
         this.view = view;
     }
 
-    // Sends login data and switches to menu on success
+    /**
+     * Processes a connection attempt for a first-time user or an unauthenticated session.
+     * It sends a LOGIN request to the server, handles the response to extract the client ID
+     * and inventory, saves the session locally, and transitions to the main menu upon success.
+     * It also manages error displays for cases like full server capacity.
+     * @param username The username provided by the user.
+     */
     public void handleFirstConnection(String username) {
         if (username == null || username.trim().isEmpty()) return;
 

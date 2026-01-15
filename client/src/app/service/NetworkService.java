@@ -11,7 +11,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
-// Handles TCP socket communication and background message listening
+/**
+ * Service class handling socket communication with the game server.
+ * It manages asynchronous listening for notifications and synchronous request-response patterns
+ * using thread-safe blocking queues.
+ */
 public class NetworkService {
 
     private Socket socket;
@@ -24,7 +28,10 @@ public class NetworkService {
     private static final String SERVER_HOST = System.getProperty("server.addr", "134.59.27.129");
     private static final int SERVER_PORT = 8080;
 
-    // Initializes connection to the server host and port
+    /**
+     * Initializes the service and attempts to establish a socket connection.
+     * Starts the background listening thread if successful.
+     */
     public NetworkService() {
         try {
             this.socket = new Socket(SERVER_HOST, SERVER_PORT);
@@ -36,12 +43,10 @@ public class NetworkService {
         }
     }
 
-    // Assigns a callback for handling incoming asynchronous notifications
-    public void setNotificationListener(Consumer<String> listener) {
-        this.notificationListener = listener;
-    }
-
-    // Starts a dedicated thread to continuously read server messages
+    /**
+     * Starts a background thread to continuously read incoming lines from the server.
+     * Dispatches messages to the response queue or notification listener based on their type.
+     */
     private void startListening() {
         isRunning = true;
         Thread listeningThread = new Thread(() -> {
@@ -66,14 +71,21 @@ public class NetworkService {
         listeningThread.start();
     }
 
-    // Sends received messages back to the JavaFX UI thread
+    /**
+     * Forwards a notification to the listener using Platform.runLater for UI thread safety.
+     * @param message The message to notify.
+     */
     private void notifyListener(String message) {
         if (notificationListener != null) {
             Platform.runLater(() -> notificationListener.accept(message));
         }
     }
 
-    // Sends a request and waits synchronously for a response
+    /**
+     * Sends a request to the server and blocks until a response is received.
+     * @param jsonRequest The request JSON string to send.
+     * @return The server's response JSON, or null if interrupted.
+     */
     public String sendRequest(String jsonRequest) {
         if (socket == null || socket.isClosed()) return null;
         try {
@@ -85,7 +97,11 @@ public class NetworkService {
         }
     }
 
-    // Sends a message to the server without waiting for a reply
+    /**
+     * Sends a message asynchronously without waiting for a direct response.
+     * Useful for sending reactions to server notifications.
+     * @param jsonMessage The JSON message to send.
+     */
     public void sendMessage(String jsonMessage) {
         if (socket != null && !socket.isClosed()) {
             System.out.println("[ENVOI ASYNC] : " + jsonMessage);
@@ -93,12 +109,18 @@ public class NetworkService {
         }
     }
 
-    // Safely terminates the network thread and closes the socket
+    /**
+     * Properly closes the socket connection and stops the listening thread.
+     */
     public void closeConnection() {
         isRunning = false;
         try {
             if (socket != null) socket.close();
         } catch (IOException e) {
         }
+    }
+
+    public void setNotificationListener(Consumer<String> listener) {
+        this.notificationListener = listener;
     }
 }

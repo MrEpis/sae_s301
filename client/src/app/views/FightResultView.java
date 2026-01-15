@@ -23,7 +23,11 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
-// Shows the outcome and logs of a resolved battle
+/**
+ * View responsible for displaying the outcome of a combat.
+ * It presents a visual summary of the duel, showing the state of both cards
+ * (or placeholders if they were destroyed) and the detailed combat log.
+ */
 public class FightResultView {
 
     private final Stage stage;
@@ -31,6 +35,13 @@ public class FightResultView {
     private final FightResultModel result;
     private final Card myCard;
 
+    /**
+     * Initializes the FightResultView with the combat result data.
+     * @param stage The stage window to display the result.
+     * @param controller The main controller for navigation.
+     * @param result The model containing the combat log and opponent's final card state.
+     * @param myCard The local player's card state after the fight.
+     */
     public FightResultView(Stage stage, MainController controller, FightResultModel result, Card myCard) {
         this.stage = stage;
         this.controller = controller;
@@ -38,7 +49,10 @@ public class FightResultView {
         this.myCard = myCard;
     }
 
-    // Initialises the summary screen after a combat ends
+    /**
+     * Constructs the scene and displays the combat report window.
+     * It handles the logic to show the fighters or a "destroyed" message if cards are missing.
+     */
     public void show() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -110,7 +124,14 @@ public class FightResultView {
         stage.show();
     }
 
-    // Creates a card widget with a greyscale effect if the card is destroyed
+    /**
+     * Creates a visual representation of a fighter card with its final status and stats.
+     * @param card The Card object to display.
+     * @param ownerTitle Label for the card owner (e.g., "Me" or "Opponent").
+     * @param isDead True if the card reached 0 HP during the fight.
+     * @param themeColor The primary color for the card's theme.
+     * @return A VBox containing the card's visual identity and stats.
+     */
     private VBox createFighterCard(Card card, String ownerTitle, boolean isDead, Color themeColor) {
         VBox container = new VBox(10);
         container.setAlignment(Pos.CENTER);
@@ -158,7 +179,11 @@ public class FightResultView {
         return container;
     }
 
-    // Shows a placeholder when a card has been removed from game
+    /**
+     * Creates a placeholder widget for when a card has been destroyed and is no longer available.
+     * @param message The message to display within the placeholder.
+     * @return A styled VBox representing the missing card.
+     */
     private VBox createDestroyedPlaceholder(String message) {
         VBox box = new VBox(10);
         box.setAlignment(Pos.CENTER);

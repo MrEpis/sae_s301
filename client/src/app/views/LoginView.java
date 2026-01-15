@@ -13,7 +13,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-// Entry point interface for user identification
+/**
+ * Entry point interface for user identification.
+ * This view provides the initial form where users can select their username
+ * and establish a connection with the game server.
+ */
 public class LoginView {
 
     private final Stage primaryStage;
@@ -21,21 +25,31 @@ public class LoginView {
     private TextField usernameField;
     private Label errorLabel;
 
+    /**
+     * Initializes the LoginView with the primary stage.
+     * @param primaryStage The main application window stage.
+     */
     public LoginView(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
 
-    public void setController(LoginController controller) {
-        this.controller = controller;
-    }
-
+    /**
+     * Updates the error label with a specific feedback message.
+     * Typically used for server errors or capacity warnings.
+     * @param message The error description to display to the user.
+     */
     public void displayError(String message) {
         if (errorLabel != null) {
             errorLabel.setText(message);
         }
     }
 
-    // Renders the login form with username input and validation button
+    /**
+     * Renders the login form with username input and a validation button.
+     * This method builds the layout, applies character and length constraints
+     * (max 20 characters, alphanumeric and specific symbols), and sets up
+     * action listeners for both the button and the Enter key.
+     */
     public void show() {
         VBox root = new VBox(20);
         root.setAlignment(Pos.CENTER);
@@ -84,5 +98,9 @@ public class LoginView {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Première Connexion");
         primaryStage.show();
+    }
+
+    public void setController(LoginController controller) {
+        this.controller = controller;
     }
 }

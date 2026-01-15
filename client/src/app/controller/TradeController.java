@@ -9,7 +9,10 @@ import app.views.TradeView;
 import java.util.ArrayList;
 import java.util.List;
 
-// Manages the card trading interface and requests
+/**
+ * Controller responsible for managing the trading logic between players.
+ * It handles player list discovery, opponent inventory inspection, and sending trade requests.
+ */
 public class TradeController {
 
     private final MainController mainController;
@@ -18,21 +21,29 @@ public class TradeController {
 
     private List<Player> connectedPlayers = new ArrayList<>();
 
+    /**
+     * Initializes the TradeController with the necessary controllers and views.
+     * @param mainController The application's main controller.
+     * @param currentPlayer The local player participating in trades.
+     * @param tradeView The view associated with this controller.
+     */
     public TradeController(MainController mainController, Player currentPlayer, TradeView tradeView) {
         this.mainController = mainController;
         this.currentPlayer = currentPlayer;
         this.tradeView = tradeView;
     }
 
+    /**
+     * Returns the application to the main menu view.
+     */
     public void backToMenu() {
         mainController.showMenu();
     }
 
-    public List<Card> getLocalPlayerInventory() {
-        return currentPlayer.getInventory();
-    }
-
-    // Fetches the list of players currently available for trading
+    /**
+     * Fetches the list of currently connected players from the server.
+     * Filters the list to exclude the local player and updates the view.
+     */
     public void refreshPlayerList() {
         System.out.println("Demande de la liste des joueurs...");
         String request = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
@@ -62,7 +73,10 @@ public class TradeController {
         }
     }
 
-    // Loads the card collection of a target opponent for selection
+    /**
+     * Requests and loads the inventory of a specific opponent from the server.
+     * @param opponentName The name of the player whose inventory is to be loaded.
+     */
     public void loadOpponentInventory(String opponentName) {
         System.out.println("Demande inventaire pour : " + opponentName);
         tradeView.displayStatus("Chargement de l'inventaire de " + opponentName + "...");
@@ -84,7 +98,12 @@ public class TradeController {
         }
     }
 
-    // Initiates an exchange request between two specific cards
+    /**
+     * Sends a trade request to a chosen opponent.
+     * @param opponentName The username of the targeted player.
+     * @param offeredCardId The ID of the local card offered in exchange.
+     * @param requestedCardId The ID of the opponent's card requested.
+     */
     public void sendTradeRequest(String opponentName, int offeredCardId, int requestedCardId) {
         System.out.println("Envoi de TradeRequest au serveur pour " + opponentName);
 
@@ -127,6 +146,10 @@ public class TradeController {
         } else {
             tradeView.displayStatus("Erreur critique : Pas de connexion réseau.");
         }
+    }
+
+    public List<Card> getLocalPlayerInventory() {
+        return currentPlayer.getInventory();
     }
 
     public Player getLocalPlayer() {

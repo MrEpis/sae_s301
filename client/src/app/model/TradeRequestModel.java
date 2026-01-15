@@ -1,6 +1,9 @@
 package app.model;
 
-// Model used to handle trade or fight proposals between players
+/**
+ * Represents a formal request between players for trading cards or initiating combat.
+ * It also serves as a container for displaying combat results in the notification list.
+ */
 public class TradeRequestModel {
     private int initiatorId;
     private int initiatorCardId;
@@ -10,6 +13,12 @@ public class TradeRequestModel {
 
     private FightResultModel fightResult;
 
+    /**
+     * Initializes a standard trade or fight request.
+     * @param initiatorId The ID of the sender.
+     * @param initiatorCardId The ID of the sender's card.
+     * @param receiverCardId The ID of the receiver's card.
+     */
     public TradeRequestModel(int initiatorId, int initiatorCardId, int receiverCardId) {
         this.initiatorId = initiatorId;
         this.initiatorCardId = initiatorCardId;
@@ -59,6 +68,10 @@ public class TradeRequestModel {
         return fightResult != null;
     }
 
+    /**
+    * Provides a localized string representation for notifications.
+     * @return A description of the request or result.
+     */
     @Override
     public String toString() {
         if (isFightResult()) return "Résultat du combat";

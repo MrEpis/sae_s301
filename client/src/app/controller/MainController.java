@@ -21,7 +21,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// Main coordinator for navigation and global network event handling
+/**
+ * The MainController class serves as the central hub of the application.
+ * It coordinates navigation between views, manages the local player's state,
+ * and handles all incoming network notifications and responses.
+ */
 public class MainController {
 
     private final Stage primaryStage;
@@ -42,6 +46,10 @@ public class MainController {
     private boolean isInCombat = false;
     private int lastMyCardIdEngaged = -1;
 
+    /**
+     * Initializes the MainController, sets up the network service, and defines the primary stage close behavior.
+     * @param primaryStage The main window of the JavaFX application.
+     */
     public MainController(Stage primaryStage) {
         this.primaryStage = primaryStage;
         this.networkService = new NetworkService();
@@ -60,7 +68,11 @@ public class MainController {
         });
     }
 
-    // Displays a temporary pop-up notification with an optional action
+    /**
+     * Displays a temporary notification popup (toast) on the screen.
+     * @param message The text content of the toast.
+     * @param onClickAction Action to execute if the user clicks the toast.
+     */
     private void showToast(String message, Runnable onClickAction) {
         Platform.runLater(() -> {
             Popup popup = new Popup();
@@ -94,7 +106,11 @@ public class MainController {
         });
     }
 
-    // Dispatches server notifications to the appropriate view or local logic
+    /**
+     * Central listener for incoming network messages.
+     * Processes fight challenges, trade requests, and results (trade or fight).
+     * @param message The raw JSON string received from the server.
+     */
     private void handleNotification(String message) {
         if (message.contains("FightConfirmationRequest")) {
             TradeRequestModel req = JsonUtils.parseFightRequestNotification(message);
@@ -179,7 +195,12 @@ public class MainController {
         }
     }
 
-    // Sends a response to the server to accept or decline a fight
+    /**
+     * Sends a response to a fight request to the server.
+     * @param request The fight request model.
+     * @param accepted Whether the fight is accepted.
+     * @param myId The ID of the local player.
+     */
     public void respondToFight(TradeRequestModel request, boolean accepted, int myId) {
         if (accepted) {
             this.setLastMyCardIdEngaged(request.getReceiverCardId());
@@ -192,7 +213,12 @@ public class MainController {
         Platform.runLater(this::showNotifications);
     }
 
-    // Sends a response to the server to accept or decline a trade
+    /**
+     * Sends a response to a trade request to the server.
+     * @param request The trade request model.
+     * @param accepted Whether the trade is accepted.
+     * @param myId The ID of the local player.
+     */
     public void respondToTrade(TradeRequestModel request, boolean accepted, int myId) {
         String jsonData = JsonUtils.buildTradeResponseJson(accepted, request, myId);
         String responseStr = JsonUtils.buildResponse("ConfirmationResponse", jsonData);
@@ -201,15 +227,29 @@ public class MainController {
         Platform.runLater(this::showNotifications);
     }
 
+    /**
+     * Fetches remote card data for display in the Trade Proposal view.
+     * @param request The trade request.
+     * @param view The view to update.
+     */
     public void fetchRemoteCardForTrade(TradeRequestModel request, app.views.TradeProposalView view) {
         fetchRemoteCardGeneric(request, view::updateRemoteCardDisplay);
     }
 
+    /**
+     * Fetches remote card data for display in the Fight Proposal view.
+     * @param request The fight request.
+     * @param view The view to update.
+     */
     public void fetchRemoteCardForTrade(TradeRequestModel request, app.views.FightProposalView view) {
         fetchRemoteCardGeneric(request, view::updateRemoteCardDisplay);
     }
 
-    // Retrieves remote card details from the opponent for confirmation views
+    /**
+     * Fetches remote card data for display in the Fight Proposal view.
+     * @param request The fight request.
+     * @param view The view to update.
+     */
     private void fetchRemoteCardGeneric(TradeRequestModel request, java.util.function.Consumer<Card> callback) {
         new Thread(() -> {
             String opponentUsername = getUsernameById(request.getInitiatorId());
@@ -231,12 +271,19 @@ public class MainController {
         }).start();
     }
 
+    /**
+     * Displays the notification list view.
+     */
     public void showNotifications() {
         this.isInCombat = false;
         new NotificationView(primaryStage, this, notifications).show();
     }
 
-    // Utility method to get a username from a client ID via the server
+    /**
+     * Requests the username of a connected client by their ID.
+     * @param id The target client ID.
+     * @return The username as a String.
+     */
     private String getUsernameById(int id) {
         String resp = networkService.sendRequest(JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}"));
         if (resp != null) {
@@ -248,6 +295,9 @@ public class MainController {
         return "Joueur " + id;
     }
 
+    /**
+     * Shows the login view.
+     */
     public void showLogin() {
         LoginView v = new LoginView(primaryStage);
         loginController = new LoginController(this, v);
@@ -255,7 +305,10 @@ public class MainController {
         v.show();
     }
 
-    // Entry point that checks for existing sessions before loading the menu
+    /**
+     * Main entry point of the controller logic.
+     * Checks for an existing session or prompts for login.
+     */
     public void start() {
         int storedId = SessionService.loadClientId();
         if (storedId == 0) {
@@ -276,24 +329,30 @@ public class MainController {
             }
         }
     }
+
+    /** Displays the main menu view. */
     public void showMenu() {
         menuView.show();
     }
 
+    /** Displays the combat selection view. */
     public void showCombat() {
         combatController = new CombatController(this, localPlayer);
         new CombatView(primaryStage, combatController).show();
     }
 
+    /** Displays the local player's inventory view. */
     public void showInventory() {
         inventoryController = new InventoryController(this, localPlayer);
         new InventoryView(primaryStage, inventoryController).show();
     }
 
+    /** Displays the card creation view. */
     public void showCardCreation() {
         cardCreationView.show();
     }
 
+    /** Displays the trading hub view. */
     public void showTrade() {
         TradeView t = new TradeView(primaryStage);
         this.tradeController = new TradeController(this, localPlayer, t);
@@ -302,6 +361,7 @@ public class MainController {
         tradeController.refreshPlayerList();
     }
 
+    /** Closes the active network connection and the UI window. */
     public void quit() {
         if (networkService != null) networkService.closeConnection();
         primaryStage.close();
@@ -323,6 +383,7 @@ public class MainController {
         this.lastMyCardIdEngaged = id;
     }
 
+    /** Logs out the current user, clears the session, and exits. */
     public void logout() {
         app.service.SessionService.clearSession();
         quit();

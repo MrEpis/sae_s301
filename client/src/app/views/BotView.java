@@ -10,22 +10,28 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-// Manages the visual interface for the automated bot
+/**
+ * Represents the graphical user interface for the automated bot manager ("roblobot").
+ * This view displays the bot's current operational status and allows for its disconnection.
+ */
 public class BotView {
 
     private final Stage stage;
     private BotController controller;
     private Label statusLabel;
 
+    /**
+     * Constructs a new BotView.
+     * @param stage The primary JavaFX stage for this view.
+     */
     public BotView(Stage stage) {
         this.stage = stage;
     }
 
-    public void setController(BotController controller) {
-        this.controller = controller;
-    }
-
-    // Displays the bot window with its status and a disconnect button
+    /**
+     * Initializes and displays the bot manager window.
+     * Sets up the layout containing the title, status indicator, and the shutdown button.
+     */
     public void show() {
         VBox root = new VBox(20);
         root.setAlignment(Pos.CENTER);
@@ -54,7 +60,10 @@ public class BotView {
         stage.show();
     }
 
-    // Updates the text message on the status label
+    public void setController(BotController controller) {
+        this.controller = controller;
+    }
+
     public void setStatus(String text) {
         if (statusLabel != null) statusLabel.setText(text);
     }

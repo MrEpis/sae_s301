@@ -18,7 +18,11 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
-// Shows a popup for the receiver to accept or decline a fight challenge
+/**
+ * View responsible for displaying a fight challenge notification to the user.
+ * It presents a side-by-side comparison of the cards involved in the challenge
+ * and allows the user to either accept or refuse the fight.
+ */
 public class FightProposalView {
 
     private final Stage stage;
@@ -26,13 +30,23 @@ public class FightProposalView {
     private final TradeRequestModel request;
     private VBox remoteCardContainer;
 
+    /**
+     * Constructs a new FightProposalView.
+     * @param stage The stage window for the notification.
+     * @param controller The main controller handling the network response.
+     * @param request The model containing fight details (initiator and targeted cards).
+     */
     public FightProposalView(Stage stage, MainController controller, TradeRequestModel request) {
         this.stage = stage;
         this.controller = controller;
         this.request = request;
     }
 
-    // Creates the proposal scene with comparison between challenged cards
+    /**
+     * Builds the main layout for the fight proposal window.
+     * Displays both players' cards and the "Accept" or "Refuse" action buttons.
+     * @return The fully constructed Scene.
+     */
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -104,6 +118,9 @@ public class FightProposalView {
         return new Scene(root, 750, 600);
     }
 
+    /**
+     * Sets the scene to the stage and initiates the retrieval of the opponent's card data.
+     */
     public void show() {
         stage.setScene(createScene());
         stage.setTitle("Défi de Combat");
@@ -121,7 +138,10 @@ public class FightProposalView {
         return btn;
     }
 
-    // Displays the opponent's card data after it's fetched from network
+    /**
+     * Updates the remote card container once the opponent's card data is received.
+     * @param card The Card object retrieved from the server.
+     */
     public void updateRemoteCardDisplay(Card card) {
         remoteCardContainer.getChildren().clear();
         if (card == null) {
@@ -136,7 +156,13 @@ public class FightProposalView {
         }
     }
 
-    // Creates a visual card summary box with image and stats
+    /**
+     * Creates a styled visual component for a card.
+     * @param card The card data to display.
+     * @param title Header title for the card (e.g., "Your Card").
+     * @param borderColor Hex color code for the card's border.
+     * @return A VBox containing the card's name, image, and stats.
+     */
     private VBox createCardWidget(Card card, String title, String borderColor) {
         VBox box = new VBox(5);
         box.setPrefSize(160, 240);
@@ -174,6 +200,11 @@ public class FightProposalView {
         return box;
     }
 
+    /**
+     * Creates a styled label for displaying a specific card statistic.
+     * @param text The statistic text (e.g., "HP: 50").
+     * @return A styled Label instance.
+     */
     private Label createStatLabel(String text) {
         Label l = new Label(text);
         l.setTextFill(Color.WHITE);

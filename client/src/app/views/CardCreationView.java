@@ -18,7 +18,11 @@ import javafx.util.converter.IntegerStringConverter;
 import java.io.File;
 import java.util.function.UnaryOperator;
 
-// Handles the UI for creating a new card and distributing stats
+/**
+ * Represents the graphical user interface for creating new game cards.
+ * This view allows users to name their cards, distribute a limited pool of stat points
+ * (HP, ATK, DEF), and select a custom image with a real-time preview.
+ */
 public class CardCreationView {
 
     public static final int MAX_POINTS = 100;
@@ -37,20 +41,19 @@ public class CardCreationView {
     private Label previewNameLabel;
     private Label errorLabel;
 
-
+    /**
+     * Constructs a new CardCreationView.
+     * @param primaryStage The primary window stage for the application.
+     */
     public CardCreationView(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
 
-    public void setController(CardCreationController controller) {
-        this.controller = controller;
-    }
-
-    public String getCardNameInput() {
-        return cardNameField.getText();
-    }
-
-    // Updates the image and name preview on the UI
+    /**
+     * Updates the card preview with a selected image and name.
+     * @param imagePath The URI or path of the chosen image.
+     * @param cardName The default name derived from the file or existing input.
+     */
     public void displayImagePreview(String imagePath, String cardName) {
         try {
             Image image = new Image(imagePath);
@@ -73,7 +76,10 @@ public class CardCreationView {
         }
     }
 
-    // Builds the main scene for the card creation window
+    /**
+     * Creates and organizes the main layout for the card creation scene.
+     * @return The constructed Scene.
+     */
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #2e2e2e;");
@@ -131,7 +137,10 @@ public class CardCreationView {
         return new Scene(root, 1100, 800);
     }
 
-    // Creates the form to input name and distribute stats
+    /**
+     * Builds the statistical input form including the name field and stat spinners.
+     * @return A VBox containing the input form components.
+     */
     private VBox createStatDistributionForm() {
         VBox form = new VBox(25);
         form.setPadding(new Insets(30));
@@ -186,7 +195,10 @@ public class CardCreationView {
         return form;
     }
 
-    // Configures spinners to allow only numeric input within limits
+    /**
+     * Configures the behavior of a stat spinner, making it editable and applying numeric filters.
+     * @param spinner The spinner to configure.
+     */
     private void configureSpinnerBehavior(Spinner<Integer> spinner) {
         spinner.setEditable(true);
 
@@ -217,7 +229,10 @@ public class CardCreationView {
         });
     }
 
-    // Prevents stats from exceeding the maximum allowed points
+    /**
+     * Adds a listener to a spinner to ensure the total points across all stats do not exceed MAX_POINTS.
+     * @param spinner The spinner to monitor.
+     */
     private void addSafeListener(Spinner<Integer> spinner) {
         spinner.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) return;
@@ -232,7 +247,9 @@ public class CardCreationView {
         });
     }
 
-    // Updates limits of each stat based on remaining points
+    /**
+     * Updates the maximum allowed values for each spinner based on points already spent.
+     */
     private void updateSpinnerLimits() {
         int currentHp = hpSpinner.getValue();
         int currentAtk = attackSpinner.getValue();
@@ -252,7 +269,9 @@ public class CardCreationView {
         updateCardPreview();
     }
 
-    // Synchronizes the card preview labels with spinner values
+    /**
+     * Syncs the statistical values from the spinners to the card preview labels.
+     */
     private void updateCardPreview() {
         if (previewHpLabel != null && hpSpinner != null) {
             previewHpLabel.setText("HP: " + hpSpinner.getValue());
@@ -261,7 +280,10 @@ public class CardCreationView {
         }
     }
 
-    // Creates the area showing the card template and image button
+    /**
+     * Creates the right-side area showing the real-time card preview and image selection button.
+     * @return A VBox containing the preview components.
+     */
     private VBox createCardPreviewArea() {
         VBox preview = new VBox(10);
         preview.setPrefSize(300, 400);
@@ -276,7 +298,10 @@ public class CardCreationView {
         return preview;
     }
 
-    // Builds the visual representation of the card
+    /**
+     * Constructs the visual template for the card preview (the actual "card" look).
+     * @return A VBox styled as a game card.
+     */
     private VBox createCardTemplate() {
         VBox cardSlot = new VBox(10);
         cardSlot.setPadding(new Insets(20));
@@ -329,10 +354,11 @@ public class CardCreationView {
         return cardSlot;
     }
 
-    public Scene getScene() {
-        return cardNameField.getScene();
-    }
-
+    /**
+     * Utility to create the main title label for the view.
+     * @param text The text for the title.
+     * @return A styled Label.
+     */
     private Label createTitleLabel(String text) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
@@ -340,10 +366,25 @@ public class CardCreationView {
         return label;
     }
 
+    /**
+     * Utility to create a basic label with specific font size and color.
+     * @param text Label text.
+     * @param size Font size.
+     * @param color Web color code.
+     * @return A styled Label.
+     */
     private Label createLabel(String text, int size, String color) {
         return createLabel(text, size, color, FontWeight.NORMAL);
     }
 
+    /**
+     * Overloaded utility to create a label with specific font weight.
+     * @param text Label text.
+     * @param size Font size.
+     * @param color Web color code.
+     * @param weight Font weight.
+     * @return A styled Label.
+     */
     private Label createLabel(String text, int size, String color, FontWeight weight) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", weight, size));
@@ -351,7 +392,14 @@ public class CardCreationView {
         return label;
     }
 
-    // Creates a styled button with hover effects
+    /**
+     * Factory method for creating buttons with consistent hover effects and styles.
+     * @param text Button text.
+     * @param color Primary color.
+     * @param width Preferred width.
+     * @param height Preferred height.
+     * @return A styled Button.
+     */
     private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
         btn.setPrefSize(width, height);
@@ -388,7 +436,9 @@ public class CardCreationView {
         return btn;
     }
 
-    // Initialises and shows the card creation stage
+    /**
+     * Initializes the stage with the creation scene and shows it.
+     */
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Card Creation");
@@ -398,5 +448,17 @@ public class CardCreationView {
 
         primaryStage.sizeToScene();
         primaryStage.show();
+    }
+
+    public void setController(CardCreationController controller) {
+        this.controller = controller;
+    }
+
+    public String getCardNameInput() {
+        return cardNameField.getText();
+    }
+
+    public Scene getScene() {
+        return cardNameField.getScene();
     }
 }

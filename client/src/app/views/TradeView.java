@@ -18,7 +18,11 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.List;
 
-// Interface for selecting players and proposing card exchanges
+/**
+ * Interface used for selecting players and proposing card exchanges.
+ * This view allows players to browse online opponents, view their inventories,
+ * and select cards from both sides to form a trade agreement.
+ */
 public class TradeView {
 
     private final Stage primaryStage;
@@ -30,6 +34,10 @@ public class TradeView {
     private Label offeredCardLabel;
     private Label requestedCardLabel;
 
+    /**
+     * Initializes the TradeView with the primary stage.
+     * @param primaryStage The main application window.
+     */
     public TradeView(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
@@ -38,11 +46,19 @@ public class TradeView {
         this.controller = controller;
     }
 
+    /**
+     * Updates the text displayed in the footer status label.
+     * @param message The feedback message for the user.
+     */
     public void displayStatus(String message) {
         if (statusLabel != null) statusLabel.setText(message);
     }
 
-    // Refreshes the dropdown list with online player names
+    /**
+     * Refreshes the dropdown list with the names of currently online players.
+     * Automatically selects the first available player if the list is not empty.
+     * @param players The list of usernames to display.
+     */
     public void updatePlayerList(List<String> players) {
         if (opponentSelector != null) {
             opponentSelector.getItems().clear();
@@ -52,12 +68,20 @@ public class TradeView {
         }
     }
 
-    // Populates the list with cards available from the selected target player
+    /**
+     * Populates the opponent's card list with available cards from the selected target.
+     * @param cards The collection of cards retrieved from the server.
+     */
     public void updateOpponentInventory(List<Card> cards) {
         if (opponentCardList != null) opponentCardList.getItems().setAll(cards);
     }
 
-    // Sets up the main trade screen layout with two inventories and a summary
+    /**
+     * Sets up the main trade screen layout.
+     * Organizes the interface into a header, two side-by-side inventory panels
+     * with a central summary, and a bottom action area.
+     * @return The fully constructed Scene for trading.
+     */
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -79,7 +103,10 @@ public class TradeView {
         return new Scene(root, 1100, 750);
     }
 
-    // Builds the control section to select and load an opponent's inventory
+    /**
+     * Builds the control section to select an opponent and refresh the player list.
+     * @return A VBox containing the search controls.
+     */
     private VBox createTopControlArea() {
         VBox topBox = new VBox(15);
         topBox.setAlignment(Pos.CENTER);
@@ -107,7 +134,10 @@ public class TradeView {
         return topBox;
     }
 
-    // Configures the side-by-side card list panels for both players
+    /**
+     * Configures the central area showing both players' card lists and the trade summary.
+     * @return An HBox containing the inventory and summary panels.
+     */
     private HBox createTradeSelectionArea() {
         HBox tradeBox = new HBox(20);
         tradeBox.setAlignment(Pos.CENTER);
@@ -126,7 +156,13 @@ public class TradeView {
         return tradeBox;
     }
 
-    // Creates an inventory panel with a customized ListCell factory for card rendering
+    /**
+     * Creates an inventory panel with a customized ListCell factory for card rendering.
+     * Manages selection events to update display labels.
+     * @param title The header for the panel.
+     * @param isLocalPlayer True if this panel belongs to the local user.
+     * @return A VBox layout for the inventory panel.
+     */
     private VBox createInventoryPanel(String title, boolean isLocalPlayer) {
         VBox panel = new VBox(10);
         panel.setMinWidth(300);
@@ -176,7 +212,12 @@ public class TradeView {
         return panel;
     }
 
-    // Generates a compact HBox row representing a card and its primary stats
+    /**
+     * Generates a compact HBox row representing a single card.
+     * Displays the thumbnail image along with health, attack, and defense stats.
+     * @param card The Card data to render.
+     * @return A styled HBox containing card info.
+     */
     private HBox createCardListWidget(Card card) {
         HBox cardBox = new HBox(15);
         cardBox.setAlignment(Pos.CENTER_LEFT);
@@ -215,7 +256,11 @@ public class TradeView {
         return cardBox;
     }
 
-    // Displays the current trade offer summary in a central column
+    /**
+     * Displays the current trade offer summary in a central column.
+     * Syncs with the list selections to show which cards are being exchanged.
+     * @return A VBox summarizing the proposed deal.
+     */
     private VBox createSummaryPanel() {
         VBox panel = new VBox(20);
         panel.setAlignment(Pos.CENTER);
@@ -237,7 +282,10 @@ public class TradeView {
         return panel;
     }
 
-    // Handles user actions to send the trade request or return to the menu
+    /**
+     * Handles the user actions to send the trade request or return to the menu.
+     * @return An HBox containing the primary action buttons.
+     */
     private HBox createBottomButtonArea() {
         HBox buttonBox = new HBox(40);
         buttonBox.setAlignment(Pos.CENTER);
@@ -259,12 +307,23 @@ public class TradeView {
         return buttonBox;
     }
 
+    /**
+     * Sets the scene to the primary stage and displays the window.
+     */
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Echange de Cartes");
         primaryStage.show();
     }
 
+    /**
+     * Utility method to create a styled Label.
+     * @param text The text content.
+     * @param size The font size.
+     * @param color The web hex color code.
+     * @param weight The font weight.
+     * @return A configured Label.
+     */
     private Label createLabel(String text, int size, String color, FontWeight weight) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", weight, size));
@@ -272,6 +331,14 @@ public class TradeView {
         return label;
     }
 
+    /**
+     * Factory method for creating buttons with consistent style and hover feedback.
+     * @param text The button text.
+     * @param color The background color code.
+     * @param width The preferred width.
+     * @param height The preferred height.
+     * @return A styled Button instance.
+     */
     private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
         btn.setPrefSize(width, height);

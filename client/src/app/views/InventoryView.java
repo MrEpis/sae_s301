@@ -22,18 +22,32 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
-// Main interface to display and inspect the player's card collection
+/**
+ * Graphical interface for displaying the local player's card collection.
+ * It provides a scrollable grid view of all owned cards with their
+ * respective stats (HP, ATK, DEF) and images.
+ */
 public class InventoryView {
 
     private final Stage primaryStage;
     private final InventoryController controller;
 
+    /**
+     * Initializes the InventoryView with the primary stage and its controller.
+     * @param stage The main application window.
+     * @param controller The controller managing inventory logic and data.
+     */
     public InventoryView(Stage primaryStage, InventoryController controller) {
         this.primaryStage = primaryStage;
         this.controller = controller;
     }
 
-    // Constructs the inventory scene with a grid and a detail panel
+    /**
+     * Creates and organizes the visual components of the inventory.
+     * Sets up a header with the player's name, a centered scrollable card grid,
+     * and a side panel for card details.
+     * @return The fully constructed Scene for the inventory view.
+     */
     public Scene createScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
@@ -63,7 +77,11 @@ public class InventoryView {
         return new Scene(root, 1100, 750);
     }
 
-    // Creates a scrollable grid containing all player cards
+    /**
+     * Creates a scrollable grid containing all cards currently in the player's inventory.
+     * Each card widget is assigned a click event to update the detail panel.
+     * @return A ScrollPane containing the formatted GridPane.
+     */
     private ScrollPane createCardGridArea() {
         GridPane cardGrid = new GridPane();
         cardGrid.setHgap(20);
@@ -88,7 +106,12 @@ public class InventoryView {
         return scrollPane;
     }
 
-    // Generates a visual component for a single card in the grid
+    /**
+     * Creates a visual representation of a single card for the inventory grid.
+     * Displays the card's name, image, and its primary stats (HP, ATK, DEF).
+     * @param card The Card model data to display.
+     * @return A styled VBox representing the card.
+     */
     private VBox createCardWidget(Card card) {
         VBox box = new VBox(5);
         box.setPrefSize(140, 220);
@@ -120,7 +143,11 @@ public class InventoryView {
         return box;
     }
 
-    // Builds the side panel used to show selected card stats
+    /**
+     * Builds the side panel used to show selected card details.
+     * Stores references to UI components in UserData for easy access during updates.
+     * @return A styled VBox for the detail area.
+     */
     private VBox createCardDetailPanel() {
         VBox detailBox = new VBox(15);
         detailBox.setPrefWidth(300);
@@ -150,7 +177,11 @@ public class InventoryView {
         return detailBox;
     }
 
-    // Updates the detail panel labels and image when a card is clicked
+    /**
+     * Updates the detail panel labels and image when a card in the grid is clicked.
+     * @param scene The active scene to perform the lookup.
+     * @param card The selected card data.
+     */
     private void updateDetails(Scene scene, Card card) {
         VBox detailBox = (VBox) scene.lookup("#DetailPanel");
 
@@ -177,6 +208,14 @@ public class InventoryView {
         }
     }
 
+    /**
+     * Utility method to create a styled Label.
+     * @param text The text to display.
+     * @param size The font size.
+     * @param weight The font weight.
+     * @param color The web hex color code.
+     * @return A configured Label instance.
+     */
     private Label createLabel(String text, int size, FontWeight weight, String color) {
         Label label = new Label(text);
         label.setFont(Font.font("Arial", weight, size));
@@ -184,6 +223,14 @@ public class InventoryView {
         return label;
     }
 
+    /**
+     * Factory method for creating buttons with consistent styles and hover states.
+     * @param text The button text.
+     * @param color The primary color code.
+     * @param width The preferred width.
+     * @param height The preferred height.
+     * @return A styled Button instance.
+     */
     private Button createActionButton(String text, String color, int width, int height) {
         Button btn = new Button(text);
         btn.setPrefSize(width, height);
@@ -217,6 +264,9 @@ public class InventoryView {
         return btn;
     }
 
+    /**
+     * Initializes the UI components and displays the inventory window.
+     */
     public void show() {
         primaryStage.setScene(createScene());
         primaryStage.setTitle("Inventaire");

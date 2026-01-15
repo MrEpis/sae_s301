@@ -13,7 +13,10 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// Controller for the card creation screen
+/**
+ * Controller responsible for managing the card creation process.
+ * It handles image selection, stat validation, and communication with the server to save new cards.
+ */
 public class CardCreationController {
 
     private final MainController mainController;
@@ -22,17 +25,29 @@ public class CardCreationController {
 
     private File rawSelectedFile;
 
+    /**
+     * Initializes the CardCreationController with necessary dependencies.
+     * @param mainController The application's main controller for navigation.
+     * @param player The local player who is creating the card.
+     * @param creationView The view associated with card creation.
+     */
     public CardCreationController(MainController mainController, Player player, CardCreationView creationView) {
         this.mainController = mainController;
         this.player = player;
         this.creationView = creationView;
     }
 
+    /**
+     * Navigates the application back to the main menu.
+     */
     public void backToMenu() {
         mainController.showMenu();
     }
 
-    // Opens a file picker to select a local image for the new card
+    /**
+     * Opens an image selector dialog to choose a file for the new card.
+     * Automatically updates the view with an image preview and a default card name based on the file name.
+     */
     public void chooseImageFile() {
         Stage stage = (Stage) creationView.getScene().getWindow();
 
@@ -60,7 +75,14 @@ public class CardCreationController {
         selector.show();
     }
 
-    // Validates card stats and sends the creation request to the server
+    /**
+     * Validates card data and sends a creation request to the server.
+     * If successful, parses the new card ID from the response, adds it to the player's inventory, and returns to the menu.
+     * @param name The chosen name for the card.
+     * @param hp The health points assigned to the card.
+     * @param atk The attack points assigned to the card.
+     * @param def The defense points assigned to the card.
+     */
     public void saveCard(String name, int hp, int atk, int def) {
         if (rawSelectedFile == null) {
             System.err.println("Erreur: Image manquante.");

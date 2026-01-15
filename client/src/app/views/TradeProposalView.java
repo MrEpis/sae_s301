@@ -18,7 +18,11 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
-// Popup screen to review, accept or refuse a trade proposal
+/**
+ * Popup screen used to review, accept, or refuse a trade proposal.
+ * This view provides a side-by-side comparison between the card offered by the
+ * initiator and the card requested from the local player's inventory.
+ */
 public class TradeProposalView {
 
     private final Stage stage;
@@ -26,13 +30,23 @@ public class TradeProposalView {
     private final TradeRequestModel request;
     private VBox remoteCardContainer;
 
+    /**
+     * Initializes the TradeProposalView with the necessary context and request data.
+     * @param stage The stage window for the proposal.
+     * @param controller The main controller handling the network responses.
+     * @param request The trade request model containing card IDs and participant info.
+     */
     public TradeProposalView(Stage stage, MainController controller, TradeRequestModel request) {
         this.stage = stage;
         this.controller = controller;
         this.request = request;
     }
 
-    // Displays the comparison of both offered and requested cards
+    /**
+     * Displays the comparison of both offered and requested cards.
+     * This method initializes the layout, prepares the local card preview,
+     * and triggers an asynchronous fetch to retrieve the details of the remote card.
+     */
     public void show() {
         VBox root = new VBox(20);
         root.setStyle("-fx-background-color: #2e2e2e;");
@@ -91,6 +105,12 @@ public class TradeProposalView {
         stage.show();
     }
 
+    /**
+     * Helper method to create a styled action button.
+     * @param text The button text.
+     * @param colorHex The background color in hex format.
+     * @return A styled Button instance.
+     */
     private Button createButton(String text, String colorHex) {
         Button btn = new Button(text);
         btn.setStyle("-fx-background-color: " + colorHex + "; -fx-text-fill: white; -fx-font-weight: bold;");
@@ -98,7 +118,12 @@ public class TradeProposalView {
         return btn;
     }
 
-    // Asynchronously refreshes the remote card container with fetched data
+    /**
+     * Asynchronously refreshes the remote card container with fetched data.
+     * Displays a loading placeholder if the card is null, or the full card widget
+     * once data is received.
+     * @param card The Card object retrieved from the server, or null if still loading.
+     */
     public void updateRemoteCardDisplay(Card card) {
         remoteCardContainer.getChildren().clear();
         if (card == null) {
@@ -113,7 +138,13 @@ public class TradeProposalView {
         }
     }
 
-    // Builds a card widget containing name, image and its combat stats
+    /**
+     * Builds a visual card widget containing the card's name, image, and combat stats.
+     * @param card The Card data to display.
+     * @param title The title for the card slot (e.g., "Your Card").
+     * @param borderColor The color of the card's frame.
+     * @return A styled VBox representing the card.
+     */
     private VBox createCardWidget(Card card, String title, String borderColor) {
         VBox box = new VBox(5);
         box.setPrefSize(160, 240);
@@ -144,6 +175,12 @@ public class TradeProposalView {
         return box;
     }
 
+    /**
+     * Helper method to create a colored statistic label.
+     * @param text The statistic text (e.g., "ATK: 50").
+     * @param color The web color code for the text.
+     * @return A configured Label instance.
+     */
     private Label createStatLabel(String text, String color) {
         Label l = new Label(text);
         l.setTextFill(Color.web(color));

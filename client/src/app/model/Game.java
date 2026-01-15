@@ -1,6 +1,9 @@
 package app.model;
 
-// Represents a match session between two players
+/**
+ * Represents a specific game instance or match between two players.
+ * It manages the participants, the cards selected for the duel, and the winner.
+ */
 public class Game {
     private Player player1;
     private Player player2;
@@ -8,6 +11,13 @@ public class Game {
     private Card cardPlayer2;
     private Player winner;
 
+    /**
+     * Creates a new match between two players.
+     * @param player2 The second participant.
+     * @param player1 The first participant.
+     * @param cardPlayer1 The card for player 1.
+     * @param cardPlayer2 The card for player 2.
+     */
     public Game(Player player2, Player player1, Card cardPlayer1, Card cardPlayer2) {
         this.player2 = player2;
         this.player1 = player1;
