@@ -6,12 +6,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+/**
+ * Main function for the server.
+ * Connects to database, verifies and gets the blockchain (or creates a new one) and starts the server.
+ * When the server is closed, cleans up resources and closes database connection.
+ */
 int main() {
 
-    // Enregistrement du signal
-
     if (db_connect() != 0) {
-        fprintf(stderr, "Echec de l'initialisation de la BDD. Arrêt.\n");
+        fprintf(stderr, "Failed to connect to database. Stopping server.\n");
         return EXIT_FAILURE;
     }
     PGconn *conn = get_db_connection();
@@ -19,76 +23,73 @@ int main() {
     int check = db_check_for_blockchain(conn);
 
     if (check == 1) {
-        printf("Restauration du contexte depuis la BDD...\n");
+        printf("Restoring blockchain from database...\n");
         global_blockchain = db_load_blockchain(conn);
 
         if (!verify_blockchain_integrity(global_blockchain)) {
-            fprintf(stderr, "[CRITIQUE] La blockchain est corrompue. Arrêt du serveur.\n");
+            fprintf(stderr, "[CRITICAL] Blockchained is compromised. Stopping server.\n");
             db_close();
             return EXIT_FAILURE;
         }
         if (!verify_consistency(conn, global_blockchain)) {
-            fprintf(stderr, "[CRITIQUE] Incohérence détectée ! La BDD contient des cartes non validées par la blockchain. Arrêt du serveur.\n");
+            fprintf(stderr, "[CRITICAL] Inconsistency detected. Database contains cards not validated by blockchain. Stopping server.\n");
             db_close();
             return EXIT_FAILURE;
         }
          if (!verify_card_stats_integrity(conn, global_blockchain)) {
-            fprintf(stderr, "[CRITIQUE] La base de données a été altérée manuellement (Stats modifiées).\n");
+            fprintf(stderr, "[CRITICAL] Database was altered manually. Stopping server.\n");
             db_close();
             return EXIT_FAILURE;
         }
 
     } else if (check == 0) {
-        printf("[INFO] Aucune sauvegarde trouvée. Création d'une nouvelle Blockchain.\n");
+        printf("[INFO] No saved blockchain was found. Creating a new one...\n");
         global_blockchain = create_new_blockchain();
 
         if (db_save_block(conn, global_blockchain->head) != 0) {
-            perror("[ERREUR] Echec de la sauvegarde du premier bloc.\n");
+            perror("[ERROR] Failed to save genesis block.\n");
             return EXIT_FAILURE;
         }
     } else {
-        fprintf(stderr, "[CRITIQUE] Erreur critique de la BDD. Arrêt du serveur.\n");
+        fprintf(stderr, "[CRITICAL] Critical database error. Stopping server.\n");
         db_close();
         return EXIT_FAILURE;
     }
     
     if (global_blockchain == NULL) {
-         fprintf(stderr, "[CRITIQUE] Blockchain non initialisée.\n");
+         fprintf(stderr, "[CRITICAL] Blockchain is uninitialized.\n");
          db_close();
          return EXIT_FAILURE;
     }
 
     if (start_server() != 0) {
-        perror("[CRITIQUE] Le serveur n'a pas pu démarrer ou s'est arrêté avec une erreur\n");
+        perror("[CRITICAL] Server couldn't start or stopped with an error.\n");
         return EXIT_FAILURE;
     }
 
 
-    printf("\n[INFO] Début du nettoyage des ressources...\n");
+    printf("\n[INFO] Start of resources cleaning...\n");
 
-    // A. Libération de la Blockchain (Liste chaînée)
+    // Free the blockchain (linked list)
     if (global_blockchain != NULL) {
         Block *current = global_blockchain->head;
         while (current != NULL) {
             Block *next = current->next;
-            
-            // Si data_action a été alloué dynamiquement (strdup), il faut le libérer
+
             if (current->data_action != NULL) {
                 free(current->data_action);
             }
             
-            free(current); // Libération du bloc
+            free(current); // Free current block
             current = next;
         }
-        free(global_blockchain); // Libération de la structure de contrôle
-        printf("[INFO] Mémoire Blockchain libérée.\n");
+        free(global_blockchain); // Free the global control structure
+        printf("[INFO] Blockchain memory successfully freed.\n");
     }
 
-    // B. Fermeture de la Base de Données
-    db_close(); 
-    // Note: db_close appelle PQfinish(conn), donc pas besoin de le refaire ici 
-    // si votre db_close utilise la variable statique interne, sinon passez 'conn'.
+    // Close db connection
+    db_close();
 
-    printf("[INFO] Arrêt complet du programme. Au revoir !\n");
+    printf("[INFO] Complete program shutdown. See you next time!\n");
     return EXIT_SUCCESS;
 }
