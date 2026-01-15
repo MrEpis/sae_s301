@@ -1,0 +1,158 @@
+package app.controller;
+
+import app.model.Card;
+import app.model.Player;
+import app.service.JsonUtils;
+import app.service.NetworkService;
+import app.views.TradeView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Controller responsible for managing the trading logic between players.
+ * It handles player list discovery, opponent inventory inspection, and sending trade requests.
+ */
+public class TradeController {
+
+    private final MainController mainController;
+    private final Player currentPlayer;
+    private final TradeView tradeView;
+
+    private List<Player> connectedPlayers = new ArrayList<>();
+
+    /**
+     * Initializes the TradeController with the necessary controllers and views.
+     * @param mainController The application's main controller.
+     * @param currentPlayer The local player participating in trades.
+     * @param tradeView The view associated with this controller.
+     */
+    public TradeController(MainController mainController, Player currentPlayer, TradeView tradeView) {
+        this.mainController = mainController;
+        this.currentPlayer = currentPlayer;
+        this.tradeView = tradeView;
+    }
+
+    /**
+     * Returns the application to the main menu view.
+     */
+    public void backToMenu() {
+        mainController.showMenu();
+    }
+
+    /**
+     * Fetches the list of currently connected players from the server.
+     * Filters the list to exclude the local player and updates the view.
+     */
+    public void refreshPlayerList() {
+        System.out.println("Demande de la liste des joueurs...");
+        String request = JsonUtils.buildRequest("GET_CONNECTED_USERS", "{}");
+
+        NetworkService net = mainController.getNetworkService();
+        if (net != null) {
+            String response = net.sendRequest(request);
+
+            if (response != null && response.contains("OK")) {
+                List<Player> allPlayers = JsonUtils.parsePlayerList(response);
+
+                this.connectedPlayers.clear();
+                List<String> playerNamesForView = new ArrayList<>();
+
+                for (Player p : allPlayers) {
+                    if (p.getId_Client() != currentPlayer.getId_Client()) {
+                        this.connectedPlayers.add(p);
+                        playerNamesForView.add(p.getName());
+                    }
+                }
+
+                tradeView.updatePlayerList(playerNamesForView);
+                tradeView.displayStatus(connectedPlayers.size() + " joueur(s) trouvé(s) (hors vous).");
+            } else {
+                tradeView.displayStatus("Erreur lors de la récupération des joueurs.");
+            }
+        }
+    }
+
+    /**
+     * Requests and loads the inventory of a specific opponent from the server.
+     * @param opponentName The name of the player whose inventory is to be loaded.
+     */
+    public void loadOpponentInventory(String opponentName) {
+        System.out.println("Demande inventaire pour : " + opponentName);
+        tradeView.displayStatus("Chargement de l'inventaire de " + opponentName + "...");
+
+        String dataJson = JsonUtils.buildGetOpponentInventoryRequest(opponentName);
+        String request = JsonUtils.buildRequest("GET_OPPONENT_INVENTORY", dataJson);
+
+        NetworkService net = mainController.getNetworkService();
+        if (net != null) {
+            String response = net.sendRequest(request);
+
+            if (response != null && response.contains("OK")) {
+                List<Card> opponentCards = JsonUtils.parseOpponentInventory(response);
+                tradeView.updateOpponentInventory(opponentCards);
+                tradeView.displayStatus("Inventaire de " + opponentName + " chargé (" + opponentCards.size() + " cartes).");
+            } else {
+                tradeView.displayStatus("Erreur chargement inventaire.");
+            }
+        }
+    }
+
+    /**
+     * Sends a trade request to a chosen opponent.
+     * @param opponentName The username of the targeted player.
+     * @param offeredCardId The ID of the local card offered in exchange.
+     * @param requestedCardId The ID of the opponent's card requested.
+     */
+    public void sendTradeRequest(String opponentName, int offeredCardId, int requestedCardId) {
+        System.out.println("Envoi de TradeRequest au serveur pour " + opponentName);
+
+        int opponentId = -1;
+        for (Player p : connectedPlayers) {
+            if (p.getName().equals(opponentName)) {
+                opponentId = p.getId_Client();
+                break;
+            }
+        }
+
+        if (opponentId == -1) {
+            tradeView.displayStatus("Erreur : Impossible de trouver l'ID du joueur " + opponentName);
+            return;
+        }
+
+        mainController.setPendingTradeOpponent(opponentName);
+
+        tradeView.displayStatus("Envoi de la demande d'échange à " + opponentName + " (ID: " + opponentId + ")...");
+
+        String dataJson = JsonUtils.buildTradeRequestData(
+                currentPlayer.getId_Client(),
+                offeredCardId,
+                opponentId,
+                requestedCardId
+        );
+
+        String request = JsonUtils.buildRequest("TradeRequest", dataJson);
+
+        NetworkService net = mainController.getNetworkService();
+        if (net != null) {
+            String response = net.sendRequest(request);
+            System.out.println("Réponse Trade : " + response);
+
+            if (response != null && response.contains("OK")) {
+                tradeView.displayStatus("Demande envoyée avec succès ! En attente...");
+            } else {
+                tradeView.displayStatus("Erreur : La demande d'échange a échoué.");
+            }
+        } else {
+            tradeView.displayStatus("Erreur critique : Pas de connexion réseau.");
+        }
+    }
+
+    public List<Card> getLocalPlayerInventory() {
+        return currentPlayer.getInventory();
+    }
+
+    public Player getLocalPlayer() {
+        return mainController.getLocalPlayer();
+    }
+}

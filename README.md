@@ -1,93 +1,129 @@
-# S301_GroupeB
+# SAE S3.01 - Jeu de Cartes - Groupe B
+
+## Présentation du jeu Random Objects Battle Simulator (R.O.B.S)
+
+Ce projet implémente un jeu de cartes multijoueur avec une architecture client-serveur.
+- **Serveur** : Codé en C, il gère la logique du jeu, la base de données (PostgreSQL) et la Blockchain.
+- **Client** : Codé en Java avec JavaFX, il fournit l'interface graphique aux joueurs.
+
+Le joueur peut attribuer des images d'objets divers et variés à ses cartes.
+
+## Organisation des répertoires
+
+L'architecture du projet sépare clairement les deux langages :
+
+- `server/` : Contient tout le code source du serveur C.
+  - `src/` : Fichiers sources (`.c`).
+  - `include/` : Fichiers d'en-tête (`.h`).
+  - `Makefile` : Script de compilation automatisé.
+- `client/` : Contient tout le code source du client Java.
+  - `src/` : Fichiers sources Java (`.java`) et ressources.
+    - `app/` : Fichiers sources.
+    - `ressources/` : Images pour les cartes.
+  -  `test/` : Contient les tests unitaires du client.
+  - `Makefile` : Script de compilation automatisé.
+- `spe_technique.pdf` : Documentation technique du projet.
+
+## Pré-requis
+
+- **Système** : Linux
+- **C** : `gcc`, `make`, `libpq-dev` (pour PostgreSQL)
+- **Java** : JDK 21, JavaFX SDK 21
+- **Base de données** : Connexion au réseau ou VPN de l'IUT afin d'avoir accès au serveur linserv
+
+---
+
+<h2 id="compilation">Compilation et démarrage</h2>
+
+### Serveur
+
+Commandes à effectuer dans le dossier `server` :
+
+Compilation : 
+`make`
+
+Démarrage du serveur :
+`bin/server_exec`
+
+Nettoyer les fichiers de sorties et l'exécutable : 
+`make clean`
+
+### Client
+
+#### Pré-requis
+Veuillez remplacer `<CHEMIN_VERS_JAVAFX_LIB>` dans les commandes ci-dessous par le chemin absolu vers le dossier `lib` de votre SDK JavaFX.
+*(Exemple : `/usr/lib/jvm/javafx-sdk-21/lib` ou `/home/user/javafx-sdk-21/lib`)*
+
+#### Compilation et configuration initiale de JavaFX
+Commandes à effectuer dans le dossier `client` :
+
+Créer le dossier de destination :
+`mkdir -p bin`
+
+Générer la liste des sources :
+`find src -name "*.java" > sources.txt`
+
+Compiler avec le module-path : <br>
+`javac -d bin \` <br>
+`      -sourcepath src \` <br>
+`      --module-path <CHEMIN_VERS_JAVAFX_LIB> \` <br>
+`      --add-modules javafx.controls,javafx.fxml \` <br>
+`     @sources.txt` 
+
+Optionnel : 
+`rm sources.txt`
+
+#### Compilation et exécution
+
+Commandes à effectuer dans le dossier `client` :
+
+Pour seulement compiler :
+`make`
+
+Compiler et exécuter le client : 
+`make run`
+
+Pour spécifier l'adresse du serveur, ajouter cette option :
+`ADDR=<ADRESSE_IP_DU_SERVEUR>`
+
+Pour lancer en mode bot : 
+`make run-bot`
+
+La session étant sauvegardée, il faut exécuter cette commande pour lancer une nouvelle session sur la même machine :
+`make run-new`
+
+Pour nettoyer les fichiers de sorties :
+`make clean`
+
+---
+
+## Fonctionnement du jeu
+
+<h3 id="premiere_connexion">Première connexion</h3>
+
+Lorsque un client se connecte pour la première fois au serveur, son nom d'utilisateur est demandé. Le joueur est sauvegardé par le serveur, mais aussi par le client : un fichier `session.dat` est créé et enregistre l'identifiant unique du joueur donné par le serveur. Lors de la prochaine connexion, l'utilisateur n'aura pas besoin de se reconnecter.
 
 
+<h3>Création de cartes</h3>
 
-## Getting started
+Pour pouvoir jouer, l'utilisateur doit créer une carte. Il peut choisir le nom de sa carte ainsi que l'image à utiliser parmi une sélection d'une centaine d'images libres de droits (trouvées sur le site pixabay.com dans la catégorie "pixels"). Le nom et l'image de la carte n'ont aucune incidence sur le jeu et sont purement esthétiques. Le joueur peut également attribuer des stats à sa carte : il a au total 100 points à répartir entre les PV (Points de Vie), l'ATK (Attaque) et la DEF (Défense). Plus d'informations sur l'utilité de ces stats dans la section [Combat](#combat).
+Une carte doit avoir au moins 1 PV mais peut avoir 0 en ATK et en DEF.
+Une fois les attributs de la carte définis, le joueur peut l'enregistrer et pourra la voir dans son inventaire, l'utiliser en combat ou bien l'échanger. La carte est enregistrée dans la table `cartes` de la base de données et sa création est enregistrée dans la Blockchain.
+Un joueur ne peut avoir plus de 5 cartes dans son inventaire. S'il essaye de créer une sixième carte, un message d'erreur s'affiche.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Inventaire
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Dans son inventaire, le joueur peut voir les cartes qu'il possède, avec leur nom, image et stats actuelles.
 
-## Add your files
+<h3 id="combat">Combat</h3>
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Pour effectuer un combat avec un autre joueur connecté (ou bot), l'utilisateur choisit d'abord dans le menu déroulant un joueur cible. Il peut rafraîchir la liste ou sélectionner un adversaire. Ensuite, il peut choisir dans la liste de gauche une carte de son propre inventaire à utiliser dans le combat. Dans la liste de droite, il choisit la carte de l'adversaire à cibler. Une fois fait, il envoie la demande de combat à l'autre utilisateur. Celui-ci reçoit alors une notification sous la forme d'un pop-up cliquable. Il peut également la retrouver dans le menu "Notifications". Il peut alors accepter ou refuser le combat. Dans tous les cas, l'initiateur du combat reçoit à son tour une notification lui indiquant le résultat. Si l'adversaire a refusé le combat, aucune carte n'est affectée. Si le combat a été accepté, alors les deux cartes concernées s'attaquent : elles s'infligent des dégats en suivant la formule suivante : `DMG_TO_2 = ATK1 - (ATK1 * DEF2/100)`. 
+Chaque combat n'est constitué que d'une seule attaque : les deux cartes peuvent très bien survivre au combat. Si les deux cartes surivivent ou meurent, le gagnant est la carte qui a infligé le plus de dégats. Si qu'une seule des deux cartes ne survit, alors le gagnant est la carte survivante. Lorsqu'une carte meurt, elle disparaît de l'inventaire du joueur. A l'issue du combat, les deux utilisateurs recoivent une notification pour afficher le résultat, qui indique clairement le gagnant et le perdant ainsi que le nouvel état des deux cartes.
 
-```
-cd existing_repo
-git remote add origin https://iut-git.unice.fr/s301_2025_2026/groupe_b/s301_groupeb.git
-git branch -M main
-git push -uf origin main
-```
+### Échange
 
-## Integrate with your tools
+Les utilisateurs peuvent aussi s'échanger des cartes. Le fonctionnement est le même que les combats : le joueur initiateur choisit un joueur dans la liste, choisit une carte de son inventaire et une carte de l'inventaire du receveur de l'offre. Après l'envoie de la proposition d'échange, le receveur reçoit une notification et peut accepter ou refuser l'échange. En cas de refus, rien ne change. Si l'échange est accepté, l'initiateur est averti et l'inventaire des deux joueurs est mis à jour.
 
-- [ ] [Set up project integrations](https://iut-git.unice.fr/s301_2025_2026/groupe_b/s301_groupeb/-/settings/integrations)
+### Bots
 
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Il est possible de lancer le client en mode "Bot" (voir section [Compilation](#compilation)). Dans ce mode, le client se connecte avec le nom "roblobot" et effectue des opérations automatiquement. Lors de sa première connexion, il crée 4 cartes avec des stats déterminées aléatoirement. Lorsqu'un joueur réel demande un échange ou un combat au Bot, celui-ci les accepte systématiquement. Si le bot perd une carte suite à un combat, il en crée une nouvelle.

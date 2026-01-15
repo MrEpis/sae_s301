@@ -11,4 +11,6 @@ char* block_to_string_for_hashing(Block* block);
 
 void mine_block(Block *block);
 
+int verify_blockchain_integrity(Blockchain *chain);
+
 #endif

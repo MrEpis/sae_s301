@@ -2,15 +2,24 @@
 #define STRUCTURES_H
 
 #include <time.h>
+#include <pthread.h>
 
 #define HASH_SIZE 65
 #define DIFFICULTY 4
-
+#define MAX_CLIENTS 5
+#define MAX_CARDS 5
 
 typedef struct Client {
     int client_id;
     char username[50];
-} Client;
+    int socket;
+    int logged_in;
+} ConnectedPlayer;
+
+extern ConnectedPlayer clients_list[MAX_CLIENTS];
+extern pthread_mutex_t clients_mutex;
+extern pthread_mutex_t db_mutex;
+extern pthread_mutex_t bc_mutex;
 
 typedef struct Card {
     int card_id;
