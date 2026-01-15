@@ -14,7 +14,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-// Variable globale pour contrôler la boucle principale
+// Golobal variable to control main loop
 volatile sig_atomic_t server_running = 1;
 
 ConnectedPlayer clients_list[MAX_CLIENTS];
@@ -29,8 +29,13 @@ Blockchain *get_global_blockchain()
     return global_blockchain;
 }
 
+/**
+ * Main server function.
+ * Initializes the server, listens for client messages and creates new threads for each action.
+ */
 int start_server()
 {
+    // Look for 'Ctrl+C'
     signal(SIGINT, handle_sigint);
 
     int server_fd, new_socket;
@@ -38,7 +43,7 @@ int start_server()
     int opt = 1;
     int addrlen = sizeof(address);
 
-    // Initialiser la liste des clients
+    // Initialize connected clients list
     for (int i = 0; i < MAX_CLIENTS; i++)
     {
         clients_list[i].client_id = -1;
@@ -46,7 +51,7 @@ int start_server()
         clients_list[i].logged_in = 0;
     }
 
-    // On crée le socket du serveur
+    // Create server socket
     // AF_INET = IPv4, SOCK_STREAM = TCP
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
@@ -54,20 +59,20 @@ int start_server()
         return -1;
     }
 
-    // Fonction pour rendre le socket réutilisable après un arrêt
+    // Make socket reusable after server stop
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
         perror("setsockopt");
         return -1;
     }
 
-    // On configure l'adresse et le port
+    // Configure address and port
     address.sin_family = AF_INET;         // AF_INET = IPv4
     address.sin_addr.s_addr = INADDR_ANY; // Ecoute sur toutes les interfaces
     // htons() convertit change l'ordre de l'octet en entrée pour correspondre à un octet réseau (avec le bit de poids fort placé en premier)
     address.sin_port = htons(PORT);
 
-    // On lie le socket au port (bind)
+    // Bind socket to port
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
     {
         perror("bind failed");
@@ -75,7 +80,7 @@ int start_server()
         return -1;
     }
 
-    // On met le port en mode écoute
+    // Make port listen to messages
     if (listen(server_fd, MAX_PENDING_CONNECTIONS) < 0)
     {
         perror("listen");
@@ -83,7 +88,7 @@ int start_server()
         return -1;
     }
 
-    printf("[INFO] Serveur démarré sur le port %d\n", PORT);
+    printf("[INFO] Server started on port %d\n", PORT);
     // Boucle d'acceptation des clients
     while (server_running)
     {
@@ -91,18 +96,17 @@ int start_server()
         fd_set readfs;
         struct timeval tv;
 
-        // Préparation de la surveillance pour stopper le serveur
         FD_ZERO(&readfs);
         FD_SET(server_fd, &readfs);
 
-        // Définition du timeout (1 seconde)
+        // Define timeout (1 second)
         tv.tv_sec = 1;
         tv.tv_usec = 0;
 
-        // On attend qu'il se passe quelque chose ou que le temps s'écoule
+        // Wait for activity or time elapse
         int activity = select(server_fd + 1, &readfs, NULL, NULL, &tv);
 
-        // Vérifications
+        // Checks
         if (activity < 0)
         {
             if (errno == EINTR) {
@@ -112,32 +116,32 @@ int start_server()
             break;
         }
 
-        // Timeout atteint, on remonte en haut de la boucle
+        // Timeout reached, go back to start of loop
         if (activity == 0)
         {
             continue;
         }
 
-        // On a une activité
+        // Activity
         if (FD_ISSET(server_fd, &readfs))
         {
-            // La fonction accept() est bloquante et attend une connexion
+            // accept() is blocking and waits for activity
             if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
             {
                 if (server_running)
                 {
                     perror("accept");
                 }
-                continue; // Ici on continue juste à écouter
+                continue;
             }
 
-            printf("[INFO] Nouvelle connexion acceptée, socket client : %d\n", new_socket);
+            printf("[INFO] New connection accepted, client socket: %d\n", new_socket);
 
-            // On instancie un nouveau thread pour ce client
+            // New thread for this client
             pthread_t client_thread;
 
-            // On alloue de la mémoire pour passer le socket au thread
-            // car new_socket sera écrasé à la prochaine boucle
+            // Allocate memory to pass socket to thread
+            // because new_socket will be overwritten in next loop
             int *client_socket_ptr = malloc(sizeof(int));
             if (client_socket_ptr == NULL)
             {
@@ -147,7 +151,7 @@ int start_server()
             }
             *client_socket_ptr = new_socket;
 
-            // On crée le thread en sur la fonction handle_client()
+            // Create thread on function handle_client()
             if (pthread_create(&client_thread, NULL, handle_client, (void *)client_socket_ptr) != 0)
             {
                 perror("pthread_create");
@@ -155,22 +159,22 @@ int start_server()
                 close(new_socket);
             }
 
-            // On détache le thread pour ne pas faire pthread_join()
-            // Le thread va donc libérer lui-même ses ressources à la fin
+            // Detach thread so that we don't have to use pthread_join() to rejoin threads manually
+            // Thread will free its resources on its own
             pthread_detach(client_thread);
         }
     }
 
     close(server_fd);
-    printf("[INFO] Socket serveur fermé.\n");
+    printf("[INFO] Server socket closed.\n");
     return 0;
 }
 
+/**
+ * Clean stop of the server if SIGINT signal (Ctrl+C) is sent.
+ */
 void handle_sigint(int sig)
 {
-    printf("\n[ARRET] Signal reçu, fermeture propre du serveur...\n");
+    printf("\n[SHUTDOWN] Signal received, clean server shutdown...\n");
     server_running = 0;
-    // Note : sur un accept() bloquant, il faudra peut-être envoyer une fausse connexion
-    // ou utiliser select() pour débloquer la boucle immédiatement,
-    // mais souvent server_running = 0 suffit après la prochaine action.
 }

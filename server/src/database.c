@@ -11,64 +11,77 @@
 
 static PGconn *db_connection = NULL;
 
+/**
+ * Creates connection to database.
+ */
 int db_connect() {
     const char *conn_string = "host=linserv-info-01.campus.unice.fr port=5432 dbname=bl405485 user=bl405485 password=bl405485";
 
-    printf("[INFO] Connexion à la base de donnée...\n");
+    printf("[INFO] Connecting to Database...\n");
 
     db_connection = PQconnectdb(conn_string);
 
     if (PQstatus(db_connection) != CONNECTION_OK) {
-        fprintf(stderr, "[ERREUR] La connexion à la BDD a échoué : %s\n", PQerrorMessage(db_connection));
+        fprintf(stderr, "[ERROR] Failed to connect to Database: %s\n", PQerrorMessage(db_connection));
         PQfinish(db_connection);
         db_connection = NULL;
         return -1;
     }
 
-    printf("[INFO] Connexion à la BDD réussie.\n");
+    printf("[INFO] Successfully connected to database.\n");
     return 0;
 }
 
+/**
+ * Closes connection to databse.
+ */
 void db_close() {
     if (db_connection != NULL) {
         PQfinish(db_connection);
         db_connection = NULL;
-        printf("[INFO] Connexion à la BDD fermée avec succès.\n");
+        printf("[INFO] Connection to DB closed successfully.\n");
     }
 }
 
+/**
+ * Simple function to get current connection to database.
+ */
 PGconn* get_db_connection() {
     return db_connection;
 }
 
+/**
+ * Checks if blockchain is initialized in database.
+ * Returns 1 if blockchain exists, 0 if not.
+ */
 int db_check_for_blockchain(PGconn *conn) {
-    //Requête pour compter les lignes
     const char *query = "SELECT COUNT(*) FROM blockchain";
-    //Exécution de la requête
     PGresult *result = PQexec(conn, query);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "[ERREUR] Erreur lors de la vérification de la blockchain : %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "[ERROR] Checking for blockchain failed: %s\n", PQerrorMessage(conn));
         PQclear(result);
         return -1;
     }
 
-    //Récupération de la valeur (située en ligne 0, colonne 0)
     char *count_str = PQgetvalue(result, 0, 0);
     int count = atoi(count_str); //Conversion en int
 
-    //Nettoyage de la mémoire du résultat
     PQclear(result);
 
-    printf("[INFO] Vérification de la BDD : %d blocs trouvés.\n", count);
+    printf("[INFO] Blockchain checking: %d blocks found.\n", count);
 
     if (count > 0) {
-        return 1; //La blockchain existe
+        return 1; // Blockchain exists
     } else {
-        return 0; //La blockchain est vide
+        return 0; // Blockchain is empty
     }
 }
 
+
+/**
+ * Loads blockchain from database
+ */
 Blockchain* db_load_blockchain(PGconn *conn) {
     const char *query = "SELECT * "
                         "FROM blockchain ORDER BY id_block ASC";
@@ -76,7 +89,7 @@ Blockchain* db_load_blockchain(PGconn *conn) {
     PGresult *res = PQexec(conn, query);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "[ERREUR] Erreur lors de la récupération de la blockchain : %s\n", 
+        fprintf(stderr, "[ERROR] Failed to fetch blockchain from database: %s\n",
                 PQerrorMessage(conn));
         PQclear(res);
         return NULL;
@@ -84,14 +97,14 @@ Blockchain* db_load_blockchain(PGconn *conn) {
 
     int rows = PQntuples(res);
     if (rows == 0) {
-        printf("[ERREUR] Aucun bloc trouvé dans la BDD.\n");
+        printf("[ERROR] No blocks found in database.\n"); // Shouldn't ever occur
         PQclear(res);
         return NULL;
     }
 
     Blockchain *chain = malloc(sizeof(Blockchain));
     if (chain == NULL) {
-        perror("[ERREUR] Malloc Blockchain");
+        perror("[ERROR] Malloc Blockchain");
         PQclear(res);
         return NULL;
     }
@@ -99,12 +112,12 @@ Blockchain* db_load_blockchain(PGconn *conn) {
     chain->tail = NULL;
     chain->size = 0;
 
-    printf("[INFO] Chargement de %d blocks depuis la BDD...\n", rows);
+    printf("[INFO] Loading %d blocks from DB...\n", rows);
 
     for (int i = 0; i < rows; i++) {
         Block *new_block = malloc(sizeof(Block));
         if (new_block == NULL) {
-            perror("[ERREUR] Malloc Bloc");
+            perror("[ERROR] Malloc Block");
             break;
         }
 
@@ -114,7 +127,7 @@ Blockchain* db_load_blockchain(PGconn *conn) {
         new_block->data_action = strdup(PQgetvalue(res, i, 2));
 
         strncpy(new_block->previous_hash, PQgetvalue(res, i, 3), HASH_SIZE);
-        new_block->previous_hash[HASH_SIZE-1] = '\0'; //Sécurité
+        new_block->previous_hash[HASH_SIZE-1] = '\0';
         
         strncpy(new_block->hash, PQgetvalue(res, i, 4), HASH_SIZE);
         new_block->hash[HASH_SIZE - 1] = '\0';
@@ -123,7 +136,8 @@ Blockchain* db_load_blockchain(PGconn *conn) {
 
         new_block->next = NULL;
 
-        if (chain->head == NULL) { //Premier block (genesis) :
+        // If first block (GENESIS)
+        if (chain->head == NULL) {
             chain->head = new_block;
             chain->tail = new_block;
         } else {
@@ -136,11 +150,13 @@ Blockchain* db_load_blockchain(PGconn *conn) {
 
     PQclear(res);
 
-    printf("[INFO] Blockchain restaurée avec succès (Taille : %d)\n", chain->size);
+    printf("[INFO] Blockchain successfully restored. (Size: %d)\n", chain->size);
     return chain;
 }
 
-
+/**
+ * Saves a mined block into the database.
+ */
 int db_save_block(PGconn *conn, Block *block) {
     const char *query = "INSERT INTO blockchain (id_block, timestamp, data_action, prev_hash, hash, nonce) "
                         "VALUES ($1, $2, $3, $4, $5, $6)";
@@ -164,17 +180,20 @@ int db_save_block(PGconn *conn, Block *block) {
     PGresult *res = PQexecParams(conn, query, 6, NULL, param_values, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        fprintf(stderr, "[ERREUR] Echec insertion du bloc %d : %s\n", 
+        fprintf(stderr, "[ERROR] Faild to insert block %d: %s\n",
                 block->ID_block, PQerrorMessage(conn));
         PQclear(res);
         return -1;
     }
 
     PQclear(res);
-    printf("[INFO] Block %d enregistré en BDD avec succès.\n", block->ID_block);
+    printf("[INFO] Block %d successfully saved in DB.\n", block->ID_block);
     return 0;
 }
 
+/**
+ * Saves a newly created player in the database.
+ */
 int db_create_player(PGconn *conn, const char *username) {
     const char *query = "INSERT INTO joueurs (username) VALUES ($1) RETURNING id";
     const char *params[1] = { username };
@@ -182,7 +201,7 @@ int db_create_player(PGconn *conn, const char *username) {
     PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "[ERREUR] Echec création joueur: %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "[ERROR] Faild to insert player in DB: %s\n", PQerrorMessage(conn));
         PQclear(res);
         return -1;
     }
@@ -190,10 +209,15 @@ int db_create_player(PGconn *conn, const char *username) {
     int new_id = atoi(PQgetvalue(res, 0, 0));
     PQclear(res);
 
-    printf("[INFO] Nouveau joueur créé : %s (ID: %d)\n", username, new_id);
+    printf("[INFO] New player created in DB: %s (ID: %d)\n", username, new_id);
     return new_id;
 }
 
+
+/**
+ * Checks if a player exists in the database.
+ * Used for basic verification when processing trades/fights.
+ */
 int db_player_exists(PGconn *conn, int id) {
     char id_str[12];
     sprintf(id_str, "%d", id);
@@ -208,6 +232,10 @@ int db_player_exists(PGconn *conn, int id) {
     return exists;
 }
 
+/**
+ * Gets a player ID from their username.
+ * Used when searching for the player to trade/fight with since client only knows usernames.
+ */
 int db_get_player_id_by_name(PGconn *conn, const char *username) {
     const char *query = "SELECT id FROM joueurs WHERE username = $1";
     const char *params[1] = { username };
@@ -216,7 +244,7 @@ int db_get_player_id_by_name(PGconn *conn, const char *username) {
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
-        return -1; // Introuvable
+        return -1;
     }
 
     int id = atoi(PQgetvalue(res, 0, 0));
@@ -224,6 +252,10 @@ int db_get_player_id_by_name(PGconn *conn, const char *username) {
     return id;
 }
 
+/**
+ * Gets a player's name from their ID.
+ * Used when an existing player logs in since the client's own ID is stored.
+ */
 int db_get_username_by_id(PGconn *conn, int id, char *username_buffer) {
     char id_str[12];
     sprintf(id_str, "%d", id);
@@ -233,7 +265,6 @@ int db_get_username_by_id(PGconn *conn, int id, char *username_buffer) {
                                  1, NULL, params, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-        // ID introuvable ou erreur
         PQclear(res);
         return -1;
     }
@@ -244,11 +275,15 @@ int db_get_username_by_id(PGconn *conn, int id, char *username_buffer) {
     return 1;
 }
 
+/**
+ * Gets a player's hand from the database.
+ * Puts the hand in a JSON array to be sent to the client.
+ */
 void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_len) {
     char id_str[12];
     sprintf(id_str, "%d", owner_id);
 
-    // On récupère toutes les infos nécessaires pour l'affichage client
+    // Get all necessary stats and info to be displayed
     const char *query = "SELECT id, nom, attaque, defense, max_hp, hp_actuel, nom_image FROM cartes WHERE owner_id = $1";
     const char *params[1] = { id_str };
 
@@ -262,13 +297,13 @@ void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_
 
     int rows = PQntuples(res);
     
-    // Début du tableau JSON
+    // Start of JSON array
     strcpy(buffer, "[");
     
     char temp[256];
+    // For each card in player's hand
     for (int i = 0; i < rows; i++) {
-        // Construction de l'objet carte
-        // Attention à bien échapper les guillemets pour le JSON
+        // Build card object
         snprintf(temp, sizeof(temp), 
                  "{\"id\": %s, \"nom\": \"%s\", \"attaque\": %s, \"defense\": %s, \"pv\": %s, \"image\": \"%s\"}",
                  PQgetvalue(res, i, 0), // id
@@ -279,20 +314,23 @@ void db_get_player_cards_json(PGconn *conn, int owner_id, char *buffer, int max_
                  PQgetvalue(res, i, 6)  // image_name
         );
 
-        // Ajouter au buffer principal
+        // Add to array
         strncat(buffer, temp, max_len - strlen(buffer) - 1);
 
-        // Ajouter une virgule si ce n'est pas le dernier élément
+        // Add coma if not last element
         if (i < rows - 1) {
             strncat(buffer, ", ", max_len - strlen(buffer) - 1);
         }
     }
 
-    // Fin du tableau JSON
+    // End of JSON array
     strncat(buffer, "]", max_len - strlen(buffer) - 1);
     PQclear(res);
 }
 
+/**
+ * Adds a newly created card in database.
+ */
 int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def, int hp, const char *img) {
     const char *query = "INSERT INTO cartes (owner_id, nom, attaque, defense, max_hp, hp_actuel, nom_image) "
                         "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id";
@@ -308,7 +346,7 @@ int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def
     PGresult *res = PQexecParams(conn, query, 7, NULL, params, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        fprintf(stderr, "[ERREUR] Echec insert carte: %s\n", PQerrorMessage(conn));
+        fprintf(stderr, "[ERROR] Failed to insert card: %s\n", PQerrorMessage(conn));
         PQclear(res);
         return -1;
     }
@@ -318,39 +356,48 @@ int db_create_card(PGconn *conn, int owner_id, const char *nom, int atk, int def
     return new_id;
 }
 
+/**
+ * Checks the blockchain's integrity.
+ * Compares the number of cards in the Blockchain with the number of cards stored in Database
+ */
 int verify_consistency(PGconn *conn, Blockchain *chain) {
-    printf("--- Vérification de la cohérence BDD vs Blockchain ---\n");
+    printf("--- Verifying consistency between Blockchain and database ---\n");
     
-    // 1. Récupérer le nombre de cartes officiel selon la Blockchain
+    // Get number of cards according to the blockchain
     int cards_in_blockchain = 0;
     Block *current = chain->head;
     
     while (current != NULL) {
-        // On cherche les actions de création
+        // Look for Card Creation blocks
         if (strstr(current->data_action, "\"action\": \"CreateCard\"") != NULL) {
             cards_in_blockchain++;
         }
         current = current->next;
     }
 
-    // 2. Récupérer le nombre de cartes dans la table SQL
+    // Get number of cards according to database
     PGresult *res = PQexec(conn, "SELECT COUNT(*) FROM cartes");
     int cards_in_db = atoi(PQgetvalue(res, 0, 0));
     PQclear(res);
 
-    printf("[INFO] Cartes dans la Blockchain : %d\n", cards_in_blockchain);
-    printf("[INFO] Cartes dans la table SQL  : %d\n", cards_in_db);
+    printf("[INFO] Cards in blockchain: %d\n", cards_in_blockchain);
+    printf("[INFO] Cards in database: %d\n", cards_in_db);
 
     if (cards_in_blockchain < cards_in_db) {
         return 0;
     } else {
-        printf("--- Cohérence : OK ---\n");
+        printf("--- Consistency: OK ---\n");
         return 1;
     }
 }
 
+/**
+ * Checks the integrity of card stats.
+ * Compares the stats of cards stored in database with their stats as initialized in Blockchain.
+ * If there is a discrepancy, one or mu:tiple cards were manually modified in database.
+ */
 int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
-    printf("--- Vérification détaillée des stats des cartes ---\n");
+    printf("--- Detailed verification of cards stats ---\n");
     
     Block *current = chain->head;
     //char buffer[1024];
@@ -359,14 +406,13 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
     int errors = 0;
 
     while (current != NULL) {
-        // On ne s'intéresse qu'aux blocs de création
+        // Search for Card creation blocks
         if (strstr(current->data_action, "\"action\": \"CreateCard\"") != NULL) {
             
-            // 1. Extraction des données "Vérité Blockchain"
-            // Note : Adaptez les clés selon votre format JSON exact ("attaque", "pv", etc.)
+            // Extract data from block
             extract_json_value(current->data_action, "card_id", id_str, sizeof(id_str));
             
-            // Valeurs par défaut si parsing échoue (sécurité)
+            // Defaullt values if parsing somehow fails
             int bc_atk = 0, bc_def = 0, bc_hp = 0;
             
             if (extract_json_value(current->data_action, "attack", atk_str, sizeof(atk_str))) 
@@ -376,9 +422,9 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
                 bc_def = atoi(def_str);
                 
             if (extract_json_value(current->data_action, "max_hp", pv_str, sizeof(pv_str))) 
-                bc_hp = atoi(pv_str); // On suppose PV = MaxHP à la création
+                bc_hp = atoi(pv_str);
 
-            // 2. Récupération des données "État BDD"
+            // Get data from database
             const char *query = "SELECT attaque, max_hp, defense FROM cartes WHERE id = $1";
             const char *params[1] = { id_str };
             
@@ -389,16 +435,16 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
                 int db_hp = atoi(PQgetvalue(res, 0, 1));
                 int db_def = atoi(PQgetvalue(res, 0, 2));
 
-                // 3. Comparaison
+                // Compare
                 if (db_atk != bc_atk || db_hp != bc_hp || db_def != bc_def) {
-                    fprintf(stderr, "[ALERTE TRICHE] Incohérence Carte ID %s !\n", id_str);
-                    fprintf(stderr, "Blockchain : Atk=%d, Def=%d, HP=%d\n", bc_atk, bc_def, bc_hp);
-                    fprintf(stderr, "Base de Données : Atk=%d, Def=%d, HP=%d\n", db_atk, db_def, db_hp);
+                    fprintf(stderr, "[ALERT] Inconsistency for card ID %s !\n", id_str);
+                    fprintf(stderr, "Blockchain: Atk=%d, Def=%d, HP=%d\n", bc_atk, bc_def, bc_hp);
+                    fprintf(stderr, "Database: Atk=%d, Def=%d, HP=%d\n", db_atk, db_def, db_hp);
                     errors++;
                 }
             } else {
-                // La carte est dans la blockchain mais pas dans la BDD (Suppression illégale ?)
-                fprintf(stderr, "[INFO] Carte ID %s présente dans la Blockchain mais absente de la BDD (Probablement détruite).\n", id_str);
+                // Card not present in DB (deprecated since cards are deleted after death, so no errors are raised)
+                fprintf(stderr, "[INFO] Card ID %s in Blockchain but missing from DB.\n", id_str);
             }
             PQclear(res);
         }
@@ -406,20 +452,21 @@ int verify_card_stats_integrity(PGconn *conn, Blockchain *chain) {
     }
 
     if (errors > 0) {
-        printf("--- ECHEC Vérification : %d incohérences trouvées ---\n", errors);
+        printf("--- Check failed: %d inconsistencies found. ---\n", errors);
         return 0; 
     }
     
-    printf("--- Stats des cartes intègres ---\n");
+    printf("--- Card stats check OK ---\n");
     return 1;
 }
 
-// server/src/database.c
-
+/**
+ * Trades two cards between two players in the database using a SQL transaction.
+ */
 int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int card_recv) {
     PGresult *res;
     
-    // 1. Démarrer la transaction
+    // Start transaction
     res = PQexec(conn, "BEGIN");
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
         PQclear(res);
@@ -427,7 +474,7 @@ int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int 
     }
     PQclear(res);
 
-    // 2. Transférer la carte de l'initiateur vers le receveur
+    // Transfer initiator's card to receiver
     const char *q1 = "UPDATE cartes SET owner_id = $1 WHERE id = $2 AND owner_id = $3";
     char owner_recv_str[12], card_init_str[12], owner_init_str[12];
     sprintf(owner_recv_str, "%d", id_recv);
@@ -437,14 +484,14 @@ int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int 
 
     res = PQexecParams(conn, q1, 3, NULL, p1, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK || atoi(PQcmdTuples(res)) == 0) {
-        // Echec (ex: la carte n'appartient plus au joueur)
+        // If failure we can rollback
         PQclear(res);
         PQexec(conn, "ROLLBACK");
         return -1;
     }
     PQclear(res);
 
-    // 3. Transférer la carte du receveur vers l'initiateur
+    // Transfer receiver's card to initiator
     const char *q2 = "UPDATE cartes SET owner_id = $1 WHERE id = $2 AND owner_id = $3";
     char card_recv_str[12];
     sprintf(card_recv_str, "%d", card_recv);
@@ -452,19 +499,24 @@ int db_execute_trade(PGconn *conn, int id_init, int card_init, int id_recv, int 
 
     res = PQexecParams(conn, q2, 3, NULL, p2, NULL, NULL, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK || atoi(PQcmdTuples(res)) == 0) {
+        // If failure we can rollback
         PQclear(res);
         PQexec(conn, "ROLLBACK");
         return -1;
     }
     PQclear(res);
 
-    // 4. Valider la transaction
+    // Commit transaction
     res = PQexec(conn, "COMMIT");
     PQclear(res);
     
-    return 0; // Succès
+    return 0;
 }
 
+/**
+ * Returns the amount of cards in a player's hand.
+ * Used for card creation to check if a player has the max amount of cards.
+ */
 int db_count_player_cards(PGconn *conn, int id_client) {
     char id_str[12];
     sprintf(id_str, "%d", id_client);
@@ -479,57 +531,66 @@ int db_count_player_cards(PGconn *conn, int id_client) {
     return client_cards;
 }
 
+/**
+ * Gets a card stats from db.
+ * Used for fights.
+ */
 int db_get_card_stats(PGconn *conn, int card_id, int *atk, int *def, int *hp) {
     char id_str[12];
     sprintf(id_str, "%d", card_id);
     const char *params[1] = { id_str };
 
-    // On récupère hp_actuel (pas max_hp) car les dégâts sont persistants
     PGresult *res = PQexecParams(conn, "SELECT attaque, defense, hp_actuel FROM cartes WHERE id = $1", 
                                  1, NULL, params, NULL, NULL, 0);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
-        return -1; // Carte introuvable
+        return -1;
     }
 
     *atk = atoi(PQgetvalue(res, 0, 0));
     *def = atoi(PQgetvalue(res, 0, 1));
-    *hp  = atoi(PQgetvalue(res, 0, 2)); // PV Actuels
+    *hp  = atoi(PQgetvalue(res, 0, 2));
 
     PQclear(res);
     return 0;
 }
 
-// Met à jour les PV et gère la mort de la carte
+/**
+ * Updates card hp in database after a fight.
+ * If card is dead, it's deleted from the database.
+ * Returns 0 if card is dead, 1 if card is still alive.
+ */
 int db_update_card_hp(PGconn *conn, int card_id, int new_hp) {
     char id_str[12], hp_str[12];
     sprintf(id_str, "%d", card_id);
     
-    // Règle : Si PV <= 0, on supprime la carte (ou on met owner_id à NULL)
-    // Ici, supprimons-la pour faire simple et propre.
+    // If hp <= 0, delete card from database
     if (new_hp <= 0) {
         const char *params[1] = { id_str };
         PGresult *res = PQexecParams(conn, "DELETE FROM cartes WHERE id = $1", 
                                      1, NULL, params, NULL, NULL, 0);
         PQclear(res);
-        return 0; // Carte morte
+        return 0;
     } else {
         sprintf(hp_str, "%d", new_hp);
         const char *params[2] = { hp_str, id_str };
         PGresult *res = PQexecParams(conn, "UPDATE cartes SET hp_actuel = $1 WHERE id = $2", 
                                      2, NULL, params, NULL, NULL, 0);
         PQclear(res);
-        return 1; // Carte vivante
+        return 1;
     }
 }
 
+/**
+ * Returns JSON object for a single card.
+ * Used to send fight results.
+ */
 void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_len) {
     char id_str[12];
     sprintf(id_str, "%d", card_id);
     const char *params[1] = { id_str };
 
-    // On récupère les infos visuelles et les stats
     const char *query = "SELECT id, nom, attaque, defense, max_hp, hp_actuel, nom_image FROM cartes WHERE id = $1";
     PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
 
@@ -539,7 +600,6 @@ void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_le
         return;
     }
 
-    // Construction de l'objet JSON unique
     snprintf(buffer, max_len, 
              "{\"id\": %s, \"nom\": \"%s\", \"attaque\": %s, \"defense\": %s, \"pv\": %s, \"image\": \"%s\"}",
              PQgetvalue(res, 0, 0),
@@ -553,12 +613,14 @@ void db_get_single_card_json(PGconn *conn, int card_id, char *buffer, int max_le
     PQclear(res);
 }
 
+/**
+ * Checks if a card exists in database.
+ */
 int db_card_exists(PGconn *conn, int card_id) {
     char id_str[12];
     snprintf(id_str, sizeof(id_str), "%d", card_id);
     const char *params[1] = { id_str };
 
-    // On sélectionne juste "1" pour optimiser, pas besoin de lire toutes les colonnes
     const char *query = "SELECT 1 FROM cartes WHERE id = $1";
     
     PGresult *res = PQexecParams(conn, query, 1, NULL, params, NULL, NULL, 0);
@@ -567,10 +629,9 @@ int db_card_exists(PGconn *conn, int card_id) {
         fprintf(stderr, "[ERREUR BDD] Echec verification existence carte %d : %s\n", 
                 card_id, PQerrorMessage(conn));
         PQclear(res);
-        return -1; // Erreur technique
+        return -1;
     }
 
-    // PQntuples renvoie le nombre de lignes trouvées
     int exists = (PQntuples(res) > 0) ? 1 : 0;
 
     PQclear(res);
