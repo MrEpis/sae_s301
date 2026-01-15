@@ -4,6 +4,11 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerTest {
+
+    /**
+     * Tests the initialization of a Player object.
+     * Checks that the ID and name are set, and that the inventory is initialized as empty (not null).
+     */
     @Test
     void testPlayerInitialization(){
         Player p = new Player(0, "Guest");
@@ -14,6 +19,10 @@ class PlayerTest {
         assertTrue(p.getInventory().isEmpty());
     }
 
+    /**
+     * Tests the setter methods for Player properties.
+     * Verifies that ID and Name can be modified after instantiation.
+     */
     @Test
     void testSetters(){
         Player p = new Player(0,"Guest");
@@ -23,6 +32,11 @@ class PlayerTest {
         assertEquals(101, p.getId_Client());
         assertEquals("Robs", p.getName());
     }
+
+    /**
+     * Tests adding a card to the player's inventory.
+     * Verifies that the inventory size increases and contains the correct card object.
+     */
     @Test
     void testAddCard(){
         Player p = new Player(1, "Test");
