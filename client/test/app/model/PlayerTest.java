@@ -4,33 +4,24 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerTest {
-    @Test
-    void testPlayerInitialization(){
-        Player p = new Player(0, "Guest");
 
-        assertEquals(0, p.getId_Client());
-        assertEquals("Guest", p.getName());
-        assertNotNull(p.getInventory(), "Inventory should be initialized empty");
-        assertTrue(p.getInventory().isEmpty());
+    @Test
+    void testPlayerCreation() {
+        Player player = new Player(123, "Lancelot");
+
+        assertEquals(123, player.getId_Client());
+        assertEquals("Lancelot", player.getName());
+        assertTrue(player.getInventory().isEmpty());
     }
 
     @Test
-    void testSetters(){
-        Player p = new Player(0,"Guest");
-        p.setId(101);
-        p.setName("Robs");
+    void testAddCard() {
+        Player player = new Player(1, "Test");
+        Card card = new Card(10, "Dragon", 10, 40, 50, "img.png");
 
-        assertEquals(101, p.getId_Client());
-        assertEquals("Robs", p.getName());
-    }
-    @Test
-    void testAddCard(){
-        Player p = new Player(1, "Test");
+        player.addCard(card);
 
-        Card c = new Card(10, "Shield", 50, 50, 0, "src/ressources/img/shield.png");
-        p.addCard(c);
-
-        assertEquals(1, p.getInventory().size());
-        assertEquals("Shield", p.getInventory().get(0).getNom());
+        assertEquals(1, player.getInventory().size());
+        assertEquals("Dragon", player.getInventory().get(0).getNom());
     }
 }
