@@ -107,13 +107,13 @@ void process_login(int client_socket, const char *json_payload) {
     char username[50];
     int id_client = -1;
 
-    // 1. Extract "data" object (contains {id_client:..., username:...})
+    // Extract "data" segment
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
         send_error_response(client_socket, "LOGIN", "Missing 'data' field");
         return;
     }
 
-    // 2. Extract inner fields
+    // Extract inner fields
     // ID (mandatory)
     if (extract_json_value(data_buffer, "id_client", id_str, sizeof(id_str))) {
         id_client = atoi(id_str);
@@ -235,7 +235,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
     int pv = 0;
     char image[50] = {0};
 
-    // 1. Extract data from JSON
+    // Extract data from JSON
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
         send_error_response(client_socket, "RequestCardCreation", "Donnees manquantes");
         return;
@@ -252,7 +252,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
     if (extract_json_value(data_buffer, "defense", temp_str, sizeof(temp_str))) defense = atoi(temp_str);
     // Image
     if (!extract_json_value(data_buffer, "image", image, sizeof(image))) {
-        strcpy(image, "default.png"); // Image par défaut si non fournie
+        strcpy(image, "default.png");
     }
 
     if (id_client < 1 || strlen(nomCarte) == 0) {
@@ -268,7 +268,7 @@ void process_card_creation(int client_socket, const char *json_payload) {
         return;
      }
 
-    // 2. Insert card in DB
+    // Insert card in DB
     int new_card_id = db_create_card(conn, id_client, nomCarte, attaque, defense, pv, image);
     
     if (new_card_id == -1) {
@@ -276,9 +276,9 @@ void process_card_creation(int client_socket, const char *json_payload) {
         return;
     }
 
-    printf("[INFO] Carte crée en BDD (ID: %d) pour le joueur %d\n", new_card_id, id_client);
+    printf("[INFO] Card created in DB (ID: %d) for player %d\n", new_card_id, id_client);
 
-    // 3. Create and mine Block
+    // Create and mine Block
 
     Blockchain *bc = get_global_blockchain();
     if (bc == NULL) {
@@ -313,19 +313,18 @@ void process_card_creation(int client_socket, const char *json_payload) {
     bc->tail = new_block;
     bc->size++;
 
-    // 4. Save block in DB
+    // Save block in DB
     if (db_save_block(conn, new_block) != 0) {
-        fprintf(stderr, "[ERREUR] Impossible de sauvegarder le bloc\n");
-        // En prod, il faudrait rollback la création de carte ici
+        fprintf(stderr, "[ERROR] Error while saving block\n");
     }
 
-    // 5. Send response to client
+    // Send response to client
     char response[512];
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"CardCreated\", \"status\": \"OK\", \"data\": {\"id\": %d}}\n", 
              new_card_id);
 
-    printf("[SERVEUR -> CLIENT] (socket client %d) : %s", client_socket, response);
+    printf("[SERVER -> CLIENT] (client socket %d) : %s", client_socket, response);
     
     send(client_socket, response, strlen(response), 0);
 }
@@ -341,7 +340,6 @@ void process_get_connected_users(int client_socket) {
 
     // Find requester ID
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        // On ne liste que les sockets valides et les joueurs authentifiés (logged_in)
         if (clients_list[i].socket != -1 && clients_list[i].logged_in == 1) {
             
             if (!first) {
@@ -349,45 +347,45 @@ void process_get_connected_users(int client_socket) {
             }
             
             char user_entry[256];
-            // Format JSON : {"id_client": 1, "username": "leo"}
-            // On utilise id_client pour correspondre au champ de votre structure
             snprintf(user_entry, sizeof(user_entry), 
                      "{\"id_client\": %d, \"username\": \"%s\"}", 
                      clients_list[i].client_id, 
                      clients_list[i].username);
-            
-            // Concaténation sécurisée (vérifier limites en prod, ici simplifié)
+
             strcat(json_array, user_entry);
             first = 0;
         }
     }
 
-    pthread_mutex_unlock(&clients_mutex); // Déverrouillage
+    pthread_mutex_unlock(&clients_mutex);
 
-    strcat(json_array, "]"); // Fermeture du tableau
+    strcat(json_array, "]");
 
-    // Envoi de la réponse au format standard
+    // Sending response
     char response[5000];
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
              ACTION_GET_USERS, json_array);
-    printf("[SERVEUR -> CLIENT] (Socket client %d) : %s", client_socket, response);
+    printf("[SERVER -> CLIENT] (client socket %d) : %s", client_socket, response);
     fflush(stdout);
 
     send(client_socket, response, strlen(response), 0);
 }
 
+/**
+ * Returns the inventory of the selected player.
+ */
 void process_get_opponent_inventory(int client_socket, const char *json_payload) {
     char data_buffer[512];
     char target_username[50];
     
-    // 1. Extraire l'objet "data"
+    // Extract "data" field
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
         send_error_response(client_socket, ACTION_GET_OPPONENT_INVENTORY, "Donnees manquantes");
         return;
     }
 
-    // 2. Extraire le "username" cible
+    // Extract username
     if (!extract_json_value(data_buffer, "username", target_username, sizeof(target_username))) {
         send_error_response(client_socket, ACTION_GET_OPPONENT_INVENTORY, "Username manquant");
         return;
@@ -395,7 +393,7 @@ void process_get_opponent_inventory(int client_socket, const char *json_payload)
 
     PGconn *conn = get_db_connection();
 
-    // 3. Trouver l'ID du joueur cible via son pseudo
+    // Get user ID by username
     int target_id = db_get_player_id_by_name(conn, target_username);
     
     if (target_id == -1) {
@@ -403,23 +401,27 @@ void process_get_opponent_inventory(int client_socket, const char *json_payload)
         return;
     }
 
-    // 4. Récupérer son inventaire
+    // Get their inventory
     char cards_json[4096];
     db_get_player_cards_json(conn, target_id, cards_json, sizeof(cards_json));
 
-    // 5. Construire et envoyer la réponse
+    // Send response
     char response[5000];
     snprintf(response, sizeof(response), 
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": %s}\n", 
              ACTION_GET_OPPONENT_INVENTORY, cards_json);
 
-    printf("[SERVEUR -> CLIENT] (Socket client %d) Inventaire de %s envoyé : %s", 
+    printf("[SERVER -> CLIENT] (client socket %d) Inventory of player %s sent: %s",
            client_socket, target_username, response);
     fflush(stdout);
 
     send(client_socket, response, strlen(response), 0);
 }   
 
+/**
+ * Handles trade request.
+ * If receiving player found, sends them the trade offer.
+ */
 void process_trade_request(int client_socket, const char *json_payload) {
     char data_buffer[512];
     char temp_str[50];
@@ -429,7 +431,7 @@ void process_trade_request(int client_socket, const char *json_payload) {
     int id_receiver = -1;
     int id_card_receiver = -1;
 
-    // 1. Extraction des données
+    // Data extraction
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
         send_error_response(client_socket, ACTION_TRADE, "Donnees manquantes");
         return;
@@ -440,7 +442,6 @@ void process_trade_request(int client_socket, const char *json_payload) {
     if (extract_json_value(data_buffer, "id_receiver", temp_str, sizeof(temp_str))) id_receiver = atoi(temp_str);
     if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
 
-    // Vérification basique
     if (id_initiator == -1 || id_receiver == -1 || id_card_initiator == -1 || id_card_receiver == -1) {
         send_error_response(client_socket, ACTION_TRADE, "IDs invalides");
         return;
@@ -457,7 +458,7 @@ void process_trade_request(int client_socket, const char *json_payload) {
         return;
     }
 
-    // 2. Recherche du socket du destinataire (Client B)
+    // Search for the trade receiver's socket
     int socket_receiver = -1;
     char receiver_username[50] = "Inconnu";
 
@@ -472,35 +473,36 @@ void process_trade_request(int client_socket, const char *json_payload) {
     }
     pthread_mutex_unlock(&clients_mutex);
 
-    // 3. Gestion du cas "Joueur non trouvé"
+    // If player not found
     if (socket_receiver == -1) {
         send_error_response(client_socket, ACTION_TRADE, "Le joueur cible n'est pas connecte");
         return;
     }
 
-    // 4. Construction du message pour le destinataire (Client B)
-    // On lui envoie une "ConfirmationRequest"
+    // Build "ConfirmationRequest" message to trade offerer
     char notification[1024];
     snprintf(notification, sizeof(notification), 
              "{\"type\": \"request\", \"nom\": \"%s\", \"data\": {\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d}}\n",
              ACTION_CONFIRMATION, id_initiator, id_card_initiator, id_card_receiver);
 
-    // 5. Envoi au destinataire
-    printf("[SERVEUR -> CLIENT %d (Trade receiver)] Transfert offre echange : %s", socket_receiver, notification);
+    // Send offer to receiver
+    printf("[SERVER -> CLIENT %d (Trade receiver)] Sending trade offer: %s", socket_receiver, notification);
     send(socket_receiver, notification, strlen(notification), 0);
 
-    // 6. Confirmation à l'expéditeur (Client A)
+    // Send confirmation to offerer
     char ack[256];
     snprintf(ack, sizeof(ack), 
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": \"Offre envoyee a %s\"}\n", 
              ACTION_TRADE, receiver_username);
     
-    printf("[SERVEUR -> CLIENT %d (Trade initiator)] Ack echange : %s", client_socket, ack);
+    printf("[SERVER -> CLIENT %d (Trade initiator)] Trade request confirmation: %s", client_socket, ack);
     send(client_socket, ack, strlen(ack), 0);
 }
 
-// server/src/client_handler.c
-
+/**
+ * Handles the trade's response.
+ * If accepted, executes the trade in DB and mines a block.
+ */
 void process_trade_response(int client_socket, const char *json_payload) {
     char data_buffer[1024];
     char temp_str[50];
@@ -512,11 +514,10 @@ void process_trade_response(int client_socket, const char *json_payload) {
     int id_card_receiver = -1;
     int accepted = 0;
 
-    // 1. Extraction des données
+    // Data extraction
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) return;
 
-    // On regarde si c'est accepté ou refusé ("accepted": true/false ou "response": "ACCEPTED")
-    // Adapté selon votre JSON client. Ici je suppose un champ "response": "ACCEPTED"
+    // Check if trade is accepted or refused
     if (extract_json_value(data_buffer, "accepted", status_str, sizeof(status_str))) {
         if (strcmp(status_str, "true") == 0) accepted = 1;
     }
@@ -526,7 +527,7 @@ void process_trade_response(int client_socket, const char *json_payload) {
     if (extract_json_value(data_buffer, "id_receiver", temp_str, sizeof(temp_str))) id_receiver = atoi(temp_str);
     if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
 
-    // 2. Retrouver le socket de l'initiateur (Celui qui a proposé l'échange)
+    // Find trade initiator's socket
     int socket_initiator = -1;
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -537,9 +538,9 @@ void process_trade_response(int client_socket, const char *json_payload) {
     }
     pthread_mutex_unlock(&clients_mutex);
 
-    // 3. Traitement
+    // Processing
     if (!accepted) {
-        // CAS REFUSÉ
+        // If trade refused, send message to the initiator
         if (socket_initiator != -1) {
             char msg[] = "{\"type\": \"response\", \"nom\": \"TradeResult\", \"status\": \"ERROR\", \"data\": \"Echange refuse par le joueur\"}\n";
             send(socket_initiator, msg, strlen(msg), 0);
@@ -547,10 +548,10 @@ void process_trade_response(int client_socket, const char *json_payload) {
         return;
     }
 
-    // CAS ACCEPTÉ
+    // If accepted, first connect to db
     PGconn *conn = get_db_connection();
 
-    // Vérification
+    // Checks
     if (db_card_exists(conn, id_card_initiator) == 0) {
         send_error_response(client_socket, ACTION_TRADE_RESPONSE, "La carte de l'initiateur n'existe plus.");
         return;
@@ -560,13 +561,13 @@ void process_trade_response(int client_socket, const char *json_payload) {
         return;
     }
     
-    // A. Mise à jour BDD (Transaction)
+    // Update db
     if (db_execute_trade(conn, id_initiator, id_card_initiator, id_receiver, id_card_receiver) != 0) {
         send_error_response(client_socket, "TradeResponse", "Echec technique de l'echange en BDD");
         return;
     }
 
-    // B. Ajout dans la Blockchain
+    // Add in Blockchain
     Blockchain *bc = get_global_blockchain();
     Block *new_block = calloc(1, sizeof(Block));
     if (new_block == NULL) {
@@ -590,25 +591,26 @@ void process_trade_response(int client_socket, const char *json_payload) {
     bc->tail = new_block;
     bc->size++;
     
-    db_save_block(conn, new_block); // Sauvegarde persistante
+    db_save_block(conn, new_block);
 
-    // C. Notification de succès avec mise à jour des mains
+    // Send sucess messages with updated inventories
     
-    // 1. Pour le Receveur (Client B - celui qui a accepté)
-    // On récupère sa main mise à jour depuis la BDD
+    // 1. For the trade receiver
+    // Get updated hand
     char hand_recv[4096];
     db_get_player_cards_json(conn, id_receiver, hand_recv, sizeof(hand_recv));
     
     char msg_b[5000];
-    // On envoie un objet JSON contenant à la fois un message et la liste "hand"
+    // Send message
     snprintf(msg_b, sizeof(msg_b), 
              "{\"type\": \"response\", \"nom\": \"TradeResult\", \"status\": \"OK\", \"data\": {\"message\": \"Echange valide\", \"hand\": %s}}\n", 
              hand_recv);
 
-    printf("[SERVEUR -> CLIENT %d] Envoi nouvelle main apres echange\n", client_socket);
+    printf("[SERVER -> CLIENT %d] Send message with new hand after trade\n", client_socket);
     send(client_socket, msg_b, strlen(msg_b), 0); 
 
-    // 2. Pour l'Initiateur (Client A - celui qui a proposé)
+    // 2. For the trade initiator
+    // Same thing
     if (socket_initiator != -1) {
         char hand_init[4096];
         db_get_player_cards_json(conn, id_initiator, hand_init, sizeof(hand_init));
@@ -618,13 +620,17 @@ void process_trade_response(int client_socket, const char *json_payload) {
                  "{\"type\": \"response\", \"nom\": \"TradeResult\", \"status\": \"OK\", \"data\": {\"message\": \"Offre acceptee\", \"hand\": %s}}\n", 
                  hand_init);
         
-        printf("[SERVEUR -> CLIENT %d] Envoi nouvelle main apres echange\n", socket_initiator);
+        printf("[SERVER -> CLIENT %d] Send message with new hand after trade\n", socket_initiator);
         send(socket_initiator, msg_a, strlen(msg_a), 0);
     }
 
-    printf("[INFO] Echange termine avec succes.\n");
+    printf("[INFO] Trade succesfully executed.\n");
 }
 
+/**
+ * Handles fight request.
+ * Sends offer to requested player.
+ */
 void process_fight_request(int client_socket, const char *json_payload) {
     char data_buffer[512];
     char temp_str[50];
@@ -634,7 +640,7 @@ void process_fight_request(int client_socket, const char *json_payload) {
     int id_receiver = -1;
     int id_card_receiver = -1;
 
-    // 1. Extraction des données
+    // Extract data
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) {
         send_error_response(client_socket, ACTION_FIGHT, "Donnees manquantes");
         return;
@@ -645,7 +651,6 @@ void process_fight_request(int client_socket, const char *json_payload) {
     if (extract_json_value(data_buffer, "id_receiver", temp_str, sizeof(temp_str))) id_receiver = atoi(temp_str);
     if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
 
-    // Validation
     if (id_initiator == -1 || id_receiver == -1) {
         send_error_response(client_socket, ACTION_FIGHT, "IDs invalides");
         return;
@@ -662,7 +667,7 @@ void process_fight_request(int client_socket, const char *json_payload) {
         return;
     }
 
-    // 2. Recherche du socket de l'adversaire
+    // Search opponent socket
     int socket_receiver = -1;
     char receiver_username[50] = "Inconnu";
 
@@ -676,46 +681,48 @@ void process_fight_request(int client_socket, const char *json_payload) {
     }
     pthread_mutex_unlock(&clients_mutex);
 
-    // 3. Gestion Joueur absent
+    // If player not connected
     if (socket_receiver == -1) {
         send_error_response(client_socket, ACTION_FIGHT, "L'adversaire n'est pas connecte");
         return;
     }
 
-    // 4. Construction et envoi de la notification à l'adversaire
+    // Send offer to opponent
     char notification[1024];
-    // Attention au \n final indispensable pour le client Java !
     snprintf(notification, sizeof(notification), 
              "{\"type\": \"request\", \"nom\": \"%s\", \"data\": {\"id_initiator\": %d, \"id_card_initiator\": %d, \"id_card_receiver\": %d}}\n",
              ACTION_FIGHT_CONFIRMATION, id_initiator, id_card_initiator, id_card_receiver);
 
-    printf("[SERVEUR -> CLIENT %d (%s)] Transfert defi combat : %s", socket_receiver, receiver_username, notification);
+    printf("[SERVER -> CLIENT %d (%s)] Sending fight request to player %s", socket_receiver, receiver_username, notification);
     fflush(stdout);
     send(socket_receiver, notification, strlen(notification), 0);
 
-    // 5. Ack à l'initiateur
+    // Send confirmation to initiator
     char ack[256];
     snprintf(ack, sizeof(ack), 
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"OK\", \"data\": \"Defi envoye a %s\"}\n", 
              ACTION_FIGHT, receiver_username);
     
-    printf("[SERVEUR -> CLIENT %d] Ack combat : %s", client_socket, ack);
+    printf("[SERVER -> CLIENT %d] Sent fight request from %s", client_socket, ack);
     send(client_socket, ack, strlen(ack), 0);
 }
 
+
+/**
+ * Handles response to fight offer.
+ * If accepted, executes the fight, updates DB and mines block.
+ */
 void process_fight_response(int client_socket, const char *json_payload) {
     char data_buffer[1024];
     char temp_str[50];
-    int accepted = 0; // Par défaut false
+    int accepted = 0;
 
     int id_initiator = -1, id_card_initiator = -1;
     int id_receiver = -1, id_card_receiver = -1;
 
-    // 1. Parsing
+    // Extract data
     if (!extract_json_value(json_payload, "data", data_buffer, sizeof(data_buffer))) return;
 
-    // Gestion du booléen "accepted" (votre parser gère true/false comme des chaines ou 1/0)
-    // Adaptez selon ce que renvoie votre extract_json_value pour un booléen
     if (strstr(data_buffer, "\"accepted\": true") != NULL) accepted = 1;
 
     if (extract_json_value(data_buffer, "id_initiator", temp_str, sizeof(temp_str))) id_initiator = atoi(temp_str);
@@ -723,7 +730,7 @@ void process_fight_response(int client_socket, const char *json_payload) {
     if (extract_json_value(data_buffer, "id_receiver", temp_str, sizeof(temp_str))) id_receiver = atoi(temp_str);
     if (extract_json_value(data_buffer, "id_card_receiver", temp_str, sizeof(temp_str))) id_card_receiver = atoi(temp_str);
 
-    // 2. Retrouver le socket de l'initiateur (A)
+    // Search fight initiator socket
     int socket_initiator = -1;
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -734,7 +741,7 @@ void process_fight_response(int client_socket, const char *json_payload) {
     }
     pthread_mutex_unlock(&clients_mutex);
 
-    // Si refusé, on notifie juste A et on s'arrête
+    // If fight refused, only send message to initiator and return
     if (!accepted) {
         if (socket_initiator != -1) {
             char msg[] = "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"ERROR\", \"data\": \"Combat refuse\"}\n";
@@ -743,10 +750,10 @@ void process_fight_response(int client_socket, const char *json_payload) {
         return;
     }
 
-    // 3. EXECUTION DU COMBAT
+    // Fight processing
     PGconn *conn = get_db_connection();
 
-    // Vérification
+    // Checks
     if (db_card_exists(conn, id_card_initiator) == 0) {
         send_error_response(client_socket, ACTION_FIGHT_RESPONSE, "La carte de l'initiateur n'existe plus.");
         return;
@@ -755,37 +762,33 @@ void process_fight_response(int client_socket, const char *json_payload) {
         send_error_response(client_socket, ACTION_FIGHT_RESPONSE, "Votre carte n'existe plus.");
         return;
     }
-    
 
     char json_card_initiator[1024];
     char json_card_receiver[1024];
 
-    
-
     int atk1, def1, hp1, atk2, def2, hp2;
 
-    // Récup stats
+    // Get card stats
     if (db_get_card_stats(conn, id_card_initiator, &atk1, &def1, &hp1) != 0 ||
         db_get_card_stats(conn, id_card_receiver, &atk2, &def2, &hp2) != 0) {
-        // Erreur (une carte n'existe plus ?)
         return; 
     }
 
     float dmg_to_2 = atk1 - (atk1 * (def2/100.0));
     float dmg_to_1 = atk2 - (atk2 * (def1/100.0));
 
-    if (dmg_to_2 < 0) dmg_to_2 = 0; // Pas de soin par attaque
+    if (dmg_to_2 < 0) dmg_to_2 = 0;
     if (dmg_to_1 < 0) dmg_to_1 = 0;
 
-    // Application des dégâts
+    // Dealing damage
     int new_hp1 = hp1 - ((int) dmg_to_1);
     int new_hp2 = hp2 - ((int) dmg_to_2);
 
-    // Mise à jour BDD (et suppression si mort)
+    // Update db (deletes card if killed)
     int status1 = db_update_card_hp(conn, id_card_initiator, new_hp1);
     int status2 = db_update_card_hp(conn, id_card_receiver, new_hp2);
 
-    // 4. Enregistrement Blockchain
+    // Mine block
     Blockchain *bc = get_global_blockchain();
     Block *new_block = calloc(1, sizeof(Block));
     if (new_block == NULL) {
@@ -799,7 +802,7 @@ void process_fight_response(int client_socket, const char *json_payload) {
 
     char action_json[512];
 
-    // On détermine le gagnant (celui qui a fait le plus de dégats ou tué l'autre)
+    // Winner is either the one that dealt the most damage OR the one who killed the opponent's card
     int winner_id;
     if ((status1 && status2) || (!status1 && !status2)) {
         winner_id = (dmg_to_2 > dmg_to_1) ? id_initiator : id_receiver;
@@ -808,7 +811,6 @@ void process_fight_response(int client_socket, const char *json_payload) {
     } else if (status1 && !status2) {
         winner_id = id_initiator;
     }
-    
 
     snprintf(action_json, sizeof(action_json), 
          "{\"action\": \"Fight\", \"p1\": %d, \"dmg1\": %d, \"p2\": %d, \"dmg2\": %d, \"winner\": %d}", 
@@ -822,7 +824,7 @@ void process_fight_response(int client_socket, const char *json_payload) {
     bc->size++;
     db_save_block(conn, new_block);
 
-    // 5. Notification des résultats (Avec nouvelles mains)
+    // Send results with updated hands
     char hand_init[4096], hand_recv[4096];
     db_get_player_cards_json(conn, id_initiator, hand_init, sizeof(hand_init));
     db_get_player_cards_json(conn, id_receiver, hand_recv, sizeof(hand_recv));
@@ -835,14 +837,14 @@ void process_fight_response(int client_socket, const char *json_payload) {
     db_get_single_card_json(conn, id_card_initiator, json_card_initiator, sizeof(json_card_initiator));
     db_get_single_card_json(conn, id_card_receiver, json_card_receiver, sizeof(json_card_receiver));    
     
-    // Message pour le Receveur (B)
+    // Message for receiver
 
     snprintf(result_msg, sizeof(result_msg), 
              "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"result\": \"%s\", \"log\": \"[%s] Combat termine. Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
              res_receiver, res_receiver, ((int) dmg_to_2), ((int) dmg_to_1), hand_recv, json_card_initiator);
     send(client_socket, result_msg, strlen(result_msg), 0);
 
-    // Message pour l'Initiateur (A)
+    // Message for initiator
     if (socket_initiator != -1) {
         snprintf(result_msg, sizeof(result_msg), 
              "{\"type\": \"response\", \"nom\": \"FightResult\", \"status\": \"OK\", \"data\": {\"result\": \"%s\", \"log\": \"[%s] Combat termine. Tu as subi %d degats. Tu as inflige %d degats.\", \"hand\": %s, \"opponent_card\": %s}}\n", 
@@ -850,5 +852,5 @@ void process_fight_response(int client_socket, const char *json_payload) {
         send(socket_initiator, result_msg, strlen(result_msg), 0);
     }
 
-    printf("[INFO] Combat termine : %d vs %d (Dmg: %d - %d). Gagnant : %d\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2), winner_id);
+    printf("[INFO] Fight finished : %d vs %d (Dmg: %d - %d). Winner: %d\n", id_initiator, id_receiver, ((int) dmg_to_1), ((int) dmg_to_2), winner_id);
 }

@@ -6,7 +6,11 @@
 
 #include "protocol.h"
 
-
+/**
+ * Custom JSON parser.
+ * Extracts the data elements associated with the key passed as function parameter from a JSON object.
+ * Example: when a user logs in, use "username" key to get their username.
+ */
 int extract_json_value(const char *json, const char *key, char *output, int max_len) {
     char search_key[50];
     snprintf(search_key, sizeof(search_key), "\"%s\"", key);
@@ -26,12 +30,12 @@ int extract_json_value(const char *json, const char *key, char *output, int max_
 
     
     if (*start == '"') {
-        // Cas 1 : C'est une chaîne de caractères
+        // Case 1 : it's a string
         start++; 
         end = strchr(start, '"'); 
     } else if (*start == '{') {
-        // Cas 2 : C'est un objet JSON (ex: le champ "data")
-        // Il faut compter les accolades pour trouver la fin
+        // Case 2 : it's a JSON object (for example "data" field)
+        // Count the braces to find the end
         int brace_count = 1;
         const char *p = start + 1;
         while (*p && brace_count > 0) {
@@ -40,12 +44,12 @@ int extract_json_value(const char *json, const char *key, char *output, int max_
             p++;
         }
         if (brace_count == 0) {
-            end = p; // p pointe juste après le '}' final
-            // On recule de 1 pour ne pas inclure le caractère après le '}'
-            // (mais strncpy prendra la longueur, donc 'end' sert de borne)
+            end = p; // points to character after final '}'
+            // Move back 1 to not include that chararacter
+            // (strncpy takes length so end will serve as a bound)
         }
     } else {
-        // Cas 3 : Nombre ou Booléen
+        // Case 3 : number or boolean
         end = start;
         while (*end && *end != ',' && *end != '}' && *end != ']' && !isspace(*end)) {
             end++;
@@ -62,7 +66,9 @@ int extract_json_value(const char *json, const char *key, char *output, int max_
 
     return 1;
 }
-
+/**
+ * Builds and sends an error message for the action type passed as parameters.
+ */
 void send_error_response(int socket, const char *action, const char *message) {
     char response[512];
     // Construction manuelle du JSON
@@ -70,6 +76,6 @@ void send_error_response(int socket, const char *action, const char *message) {
              "{\"type\": \"response\", \"nom\": \"%s\", \"status\": \"ERROR\", \"data\": \"%s\"}\n", 
              action, message);
     
-    printf("[SERVEUR -> CLIENT] (Socket client %d) [ERREUR] %s\n", socket, response);
+    printf("[SERVER -> CLIENT] (client socket %d) [ERROR] %s\n", socket, response);
     send(socket, response, strlen(response), 0);
 }
